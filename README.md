@@ -92,6 +92,8 @@ Edit JSON files in `configs/` to customize:
 - **Repositories**: Git repositories to clone (organized by owner)
 - **Git**: User info, defaults, and aliases
 - **Cursor**: Editor settings and preferences
+- **Shell**: Per-OS shell preferences (e.g., `ohMyZshTheme`)
+- **Cruft**: Packages to uninstall (e.g., Ubuntu `apt` wildcard patterns)
 
 ## Using This Repository
 
