@@ -343,6 +343,55 @@ function configureGitAliases {
     }
 }
 
+# Function to configure Git LFS
+function configureGitLfs {
+    <#
+    .SYNOPSIS
+    Configures Git LFS (Large File Storage).
+
+    .DESCRIPTION
+    Initializes Git LFS if it's installed and available.
+
+    .OUTPUTS
+    Boolean. Returns $true if configuration was successful, $false otherwise.
+    #>
+    param()
+
+    Write-Host "Configuring Git LFS..." -ForegroundColor Cyan
+
+    try {
+        # Check if git-lfs is installed
+        $gitLfsPath = Get-Command git-lfs -ErrorAction SilentlyContinue
+        if (-not $gitLfsPath) {
+            Write-Host "  ⚠ git-lfs is not installed. Skipping LFS configuration." -ForegroundColor Yellow
+            return $true
+        }
+
+        # Check if git lfs command is available
+        $lfsVersion = git lfs version 2>$null
+        if ($LASTEXITCODE -ne 0) {
+            Write-Host "  ⚠ Git LFS command not available" -ForegroundColor Yellow
+            return $true
+        }
+
+        Write-Host "Initializing Git LFS..." -ForegroundColor Yellow
+        git lfs install 2>$null | Out-Null
+        if ($LASTEXITCODE -eq 0) {
+            Write-Host "  ✓ Git LFS initialized successfully" -ForegroundColor Green
+        }
+        else {
+            Write-Host "  ⚠ Git LFS may already be initialized" -ForegroundColor Yellow
+        }
+
+        Write-Host "Git LFS configured successfully!" -ForegroundColor Green
+        return $true
+    }
+    catch {
+        Write-Warning "Failed to configure Git LFS: $_"
+        return $false
+    }
+}
+
 # Main configuration function
 function configureGit {
     <#
@@ -398,6 +447,13 @@ function configureGit {
 
     # Configure aliases
     if (-not (configureGitAliases)) {
+        $success = $false
+    }
+
+    Write-Host ""
+
+    # Configure Git LFS
+    if (-not (configureGitLfs)) {
         $success = $false
     }
 

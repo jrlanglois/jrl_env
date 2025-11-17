@@ -302,6 +302,32 @@ PY
     return 0
 }
 
+# Function to configure Git LFS
+configureGitLfs()
+{
+    echo -e "${cyan}Configuring Git LFS...${nc}"
+
+    if ! command -v git-lfs >/dev/null 2>&1; then
+        echo -e "${yellow}⚠ git-lfs is not installed. Skipping LFS configuration.${nc}"
+        return 0
+    fi
+
+    if git lfs version >/dev/null 2>&1; then
+        echo -e "${yellow}Initializing Git LFS...${nc}"
+        if git lfs install >/dev/null 2>&1; then
+            echo -e "  ${green}✓ Git LFS initialized successfully${nc}"
+        else
+            echo -e "  ${yellow}⚠ Git LFS may already be initialized${nc}"
+        fi
+    else
+        echo -e "${yellow}⚠ Git LFS command not available${nc}"
+        return 0
+    fi
+
+    echo -e "${green}Git LFS configured successfully!${nc}"
+    return 0
+}
+
 # Main configuration function
 configureGit()
 {
@@ -330,6 +356,11 @@ configureGit()
     echo ""
 
     if ! configureGitAliases; then
+        success=false
+    fi
+    echo ""
+
+    if ! configureGitLfs; then
         success=false
     fi
     echo ""

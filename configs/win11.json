@@ -12,6 +12,7 @@
         "ElectronicArts.EADesktop",
         "EpicGames.EpicGamesLauncher",
         "Git.Git",
+        "Git.GitLFS",
         "Google.AndroidStudio",
         "Google.Chrome",
         "Kitware.CMake",
@@ -55,49 +56,4 @@
         ],
         "postInstall": []
     }
-}
-
-    "winget":
-    [
-        "7zip.7zip",
-        "Anysphere.Cursor",
-        "ArobasMusic.GuitarPro.8",
-        "ArduinoSA.IDE.stable",
-        "CPUID.CPU-Z",
-        "Cockos.REAPER",
-        "Discord.Discord",
-        "Docker.DockerDesktop",
-        "ElectronicArts.EADesktop",
-        "EpicGames.EpicGamesLauncher",
-        "Git.Git",
-        "Google.AndroidStudio",
-        "Google.Chrome",
-        "Kitware.CMake",
-        "Maxon.Cinema4D.2025",
-        "MichaelTippach.ASIO4ALL",
-        "Microsoft.PowerToys",
-        "Microsoft.VisualStudioCode",
-        "ShellCheck.ShellCheck",
-        "Mozilla.Firefox",
-        "Notion.Notion",
-        "OpenJS.NodeJS.LTS",
-        "Oracle.VirtualBox",
-        "Postman.Postman",
-        "Python.Python.3.13",
-        "RaspberryPiFoundation.RaspberryPiImager",
-        "RubyInstallerTeam.RubyWithDevKit.3.3",
-        "SlackTechnologies.Slack",
-        "Spotify.Spotify",
-        "Ubisoft.Connect",
-        "Valve.Steam",
-        "Valve.SteamLink",
-        "VideoLAN.VLC"
-    ],
-    "windowsStore":
-    [
-        "4DF9E0F8.Netflix",
-        "9MV0B5HZVK9Z",
-        "9NMPJ99VJBWV",
-        "9WZDNCRFJ3PV"
-    ]
 }
