@@ -4,19 +4,16 @@
 
 set -e
 
-# Colours for output
-red='\033[0;31m'
-yellow='\033[1;33m'
-cyan='\033[0;36m'
-nc='\033[0m' # No Colour
-
-echo -e "${cyan}=== jrl_env Update ===${nc}"
-echo ""
-
 # Get repository root (parent of ubuntu directory)
 scriptDir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 repoRoot="$(cd "$scriptDir/.." && pwd)"
 ubuntuDir="$scriptDir"
+
+# shellcheck source=../common/colors.sh
+source "$ubuntuDir/../common/colors.sh"
+
+echo -e "${cyan}=== jrl_env Update ===${nc}"
+echo ""
 
 # Check if we're in a git repository
 if [ ! -d "$repoRoot/.git" ]; then

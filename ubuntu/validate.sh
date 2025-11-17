@@ -4,12 +4,8 @@
 
 set -e
 
-# Colours for output
-red='\033[0;31m'
-green='\033[0;32m'
-yellow='\033[1;33m'
-cyan='\033[0;36m'
-nc='\033[0m' # No Colour
+# shellcheck source=../common/colors.sh
+source "$scriptDir/../common/colors.sh"
 
 scriptDir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 configsPath="$scriptDir/../configs"

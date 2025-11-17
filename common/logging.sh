@@ -9,7 +9,7 @@ logDirectory=""
 initLogging()
 {
     local tmpBase="${TMPDIR:-/tmp}"
-    local logDir="${LOG_DIR:-$tmpBase/jrl_env_logs}"
+    local logDir="${logDirOverride:-$tmpBase/jrl_env_logs}"
     local timestamp
     local initMessage
 
@@ -103,4 +103,3 @@ logDebug()
 {
     writeLog "DEBUG" "$@"
 }
-

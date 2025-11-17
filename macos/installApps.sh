@@ -4,15 +4,11 @@
 
 set -e
 
-# Colours for output
-red='\033[0;31m'
-green='\033[0;32m'
-yellow='\033[1;33m'
-cyan='\033[0;36m'
-nc='\033[0m' # No Colour
-
 # Get script directory
 scriptDir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# shellcheck source=../common/colors.sh
+source "$scriptDir/../common/colors.sh"
 configPath="${scriptDir}/../configs/macosApps.json"
 
 # Function to check if a command exists
@@ -21,172 +17,50 @@ commandExists()
     command -v "$1" >/dev/null 2>&1
 }
 
-# Function to check if Homebrew is installed
-isBrewInstalled()
+# Get script directory
+scriptDir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+appsConfigPath="${scriptDir}/../configs/macosApps.json"
+jqInstallHint="${yellow}  brew install jq${nc}"
+
+# shellcheck source=../common/colors.sh
+source "$scriptDir/../common/colors.sh"
+
+installApps_checkPrimary()
 {
-    if commandExists brew; then
-        return 0
-    fi
-    return 1
+    brew list "$1" &>/dev/null
 }
 
-# Function to check if a brew package is installed
-isBrewPackageInstalled()
+installApps_installPrimary()
 {
-    local package=$1
-    if brew list "$package" &>/dev/null; then
-        return 0
-    fi
-    return 1
+    brew install "$1" &>/dev/null
 }
 
-# Function to check if a brew cask is installed
-isBrewCaskInstalled()
+installApps_updatePrimary()
 {
-    local cask=$1
-    if brew list --cask "$cask" &>/dev/null; then
-        return 0
-    fi
-    return 1
+    brew upgrade "$1" &>/dev/null
 }
 
-# Function to install or update apps
-installOrUpdateApps()
+installApps_checkSecondary()
 {
-    local configPath=${1:-$configPath}
-    local brewApps=""
-    local brewCaskApps=""
-    local brewCount
-    local caskCount
-    local totalCount
-
-    echo -e "${cyan}=== macOS Application Installation ===${nc}"
-    echo ""
-
-    # Check if Homebrew is installed
-    if ! isBrewInstalled; then
-        echo -e "${red}✗ Homebrew is not installed.${nc}"
-        echo -e "${yellow}Please install Homebrew first using setupDevEnv.sh${nc}"
-        return 1
-    fi
-
-    # Check if config file exists
-    if [ ! -f "$configPath" ]; then
-        echo -e "${red}✗ Configuration file not found: $configPath${nc}"
-        return 1
-    fi
-
-    # Parse JSON (using jq if available, otherwise basic parsing)
-    if commandExists jq; then
-        brewApps=$(jq -r '.brew[]?' "$configPath" 2>/dev/null || echo "")
-        brewCaskApps=$(jq -r '.brewCask[]?' "$configPath" 2>/dev/null || echo "")
-    else
-        echo -e "${yellow}⚠ jq is not installed. Installing basic JSON parsing...${nc}"
-        # Basic fallback - install jq first
-        if ! isBrewPackageInstalled jq; then
-            brew install jq
-        fi
-        brewApps=$(jq -r '.brew[]?' "$configPath" 2>/dev/null || echo "")
-        brewCaskApps=$(jq -r '.brewCask[]?' "$configPath" 2>/dev/null || echo "")
-    fi
-
-    if [ -z "$brewApps" ] && [ -z "$brewCaskApps" ]; then
-        echo -e "${yellow}No applications specified in configuration file.${nc}"
-        return 0
-    fi
-
-    brewCount=$(echo "$brewApps" | grep -c . || echo "0")
-    caskCount=$(echo "$brewCaskApps" | grep -c . || echo "0")
-    totalCount=$((brewCount + caskCount))
-
-    echo -e "${cyan}Found $totalCount application(s) in configuration file ($brewCount brew, $caskCount cask).${nc}"
-    echo ""
-
-    local installedCount=0
-    local updatedCount=0
-    local failedCount=0
-
-    # Process brew packages
-    if [ -n "$brewApps" ]; then
-        echo -e "${cyan}=== Processing Homebrew packages ===${nc}"
-        echo ""
-
-        while IFS= read -r package; do
-            if [ -z "$package" ]; then
-                continue
-            fi
-
-            echo -e "${yellow}Processing: $package${nc}"
-
-            if isBrewPackageInstalled "$package"; then
-                echo -e "  ${cyan}Package is installed. Updating...${nc}"
-                if brew upgrade "$package" &>/dev/null; then
-                    echo -e "  ${green}✓ Updated successfully${nc}"
-                    ((updatedCount++))
-                else
-                    echo -e "  ${yellow}⚠ Update check completed (may already be up to date)${nc}"
-                    ((updatedCount++))
-                fi
-            else
-                echo -e "  ${cyan}Package is not installed. Installing...${nc}"
-                if brew install "$package" &>/dev/null; then
-                    echo -e "  ${green}✓ Installed successfully${nc}"
-                    ((installedCount++))
-                else
-                    echo -e "  ${red}✗ Installation failed${nc}"
-                    ((failedCount++))
-                fi
-            fi
-            echo ""
-        done <<< "$brewApps"
-    fi
-
-    # Process brew casks
-    if [ -n "$brewCaskApps" ]; then
-        echo -e "${cyan}=== Processing Homebrew Casks ===${nc}"
-        echo ""
-
-        while IFS= read -r cask; do
-            if [ -z "$cask" ]; then
-                continue
-            fi
-
-            echo -e "${yellow}Processing: $cask${nc}"
-
-            if isBrewCaskInstalled "$cask"; then
-                echo -e "  ${cyan}Application is installed. Updating...${nc}"
-                if brew upgrade --cask "$cask" &>/dev/null; then
-                    echo -e "  ${green}✓ Updated successfully${nc}"
-                    ((updatedCount++))
-                else
-                    echo -e "  ${yellow}⚠ Update check completed (may already be up to date)${nc}"
-                    ((updatedCount++))
-                fi
-            else
-                echo -e "  ${cyan}Application is not installed. Installing...${nc}"
-                if brew install --cask "$cask" &>/dev/null; then
-                    echo -e "  ${green}✓ Installed successfully${nc}"
-                    ((installedCount++))
-                else
-                    echo -e "  ${red}✗ Installation failed${nc}"
-                    ((failedCount++))
-                fi
-            fi
-            echo ""
-        done <<< "$brewCaskApps"
-    fi
-
-    echo -e "${cyan}Summary:${nc}"
-    echo -e "  ${green}Installed: $installedCount${nc}"
-    echo -e "  ${green}Updated: $updatedCount${nc}"
-    if [ $failedCount -gt 0 ]; then
-        echo -e "  ${red}Failed: $failedCount${nc}"
-    fi
-
-    return 0
+    brew list --cask "$1" &>/dev/null
 }
 
-# Run if executed directly
+installApps_installSecondary()
+{
+    brew install --cask "$1" &>/dev/null
+}
+
+installApps_updateSecondary()
+{
+    brew upgrade --cask "$1" &>/dev/null
+}
+
+installApps_extractPrimary='.brew[]?'
+installApps_extractSecondary='.brewCask[]?'
+
+# shellcheck source=../common/installApps.sh
+source "$scriptDir/../common/installApps.sh"
+
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    installOrUpdateApps "$@"
+    installApps "$@"
 fi

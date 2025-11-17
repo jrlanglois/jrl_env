@@ -4,10 +4,11 @@
 
 set -e
 
-# Colours for output
-red='\033[0;31m'
-yellow='\033[1;33m'
-nc='\033[0m' # No Colour
+# Get script directory
+scriptDir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# shellcheck source=../common/colors.sh
+source "$scriptDir/../common/colors.sh"
 
 # Parse arguments
 skipFonts=false
@@ -55,9 +56,6 @@ runRepos=false
 if [ "$skipRepos" = false ] && [ "$appsOnly" = false ]; then
     runRepos=true
 fi
-
-# Get script directory
-scriptDir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Load logging functions
 # shellcheck source=common/logging.sh
