@@ -5,10 +5,11 @@ set -e
 
 # Get script directory
 scriptDir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-gitInstallHint="${yellow}  sudo apt-get install -y git${nc}"
 
 # shellcheck source=../common/colors.sh
 source "$scriptDir/../common/colors.sh"
+gitInstallHint="${yellow}  sudo apt-get install -y git${nc}"
+gitConfigPath="${scriptDir}/../configs/gitConfig.json"
 
 # shellcheck source=../common/configureGit.sh
 source "$scriptDir/../common/configureGit.sh"

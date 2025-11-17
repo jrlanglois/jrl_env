@@ -9,6 +9,7 @@ scriptDir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=../common/colors.sh
 source "$scriptDir/../common/colors.sh"
 gitInstallHint="${yellow}  brew install git${nc}"
+gitConfigPath="${scriptDir}/../configs/gitConfig.json"
 
 # shellcheck source=../common/configureGit.sh
 source "$scriptDir/../common/configureGit.sh"

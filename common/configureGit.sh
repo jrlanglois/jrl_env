@@ -12,6 +12,90 @@ isGitInstalled()
     return 1
 }
 
+# Function to read a JSON section from a config file
+readJsonSection()
+{
+    local configPath=$1
+    local sectionKey=$2
+    local jsonResult="{}"
+
+    if [ -z "$configPath" ] || [ ! -f "$configPath" ]; then
+        echo "$jsonResult"
+        return 0
+    fi
+
+    if command -v jq >/dev/null 2>&1; then
+        jsonResult=$(jq -c ".${sectionKey} // {}" "$configPath" 2>/dev/null || echo "{}")
+    elif command -v python3 >/dev/null 2>&1; then
+        jsonResult=$(python3 - "$configPath" "$sectionKey" <<'PY' 2>/dev/null || echo "{}"
+import json
+import sys
+
+try:
+    with open(sys.argv[1], "r", encoding="utf-8") as fh:
+        data = json.load(fh)
+    section = data.get(sys.argv[2], {})
+    print(json.dumps(section))
+except Exception:
+    print("{}")
+PY
+)
+    fi
+
+    echo "$jsonResult"
+}
+
+# Function to get a value from a JSON object
+getJsonValue()
+{
+    local jsonObject=$1
+    local key=$2
+    local defaultValue=$3
+    local value
+
+    if command -v jq >/dev/null 2>&1; then
+        value=$(echo "$jsonObject" | jq -r ".[\"$key\"] // \"$defaultValue\"" 2>/dev/null || echo "$defaultValue")
+    elif command -v python3 >/dev/null 2>&1; then
+        value=$(python3 - "$jsonObject" "$key" "$defaultValue" <<'PY' 2>/dev/null || echo "$defaultValue"
+import json
+import sys
+
+try:
+    obj = json.loads(sys.argv[1])
+    key = sys.argv[2]
+    default = sys.argv[3]
+    print(obj.get(key, default))
+except Exception:
+    print(sys.argv[3])
+PY
+)
+    else
+        value="$defaultValue"
+    fi
+
+    echo "$value"
+}
+
+# Function to set a Git config value with output
+setGitConfig()
+{
+    local configKey=$1
+    local configValue=$2
+    local description=$3
+    local successMessage=$4
+
+    if [ -z "$description" ]; then
+        description="Setting $configKey..."
+    fi
+    if [ -z "$successMessage" ]; then
+        successMessage="✓ $configKey set to '$configValue'"
+    fi
+
+    echo -e "${yellow}$description${nc}"
+    git config --global "$configKey" "$configValue"
+    echo -e "  ${green}$successMessage${nc}"
+}
+
 # Function to configure Git user information
 configureGitUser()
 {
@@ -57,72 +141,162 @@ configureGitUser()
 # Function to configure Git defaults
 configureGitDefaults()
 {
+    local configPath="${gitConfigPath:-}"
+    local defaultsJson
+
     echo -e "${cyan}Configuring Git default settings...${nc}"
 
-    echo -e "${yellow}Setting default branch name to 'main'...${nc}"
-    git config --global init.defaultBranch main
-    echo -e "  ${green}✓ Default branch set to 'main'${nc}"
+    defaultsJson=$(readJsonSection "$configPath" "defaults")
 
-    echo -e "${yellow}Enabling colour output...${nc}"
-    git config --global color.ui auto
-    echo -e "  ${green}✓ Colour output enabled${nc}"
+    local defaultBranch
+    local colorUi
+    local pullRebase
+    local pushDefault
+    local pushAutoSetup
+    local rebaseAutoStash
+    local mergeFf
+    local fetchParallel
 
-    echo -e "${yellow}Configuring pull behaviour...${nc}"
-    git config --global pull.rebase false
-    echo -e "  ${green}✓ Pull behaviour set to merge (default)${nc}"
+    defaultBranch=$(getJsonValue "$defaultsJson" "init.defaultBranch" "main")
+    colorUi=$(getJsonValue "$defaultsJson" "color.ui" "auto")
+    pullRebase=$(getJsonValue "$defaultsJson" "pull.rebase" "false")
+    pushDefault=$(getJsonValue "$defaultsJson" "push.default" "simple")
+    pushAutoSetup=$(getJsonValue "$defaultsJson" "push.autoSetupRemote" "true")
+    rebaseAutoStash=$(getJsonValue "$defaultsJson" "rebase.autoStash" "true")
+    mergeFf=$(getJsonValue "$defaultsJson" "merge.ff" "false")
+    fetchParallel=$(getJsonValue "$defaultsJson" "fetch.parallel" "8")
 
-    echo -e "${yellow}Configuring push behaviour...${nc}"
-    git config --global push.default simple
-    echo -e "  ${green}✓ Push default set to 'simple'${nc}"
+    setGitConfig "init.defaultBranch" "$defaultBranch" "Setting default branch name to '$defaultBranch'..." "✓ Default branch set to '$defaultBranch'"
 
-    echo -e "${yellow}Configuring push auto-setup...${nc}"
-    git config --global push.autoSetupRemote true
-    echo -e "  ${green}✓ Push auto-setup remote enabled${nc}"
+    setGitConfig "color.ui" "$colorUi" "Enabling colour output..." "✓ Colour output enabled"
 
-    echo -e "${yellow}Configuring rebase behaviour...${nc}"
-    git config --global rebase.autoStash true
-    echo -e "  ${green}✓ Rebase auto-stash enabled${nc}"
+    setGitConfig "pull.rebase" "$pullRebase" "Configuring pull behaviour..." ""
+    local pullBehaviour
+    if [ "$pullRebase" = "true" ]; then
+        pullBehaviour="rebase"
+    else
+        pullBehaviour="merge (default)"
+    fi
+    echo -e "  ${green}✓ Pull behaviour set to $pullBehaviour${nc}"
 
-    echo -e "${yellow}Configuring merge strategy...${nc}"
-    git config --global merge.ff false
-    echo -e "  ${green}✓ Merge fast-forward disabled (creates merge commits)${nc}"
+    setGitConfig "push.default" "$pushDefault" "Configuring push behaviour..." "✓ Push default set to '$pushDefault'"
+
+    setGitConfig "push.autoSetupRemote" "$pushAutoSetup" "Configuring push auto-setup..." "✓ Push auto-setup remote enabled"
+
+    setGitConfig "rebase.autoStash" "$rebaseAutoStash" "Configuring rebase behaviour..." "✓ Rebase auto-stash enabled"
+
+    setGitConfig "merge.ff" "$mergeFf" "Configuring merge strategy..." ""
+    if [ "$mergeFf" = "false" ]; then
+        echo -e "  ${green}✓ Merge fast-forward disabled (creates merge commits)${nc}"
+    else
+        echo -e "  ${green}✓ Merge fast-forward enabled${nc}"
+    fi
+
+    if [ -n "$fetchParallel" ] && [ "$fetchParallel" != "null" ]; then
+        setGitConfig "fetch.parallel" "$fetchParallel" "Configuring fetch parallel jobs..." "✓ Fetch parallel jobs set to $fetchParallel"
+    fi
 
     echo -e "${green}Git default settings configured successfully!${nc}"
     return 0
 }
 
+# Function to add a Git alias if it doesn't exist
+addGitAlias()
+{
+    local aliasName=$1
+    local aliasCommand=$2
+
+    if git config --global --get "alias.$aliasName" >/dev/null 2>&1; then
+        echo -e "  ${yellow}⚠ Alias '$aliasName' already exists, skipping...${nc}"
+        return 1
+    else
+        git config --global "alias.$aliasName" "$aliasCommand"
+        echo -e "  ${green}✓ Added alias: $aliasName${nc}"
+        return 0
+    fi
+}
+
 # Function to configure Git aliases
 configureGitAliases()
 {
+    local configPath="${gitConfigPath:-}"
+    local aliasesJson
+
     echo -e "${cyan}Configuring Git aliases...${nc}"
 
-    local aliases=(
-        "st:status"
-        "co:checkout"
-        "br:branch"
-        "ci:commit"
-        "unstage:reset HEAD --"
-        "last:log -1 HEAD"
-        "visual:!code"
-        "log1:log --oneline"
-        "logg:log --oneline --graph --decorate --all"
-        "amend:commit --amend"
-        "uncommit:reset --soft HEAD^"
-        "stash-all:stash --include-untracked"
-        "undo:reset HEAD~1"
-    )
+    aliasesJson=$(readJsonSection "$configPath" "aliases")
 
-    for alias in "${aliases[@]}"; do
-        local aliasName="${alias%%:*}"
-        local aliasCommand="${alias#*:}"
+    # If no aliases found in config, use defaults
+    if [ "$aliasesJson" = "{}" ] || [ -z "$aliasesJson" ]; then
+        local defaultAliases=(
+            "st:status"
+            "co:checkout"
+            "br:branch"
+            "ci:commit"
+            "unstage:reset HEAD --"
+            "last:log -1 HEAD"
+            "visual:!code"
+            "log1:log --oneline"
+            "logg:log --oneline --graph --decorate --all"
+            "amend:commit --amend"
+            "uncommit:reset --soft HEAD^"
+            "stash-all:stash --include-untracked"
+            "undo:reset HEAD~1"
+        )
 
-        if git config --global --get "alias.$aliasName" >/dev/null 2>&1; then
-            echo -e "  ${yellow}⚠ Alias '$aliasName' already exists, skipping...${nc}"
-        else
-            git config --global "alias.$aliasName" "$aliasCommand"
-            echo -e "  ${green}✓ Added alias: $aliasName${nc}"
+        for alias in "${defaultAliases[@]}"; do
+            local aliasName="${alias%%:*}"
+            local aliasCommand="${alias#*:}"
+            addGitAlias "$aliasName" "$aliasCommand"
+        done
+    else
+        # Process aliases from JSON
+        if command -v jq >/dev/null 2>&1; then
+            local aliasNames
+            aliasNames=$(echo "$aliasesJson" | jq -r 'keys[]' 2>/dev/null || echo "")
+
+            while IFS= read -r aliasName; do
+                if [ -z "$aliasName" ]; then
+                    continue
+                fi
+
+                local aliasCommand
+                aliasCommand=$(getJsonValue "$aliasesJson" "$aliasName" "")
+
+                if [ -z "$aliasCommand" ] || [ "$aliasCommand" = "null" ]; then
+                    continue
+                fi
+
+                addGitAlias "$aliasName" "$aliasCommand"
+            done <<< "$aliasNames"
+        elif command -v python3 >/dev/null 2>&1; then
+            python3 - "$aliasesJson" <<'PY' 2>/dev/null || true
+import json
+import subprocess
+import sys
+
+try:
+    aliases = json.loads(sys.argv[1])
+    for alias_name, alias_command in aliases.items():
+        # Check if alias already exists
+        result = subprocess.run(
+            ["git", "config", "--global", "--get", f"alias.{alias_name}"],
+            capture_output=True,
+            text=True
+        )
+        if result.returncode == 0:
+            print(f"  ⚠ Alias '{alias_name}' already exists, skipping...")
+        else:
+            subprocess.run(
+                ["git", "config", "--global", f"alias.{alias_name}", alias_command],
+                check=True
+            )
+            print(f"  ✓ Added alias: {alias_name}")
+except Exception:
+    pass
+PY
         fi
-    done
+    fi
 
     echo -e "${green}Git aliases configured successfully!${nc}"
     return 0
