@@ -125,10 +125,4 @@ These conventions apply to all PowerShell (`.ps1`) and Bash (`.sh`) scripts in t
 - **Ubuntu**: apt, snap, zsh, jq
 
 ## License
-
-ISC License. See LICENSE.md for details.
-
-
-## License
-
 ISC License. See LICENSE.md for details.

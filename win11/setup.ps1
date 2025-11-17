@@ -32,6 +32,67 @@ $runGit = -not $skipGit -and -not $appsOnly
 $runCursor = -not $skipCursor -and -not $appsOnly
 $runRepos = -not $skipRepos -and -not $appsOnly
 
+$configPath = Join-Path (Join-Path $scriptRoot "..\configs") "win11.json"
+$osConfig = Get-Content $configPath -Raw | ConvertFrom-Json
+
+function Invoke-OsCommands {
+    param(
+        [Parameter()]
+        [ValidateSet("preInstall", "postInstall")]
+        [string]$Phase
+    )
+
+    if ($null -eq $osConfig.commands) { return }
+    $commands = $osConfig.commands.$Phase
+    if (-not $commands) { return }
+
+    foreach ($cmd in $commands)
+    {
+        $name = $cmd.name
+        $shell = $cmd.shell
+        $command = $cmd.command
+        $runOnce = $cmd.runOnce
+        $flagFile = Join-Path $env:LOCALAPPDATA ("jrl_env_" + $name + ".flag")
+
+        if ($runOnce -and (Test-Path $flagFile))
+        {
+            logInfo "Skipping $name (already executed)"
+            continue
+        }
+
+        if ($dryRun)
+        {
+            logInfo "DRY RUN: would execute command '$name'"
+            continue
+        }
+
+        logInfo "Running command: $name"
+        try
+        {
+            switch ($shell.ToLower())
+            {
+                "powershell"
+                {
+                    powershell.exe -NoProfile -ExecutionPolicy Bypass -Command $command
+                }
+                default
+                {
+                    cmd.exe /c $command
+                }
+            }
+
+            if ($runOnce)
+            {
+                New-Item -ItemType File -Path $flagFile -Force | Out-Null
+            }
+        }
+        catch
+        {
+            logWarn "Command $name failed: $_"
+        }
+    }
+}
+
 if ($dryRun)
 {
     logWarn "=== DRY RUN MODE ==="
@@ -47,6 +108,8 @@ if ($LASTEXITCODE -ne 0)
 {
     logWarn "Validation had issues. Continuing anyway..."
 }
+
+Invoke-OsCommands -Phase "preInstall"
 
 # Backup function
 function backupConfigs
@@ -343,6 +406,8 @@ if ($runRepos)
         }
     }
 }
+
+Invoke-OsCommands -Phase "postInstall"
 
 logSuccess "=== Setup Complete ==="
 logInfo "All setup tasks have been executed."

@@ -53,6 +53,67 @@ installApps_extractSecondary='.snap[]?'
 # shellcheck source=../common/installApps.sh
 source "$scriptDir/../common/installApps.sh"
 
+runConfigCommands()
+{
+    local phase=$1
+
+    if [ ! -f "$appsConfigPath" ]; then
+        return
+    fi
+
+    if ! commandExists jq; then
+        echo -e "${yellow}⚠ jq is not available; skipping ${phase} commands.${nc}"
+        return
+    fi
+
+    local cmdJsonList
+    cmdJsonList=$(jq -c --arg phase "$phase" '.commands[$phase] // [] | .[]' "$appsConfigPath" 2>/dev/null)
+    if [ -z "$cmdJsonList" ]; then
+        return
+    fi
+
+    local cacheDir="$HOME/.cache/jrl_env/commands"
+    mkdir -p "$cacheDir"
+
+    while IFS= read -r cmdJson; do
+        [ -z "$cmdJson" ] && continue
+
+        local name shell command runOnce
+        name=$(echo "$cmdJson" | jq -r '.name // "command"' 2>/dev/null)
+        shell=$(echo "$cmdJson" | jq -r '.shell // "bash"' 2>/dev/null)
+        command=$(echo "$cmdJson" | jq -r '.command // ""' 2>/dev/null)
+        runOnce=$(echo "$cmdJson" | jq -r '.runOnce // false' 2>/dev/null)
+
+        if [ -z "$command" ] || [ "$command" = "null" ]; then
+            continue
+        fi
+
+        if ! commandExists "$shell"; then
+            echo -e "${red}✗ Command shell '$shell' not available for $name.${nc}"
+            continue
+        fi
+
+        local safeName
+        safeName=$(echo "${phase}_${name}" | tr -cs '[:alnum:]_' '_')
+        local flagFile="${cacheDir}/${safeName}.flag"
+
+        if [ "$runOnce" = "true" ] && [ -f "$flagFile" ]; then
+            echo -e "${yellow}Skipping $name (run once already executed).${nc}"
+            continue
+        fi
+
+        echo -e "${cyan}Running $name...${nc}"
+        if "$shell" -lc "$command"; then
+            echo -e "${green}✓ $name completed${nc}"
+            if [ "$runOnce" = "true" ]; then
+                touch "$flagFile"
+            fi
+        else
+            echo -e "${red}✗ $name failed${nc}"
+        fi
+    done <<< "$cmdJsonList"
+}
+
 removeCruftPackages()
 {
     if [ ! -f "$appsConfigPath" ]; then
@@ -103,6 +164,8 @@ removeCruftPackages()
 }
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+    runConfigCommands "preInstall"
     installApps "$@"
+    runConfigCommands "postInstall"
     removeCruftPackages
 fi
