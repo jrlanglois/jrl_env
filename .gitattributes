@@ -1,7 +1,7 @@
 # Default: CRLF for all text files
 * text eol=crlf
 
-# Exceptions: Files that MUST use LF
+# Exceptions: Files that MUST use LF (e.g., Bash scripts)
 *.gitmodules text eol=lf
 *.sh text eol=lf
 

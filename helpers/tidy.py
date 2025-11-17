@@ -6,7 +6,7 @@ Features:
 - Converts tabs to four spaces.
 - Trims trailing whitespace.
 - Removes trailing blank lines.
-- Forces CRLF for known text extensions while leaving other files unchanged.
+- Forces CRLF for `.ps1`, `.json`, and `.md`, while keeping `.sh` files LF.
 """
 
 from __future__ import annotations
@@ -20,6 +20,7 @@ from typing import Iterable, List
 
 
 DEFAULT_EXTENSIONS = [".ps1", ".sh", ".json", ".md"]
+CRLF_EXTENSIONS = {".ps1", ".json", ".md"}
 
 
 def parseArguments() -> argparse.Namespace:
@@ -167,8 +168,13 @@ def gatherFiles(root: Path, extensionsLower: set[str]) -> Iterable[Path]:
 
 
 def newlineForFile(path: Path, extensionsLower: set[str]) -> str | None:
-    if path.suffix.lower() in extensionsLower:
+    suffix = path.suffix.lower()
+    if suffix in CRLF_EXTENSIONS:
         return "\r\n"
+    if suffix == ".sh":
+        return "\n"
+    if suffix in extensionsLower:
+        return None
     return None
 
 

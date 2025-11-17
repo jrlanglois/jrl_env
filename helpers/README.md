@@ -5,7 +5,7 @@ At a glance:
 
 | Script | Purpose | Typical command |
 | --- | --- | --- |
-| `tidy.py` (via `tidy.ps1` / `tidy.sh`) | Clean a single file (tabs → spaces, trim whitespace, enforce CRLF for supported extensions) | `./helpers/tidy.sh file.sh` |
+| `tidy.py` (via `tidy.ps1` / `tidy.sh`) | Clean a single file (tabs → spaces, trim whitespace, enforce CRLF on `.ps1/.json/.md` and LF on `.sh`) | `./helpers/tidy.sh file.sh` |
 | `tidyRepo.py` (via `tidyRepo.ps1` / `tidyRepo.sh`) | Clean every file under a path | `./helpers/tidyRepo.sh --dry-run` |
 | `convertToAllman.py` | Enforce Allman braces + inline `if …; then` style | `python helpers/convertToAllman.py` |
 | `formatRepo.sh` | Run the whole formatting pipeline (Allman + tidy) | `./helpers/formatRepo.sh` |
@@ -19,7 +19,7 @@ All helper scripts use Allman-style control blocks and camelCase identifiers for
 - Converts tabs to four spaces
 - Trims trailing whitespace and blank line spam
 - Supports dry runs
-- Forces CRLF endings for `.ps1`, `.sh`, `.json`, and `.md`
+- Forces CRLF endings for `.ps1`, `.json`, and `.md`, while keeping `.sh` LF
 
 ```
 # Windows

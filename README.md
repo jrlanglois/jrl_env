@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/jrlanglois/jrl_env/actions/workflows/ci.yml/badge.svg)](https://github.com/jrlanglois/jrl_env/actions/workflows/ci.yml)
 
-Cross-platform development environment setup and configuration.
+Cross-platform development environment setup and configuration. Helper tooling enforces Allman braces, camelCase helpers, and CRLF for `.ps1/.json/.md` while keeping `.sh` LF.
 
 ## Overview
 
