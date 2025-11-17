@@ -55,7 +55,7 @@ def convertContent(content):
     }
 
     functionPattern = re.compile(
-        r"^(\s*(?:function\s+)?[a-zA-Z_][\w]*\s*\(\))\s*\{", re.MULTILINE
+        r"^(\s*(?:function\s+)?[a-zA-Z_][\w]*\s*\(\))[ \t]*\{", re.MULTILINE
     )
 
     def replaceFunction(match):
@@ -65,7 +65,7 @@ def convertContent(content):
 
     content, functionCount = functionPattern.subn(replaceFunction, content)
 
-    elsePattern = re.compile(r"\}\s*else\s*\{")
+    elsePattern = re.compile(r"\}[ \t]*else[ \t]*\{")
     content, elseCount = elsePattern.subn("}\nelse\n{", content)
 
     stats["elseBraceUpdates"] = elseCount

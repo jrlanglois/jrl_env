@@ -1,5 +1,7 @@
 # jrl_env
 
+[![CI](https://github.com/jrlanglois/jrl_env/actions/workflows/ci.yml/badge.svg)](https://github.com/jrlanglois/jrl_env/actions/workflows/ci.yml)
+
 Cross-platform development environment setup and configuration.
 
 ## Overview
