@@ -1,22 +1,22 @@
 {
     "googleFonts":
     [
-        "Inconsolata",
-        "Roboto",
-        "Inter",
-        "Noto Sans",
-        "Nunito",
-        "Nunito Sans",
-        "Bungee Spice",
         "Bitcount Ink",
+        "Bungee Spice",
         "Honk",
-        "Nabla",
-        "Open Sans",
+        "Inconsolata",
+        "Inter",
         "Lato",
         "Montserrat",
-        "Source Sans Pro",
-        "Raleway",
+        "Nabla",
+        "Noto Sans",
+        "Nunito Sans",
+        "Nunito",
+        "Open Sans",
         "Poppins",
+        "Raleway",
+        "Roboto",
+        "Source Sans Pro",
         "Ubuntu"
     ]
 }

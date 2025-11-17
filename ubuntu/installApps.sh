@@ -1,14 +1,16 @@
 #!/bin/bash
 # Ubuntu wrapper for shared application installation logic
+# Reads from ubuntu.json configuration file
 
 set -e
 
 scriptDir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-appsConfigPath="${scriptDir}/../configs/ubuntuApps.json"
-jqInstallHint="${yellow}  sudo apt-get install -y jq${nc}"
 
 # shellcheck source=../common/colors.sh
 source "$scriptDir/../common/colors.sh"
+
+appsConfigPath="${scriptDir}/../configs/ubuntu.json"
+jqInstallHint="${yellow}  sudo apt-get install -y jq${nc}"
 
 installApps_checkPrimary()
 {
@@ -48,4 +50,6 @@ source "$scriptDir/../common/installApps.sh"
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     installApps "$@"
+fi
+
 fi

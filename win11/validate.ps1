@@ -170,17 +170,17 @@ Write-Host "Validating JSON files..." -ForegroundColor Yellow
 Write-Host ""
 
 # Apps configs
-if (validateJsonFile (Join-Path $configsPath "win11Apps.json") "win11Apps.json")
+if (validateJsonFile (Join-Path $configsPath "win11.json") "win11.json")
 {
-    validateAppsJson (Join-Path $configsPath "win11Apps.json") "win11"
+    validateAppsJson (Join-Path $configsPath "win11.json") "win11"
 }
-if (validateJsonFile (Join-Path $configsPath "macosApps.json") "macosApps.json")
+if (validateJsonFile (Join-Path $configsPath "macos.json") "macos.json")
 {
-    validateAppsJson (Join-Path $configsPath "macosApps.json") "macos"
+    validateAppsJson (Join-Path $configsPath "macos.json") "macos"
 }
-if (validateJsonFile (Join-Path $configsPath "ubuntuApps.json") "ubuntuApps.json")
+if (validateJsonFile (Join-Path $configsPath "ubuntu.json") "ubuntu.json")
 {
-    validateAppsJson (Join-Path $configsPath "ubuntuApps.json") "ubuntu"
+    validateAppsJson (Join-Path $configsPath "ubuntu.json") "ubuntu"
 }
 
 # Other configs

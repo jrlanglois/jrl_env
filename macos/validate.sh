@@ -122,12 +122,12 @@ echo -e "${yellow}Validating JSON files...${nc}"
 echo ""
 
 # Apps configs
-if validateJsonFile "$configsPath/macosApps.json" "macosApps.json"; then
-    validateAppsJson "$configsPath/macosApps.json" "macos"
+if validateJsonFile "$configsPath/macos.json" "macos.json"; then
+    validateAppsJson "$configsPath/macos.json" "macos"
 fi
 
-if validateJsonFile "$configsPath/ubuntuApps.json" "ubuntuApps.json"; then
-    validateAppsJson "$configsPath/ubuntuApps.json" "ubuntu"
+if validateJsonFile "$configsPath/ubuntu.json" "ubuntu.json"; then
+    validateAppsJson "$configsPath/ubuntu.json" "ubuntu"
 fi
 
 # Other configs

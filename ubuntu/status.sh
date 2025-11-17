@@ -51,14 +51,14 @@ fi
 echo ""
 
 # Check installed apps
-if [ -f "$configsPath/ubuntuApps.json" ]; then
+if [ -f "$configsPath/ubuntu.json" ]; then
     echo -e "${yellow}Installed Applications:${nc}"
     if command -v jq >/dev/null 2>&1; then
         installed=0
         notInstalled=0
 
         # Check apt packages
-        aptApps=$(jq -r '.apt[]?' "$configsPath/ubuntuApps.json" 2>/dev/null || echo "")
+        aptApps=$(jq -r '.apt[]?' "$configsPath/ubuntu.json" 2>/dev/null || echo "")
         while IFS= read -r app; do
             if [ -n "$app" ]; then
                 if dpkg -l | grep -q "^ii  $app "; then

@@ -192,7 +192,7 @@ fi
 if [ "$runApps" = true ]; then
     if [ "$dryRun" = true ]; then
         logInfo "=== Step 3: Installing applications (DRY RUN) ==="
-        logInfo "Would install/update apps from ubuntuApps.json"
+        logInfo "Would install/update apps from ubuntu.json"
     else
         logInfo "=== Step 3: Installing applications ==="
         if ! installOrUpdateApps; then

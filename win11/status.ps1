@@ -50,12 +50,12 @@ else
 Write-Host ""
 
 # Check installed apps
-if (Test-Path (Join-Path $configsPath "win11Apps.json"))
+if (Test-Path (Join-Path $configsPath "win11.json"))
 {
     Write-Host "Installed Applications:" -ForegroundColor Yellow
     try
     {
-        $apps = Get-Content (Join-Path $configsPath "win11Apps.json") -Raw | ConvertFrom-Json
+        $apps = Get-Content (Join-Path $configsPath "win11.json") -Raw | ConvertFrom-Json
         $installed = 0
         $notInstalled = 0
 

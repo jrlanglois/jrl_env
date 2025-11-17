@@ -17,9 +17,9 @@ This repository is designed for configuring my own development machines. The scr
 ```text
 jrl_env/
 ├── configs/          # JSON configuration files
-│   ├── win11Apps.json
-│   ├── macosApps.json
-│   ├── ubuntuApps.json
+│   ├── win11.json
+│   ├── macos.json
+│   ├── ubuntu.json
 │   ├── fonts.json
 │   ├── repositories.json
 │   ├── gitConfig.json
@@ -36,6 +36,7 @@ jrl_env/
 Clone the repository and run the setup script for your platform:
 
 **Windows 11:**
+
 ```powershell
 git clone https://github.com/jrlanglois/jrl_env.git
 cd jrl_env
@@ -43,6 +44,7 @@ cd jrl_env
 ```
 
 **macOS:**
+
 ```bash
 git clone https://github.com/jrlanglois/jrl_env.git
 cd jrl_env
@@ -50,6 +52,7 @@ cd jrl_env
 ```
 
 **Ubuntu:**
+
 ```bash
 git clone https://github.com/jrlanglois/jrl_env.git
 cd jrl_env
@@ -63,12 +66,14 @@ The setup script will run all configuration and installation tasks automatically
 After making changes and pushing to the repository, update other machines:
 
 **Windows 11:**
+
 ```powershell
 cd jrl_env
 .\win11\update.ps1
 ```
 
 **macOS / Ubuntu:**
+
 ```bash
 cd jrl_env
 ./macos/update.sh
@@ -116,6 +121,11 @@ These conventions apply to all PowerShell (`.ps1`) and Bash (`.sh`) scripts in t
 - **Windows**: PowerShell 5.1+, winget (Windows Package Manager)
 - **macOS**: Homebrew, zsh
 - **Ubuntu**: apt, snap, zsh, jq
+
+## License
+
+ISC License. See LICENSE.md for details.
+
 
 ## License
 

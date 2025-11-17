@@ -1,6 +1,6 @@
 #!/bin/bash
 # Script to install applications on macOS using Homebrew
-# Reads from macosApps.json configuration file
+# Reads from macos.json configuration file
 
 set -e
 
@@ -9,21 +9,9 @@ scriptDir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # shellcheck source=../common/colors.sh
 source "$scriptDir/../common/colors.sh"
-configPath="${scriptDir}/../configs/macosApps.json"
 
-# Function to check if a command exists
-commandExists()
-{
-    command -v "$1" >/dev/null 2>&1
-}
-
-# Get script directory
-scriptDir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-appsConfigPath="${scriptDir}/../configs/macosApps.json"
+appsConfigPath="${scriptDir}/../configs/macos.json"
 jqInstallHint="${yellow}  brew install jq${nc}"
-
-# shellcheck source=../common/colors.sh
-source "$scriptDir/../common/colors.sh"
 
 installApps_checkPrimary()
 {

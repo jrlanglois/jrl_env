@@ -61,14 +61,14 @@ fi
 echo ""
 
 # Check installed apps
-if [ -f "$configsPath/macosApps.json" ]; then
+if [ -f "$configsPath/macos.json" ]; then
     echo -e "${yellow}Installed Applications:${nc}"
     if command -v jq >/dev/null 2>&1 && command -v brew >/dev/null 2>&1; then
         installed=0
         notInstalled=0
 
         # Check brew packages
-        brewApps=$(jq -r '.brew[]?' "$configsPath/macosApps.json" 2>/dev/null || echo "")
+        brewApps=$(jq -r '.brew[]?' "$configsPath/macos.json" 2>/dev/null || echo "")
         while IFS= read -r app; do
             if [ -n "$app" ]; then
                 if brew list "$app" &>/dev/null 2>&1; then

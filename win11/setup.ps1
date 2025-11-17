@@ -218,7 +218,7 @@ if ($runApps)
     if ($dryRun)
     {
         logInfo "=== Step 4: Installing applications (DRY RUN) ==="
-        logInfo "Would install/update apps from win11Apps.json"
+        logInfo "Would install/update apps from win11.json"
     }
     else
     {

@@ -62,20 +62,20 @@ function installOrUpdateApps
     updated to the latest version (winget apps only; Store apps are installed only).
 
     .PARAMETER configPath
-    Path to the JSON configuration file. Defaults to "win11Apps.json" in the same directory as the script.
+    Path to the JSON configuration file. Defaults to "win11.json" in the same directory as the script.
 
     .OUTPUTS
     Boolean. Returns $true if all operations completed (some may have failed), $false if critical error occurred.
 
     .EXAMPLE
-        installOrUpdateApps -configPath "C:\path\to\win11Apps.json"
+        installOrUpdateApps -configPath "C:\path\to\win11.json"
 
     .EXAMPLE
     installOrUpdateApps
     #>
     param(
         [Parameter(Mandatory=$false)]
-        [string]$configPath = (Join-Path (Join-Path $PSScriptRoot "..\configs") "win11Apps.json")
+        [string]$configPath = (Join-Path (Join-Path $PSScriptRoot "..\configs") "win11.json")
     )
 
     # Check if winget is installed, prompt user to install if not available
