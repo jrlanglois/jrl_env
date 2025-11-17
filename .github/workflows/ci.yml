@@ -35,18 +35,25 @@ jobs:
         run: python -m compileall helpers
 
   formatting:
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
       - name: Ensure helper scripts are executable
+        if: runner.os != 'Windows'
         run: chmod +x helpers/*.sh helpers/*.py
 
       - name: Run formatting pipeline
+        shell: bash
         run: ./helpers/formatRepo.sh
 
       - name: Fail if formatting changes files
+        shell: bash
         run: |
           if ! git diff --quiet
           then
