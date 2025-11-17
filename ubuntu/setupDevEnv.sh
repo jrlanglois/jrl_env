@@ -5,11 +5,11 @@
 set -e
 
 # Colours for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-CYAN='\033[0;36m'
-NC='\033[0m' # No Colour
+red='\033[0;31m'
+green='\033[0;32m'
+yellow='\033[1;33m'
+cyan='\033[0;36m'
+nc='\033[0m' # No Colour
 
 # Function to check if a command exists
 commandExists() {
@@ -34,55 +34,55 @@ isOhMyZshInstalled() {
 
 # Function to install zsh
 installZsh() {
-    echo -e "${CYAN}Installing zsh...${NC}"
+    echo -e "${cyan}Installing zsh...${nc}"
     
     if isZshInstalled; then
-        echo -e "${GREEN}✓ zsh is already installed${NC}"
+        echo -e "${green}✓ zsh is already installed${nc}"
         zsh --version
         return 0
     fi
     
-    echo -e "${YELLOW}Installing zsh via apt...${NC}"
+    echo -e "${yellow}Installing zsh via apt...${nc}"
     sudo apt-get update
     if sudo apt-get install -y zsh; then
         if isZshInstalled; then
-            echo -e "${GREEN}✓ zsh installed successfully${NC}"
+            echo -e "${green}✓ zsh installed successfully${nc}"
             return 0
         else
-            echo -e "${RED}✗ Failed to install zsh${NC}"
+            echo -e "${red}✗ Failed to install zsh${nc}"
             return 1
         fi
     else
-        echo -e "${RED}✗ Failed to install zsh${NC}"
+        echo -e "${red}✗ Failed to install zsh${nc}"
         return 1
     fi
 }
 
 # Function to install Oh My Zsh
 installOhMyZsh() {
-    echo -e "${CYAN}Installing Oh My Zsh...${NC}"
+    echo -e "${cyan}Installing Oh My Zsh...${nc}"
     
     if isOhMyZshInstalled; then
-        echo -e "${GREEN}✓ Oh My Zsh is already installed${NC}"
+        echo -e "${green}✓ Oh My Zsh is already installed${nc}"
         return 0
     fi
     
-    echo -e "${YELLOW}Installing Oh My Zsh...${NC}"
+    echo -e "${yellow}Installing Oh My Zsh...${nc}"
     if sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended; then
-        echo -e "${GREEN}✓ Oh My Zsh installed successfully${NC}"
+        echo -e "${green}✓ Oh My Zsh installed successfully${nc}"
         return 0
     else
-        echo -e "${RED}✗ Failed to install Oh My Zsh${NC}"
+        echo -e "${red}✗ Failed to install Oh My Zsh${nc}"
         return 1
     fi
 }
 
 # Function to set zsh as default shell
 setZshAsDefault() {
-    echo -e "${CYAN}Setting zsh as default shell...${NC}"
+    echo -e "${cyan}Setting zsh as default shell...${nc}"
     
     if ! isZshInstalled; then
-        echo -e "${RED}✗ zsh is not installed. Please install it first.${NC}"
+        echo -e "${red}✗ zsh is not installed. Please install it first.${nc}"
         return 1
     fi
     
@@ -90,32 +90,32 @@ setZshAsDefault() {
     CURRENT_SHELL=$(echo $SHELL)
     
     if [ "$CURRENT_SHELL" = "$ZSH_PATH" ]; then
-        echo -e "${GREEN}✓ zsh is already the default shell${NC}"
+        echo -e "${green}✓ zsh is already the default shell${nc}"
         return 0
     fi
     
-    echo -e "${YELLOW}Changing default shell to zsh...${NC}"
-    echo -e "${YELLOW}You may be prompted for your password.${NC}"
+    echo -e "${yellow}Changing default shell to zsh...${nc}"
+    echo -e "${yellow}You may be prompted for your password.${nc}"
     
     if sudo chsh -s "$ZSH_PATH" "$USER"; then
-        echo -e "${GREEN}✓ Default shell changed to zsh${NC}"
-        echo -e "${YELLOW}Note: This change will take effect after you log out and log back in.${NC}"
+        echo -e "${green}✓ Default shell changed to zsh${nc}"
+        echo -e "${yellow}Note: This change will take effect after you log out and log back in.${nc}"
         return 0
     else
-        echo -e "${RED}✗ Failed to change default shell${NC}"
+        echo -e "${red}✗ Failed to change default shell${nc}"
         return 1
     fi
 }
 
 # Main setup function
 setupDevEnv() {
-    echo -e "${CYAN}=== Ubuntu Development Environment Setup ===${NC}"
+    echo -e "${cyan}=== Ubuntu Development Environment Setup ===${nc}"
     echo ""
     
     local success=true
     
     # Update package list
-    echo -e "${CYAN}Updating package list...${NC}"
+    echo -e "${cyan}Updating package list...${nc}"
     sudo apt-get update
     echo ""
     
@@ -137,12 +137,12 @@ setupDevEnv() {
     fi
     echo ""
     
-    echo -e "${CYAN}=== Setup Complete ===${NC}"
+    echo -e "${cyan}=== Setup Complete ===${nc}"
     if [ "$success" = true ]; then
-        echo -e "${GREEN}Development environment setup completed successfully!${NC}"
-        echo -e "${YELLOW}Note: You may need to restart your terminal for all changes to take effect.${NC}"
+        echo -e "${green}Development environment setup completed successfully!${nc}"
+        echo -e "${yellow}Note: You may need to restart your terminal for all changes to take effect.${nc}"
     else
-        echo -e "${YELLOW}Some steps may not have completed successfully. Please review the output above.${NC}"
+        echo -e "${yellow}Some steps may not have completed successfully. Please review the output above.${nc}"
     fi
     
     return 0

@@ -5,11 +5,11 @@
 set -e
 
 # Colours for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-CYAN='\033[0;36m'
-NC='\033[0m' # No Colour
+red='\033[0;31m'
+green='\033[0;32m'
+yellow='\033[1;33m'
+cyan='\033[0;36m'
+nc='\033[0m' # No Colour
 
 # Function to check if Git is installed
 isGitInstalled() {
@@ -21,19 +21,19 @@ isGitInstalled() {
 
 # Function to configure Git user information
 configureGitUser() {
-    echo -e "${CYAN}Configuring Git user information...${NC}"
+    echo -e "${cyan}Configuring Git user information...${nc}"
     
     # Check current user name
     local currentName=$(git config --global user.name 2>/dev/null || echo "")
     local currentEmail=$(git config --global user.email 2>/dev/null || echo "")
     
     if [ -n "$currentName" ] && [ -n "$currentEmail" ]; then
-        echo -e "${YELLOW}Current Git user configuration:${NC}"
+        echo -e "${yellow}Current Git user configuration:${nc}"
         echo -e "  Name:  $currentName"
         echo -e "  Email: $currentEmail"
         read -p "Keep existing configuration? (Y/N): " keepExisting
         if [[ "$keepExisting" =~ ^[Yy]$ ]]; then
-            echo -e "${GREEN}✓ Keeping existing configuration${NC}"
+            echo -e "${green}✓ Keeping existing configuration${nc}"
             return 0
         fi
     fi
@@ -58,49 +58,49 @@ configureGitUser() {
     git config --global user.name "$userName"
     git config --global user.email "$userEmail"
     
-    echo -e "${GREEN}✓ Git user information configured successfully${NC}"
+    echo -e "${green}✓ Git user information configured successfully${nc}"
     return 0
 }
 
 # Function to configure Git defaults
 configureGitDefaults() {
-    echo -e "${CYAN}Configuring Git default settings...${NC}"
+    echo -e "${cyan}Configuring Git default settings...${nc}"
     
-    echo -e "${YELLOW}Setting default branch name to 'main'...${NC}"
+    echo -e "${yellow}Setting default branch name to 'main'...${nc}"
     git config --global init.defaultBranch main
-    echo -e "  ${GREEN}✓ Default branch set to 'main'${NC}"
+    echo -e "  ${green}✓ Default branch set to 'main'${nc}"
     
-    echo -e "${YELLOW}Enabling colour output...${NC}"
+    echo -e "${yellow}Enabling colour output...${nc}"
     git config --global color.ui auto
-    echo -e "  ${GREEN}✓ Colour output enabled${NC}"
+    echo -e "  ${green}✓ Colour output enabled${nc}"
     
-    echo -e "${YELLOW}Configuring pull behaviour...${NC}"
+    echo -e "${yellow}Configuring pull behaviour...${nc}"
     git config --global pull.rebase false
-    echo -e "  ${GREEN}✓ Pull behaviour set to merge (default)${NC}"
+    echo -e "  ${green}✓ Pull behaviour set to merge (default)${nc}"
     
-    echo -e "${YELLOW}Configuring push behaviour...${NC}"
+    echo -e "${yellow}Configuring push behaviour...${nc}"
     git config --global push.default simple
-    echo -e "  ${GREEN}✓ Push default set to 'simple'${NC}"
+    echo -e "  ${green}✓ Push default set to 'simple'${nc}"
     
-    echo -e "${YELLOW}Configuring push auto-setup...${NC}"
+    echo -e "${yellow}Configuring push auto-setup...${nc}"
     git config --global push.autoSetupRemote true
-    echo -e "  ${GREEN}✓ Push auto-setup remote enabled${NC}"
+    echo -e "  ${green}✓ Push auto-setup remote enabled${nc}"
     
-    echo -e "${YELLOW}Configuring rebase behaviour...${NC}"
+    echo -e "${yellow}Configuring rebase behaviour...${nc}"
     git config --global rebase.autoStash true
-    echo -e "  ${GREEN}✓ Rebase auto-stash enabled${NC}"
+    echo -e "  ${green}✓ Rebase auto-stash enabled${nc}"
     
-    echo -e "${YELLOW}Configuring merge strategy...${NC}"
+    echo -e "${yellow}Configuring merge strategy...${nc}"
     git config --global merge.ff false
-    echo -e "  ${GREEN}✓ Merge fast-forward disabled (creates merge commits)${NC}"
+    echo -e "  ${green}✓ Merge fast-forward disabled (creates merge commits)${nc}"
     
-    echo -e "${GREEN}Git default settings configured successfully!${NC}"
+    echo -e "${green}Git default settings configured successfully!${nc}"
     return 0
 }
 
 # Function to configure Git aliases
 configureGitAliases() {
-    echo -e "${CYAN}Configuring Git aliases...${NC}"
+    echo -e "${cyan}Configuring Git aliases...${nc}"
     
     # Common aliases
     local aliases=(
@@ -125,26 +125,26 @@ configureGitAliases() {
         
         # Check if alias already exists
         if git config --global --get "alias.$aliasName" >/dev/null 2>&1; then
-            echo -e "  ${YELLOW}⚠ Alias '$aliasName' already exists, skipping...${NC}"
+            echo -e "  ${yellow}⚠ Alias '$aliasName' already exists, skipping...${nc}"
         else
             git config --global "alias.$aliasName" "$aliasCommand"
-            echo -e "  ${GREEN}✓ Added alias: $aliasName${NC}"
+            echo -e "  ${green}✓ Added alias: $aliasName${nc}"
         fi
     done
     
-    echo -e "${GREEN}Git aliases configured successfully!${NC}"
+    echo -e "${green}Git aliases configured successfully!${nc}"
     return 0
 }
 
 # Main configuration function
 configureGit() {
-    echo -e "${CYAN}=== Git Configuration ===${NC}"
+    echo -e "${cyan}=== Git Configuration ===${nc}"
     echo ""
     
     if ! isGitInstalled; then
-        echo -e "${RED}✗ Git is not installed.${NC}"
-        echo -e "${YELLOW}Please install Git first.${NC}"
-        echo -e "${YELLOW}  sudo apt-get install -y git${NC}"
+        echo -e "${red}✗ Git is not installed.${nc}"
+        echo -e "${yellow}Please install Git first.${nc}"
+        echo -e "${yellow}  sudo apt-get install -y git${nc}"
         return 1
     fi
     
@@ -165,11 +165,11 @@ configureGit() {
     fi
     echo ""
     
-    echo -e "${CYAN}=== Configuration Complete ===${NC}"
+    echo -e "${cyan}=== Configuration Complete ===${nc}"
     if [ "$success" = true ]; then
-        echo -e "${GREEN}Git has been configured successfully!${NC}"
+        echo -e "${green}Git has been configured successfully!${nc}"
     else
-        echo -e "${YELLOW}Some settings may not have been configured. Please review the output above.${NC}"
+        echo -e "${yellow}Some settings may not have been configured. Please review the output above.${nc}"
     fi
     
     return 0

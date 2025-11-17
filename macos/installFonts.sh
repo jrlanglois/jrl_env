@@ -5,16 +5,16 @@
 set -e
 
 # Colours for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-CYAN='\033[0;36m'
-NC='\033[0m' # No Colour
+red='\033[0;31m'
+green='\033[0;32m'
+yellow='\033[1;33m'
+cyan='\033[0;36m'
+nc='\033[0m' # No Colour
 
 # Get script directory
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-CONFIG_PATH="${SCRIPT_DIR}/../configs/fonts.json"
-FONTS_DIR="$HOME/Library/Fonts"
+scriptDir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+configPath="${scriptDir}/../configs/fonts.json"
+fontsDir="$HOME/Library/Fonts"
 
 # Function to check if a command exists
 commandExists() {
@@ -24,7 +24,7 @@ commandExists() {
 # Function to check if a font is installed
 isFontInstalled() {
     local fontName=$1
-    if [ -f "${FONTS_DIR}/${fontName}" ] || find "$FONTS_DIR" -iname "*${fontName}*" -type f | grep -q .; then
+    if [ -f "${FONTS_DIR}/${fontName}" ] || find "$fontsDir" -iname "*${fontName}*" -type f | grep -q .; then
         return 0
     fi
     return 1
@@ -51,17 +51,17 @@ downloadGoogleFont() {
     local fileName="${normalisedName}-${normalisedVariant}.ttf"
     local filePath="${outputPath}/${fileName}"
     
-    echo -e "  ${YELLOW}Downloading $fontName $variant...${NC}"
+    echo -e "  ${yellow}Downloading $fontName $variant...${nc}"
     
     for url in "${urlPatterns[@]}"; do
         if curl -fsSL -o "$filePath" "$url" 2>/dev/null && [ -f "$filePath" ] && [ -s "$filePath" ]; then
-            echo -e "    ${GREEN}✓ Downloaded successfully${NC}"
+            echo -e "    ${green}✓ Downloaded successfully${nc}"
             echo "$filePath"
             return 0
         fi
     done
     
-    echo -e "    ${RED}✗ Download failed: font variant not found${NC}"
+    echo -e "    ${red}✗ Download failed: font variant not found${nc}"
     return 1
 }
 
@@ -70,7 +70,7 @@ installFont() {
     local fontPath=$1
     
     if [ ! -f "$fontPath" ]; then
-        echo -e "    ${RED}✗ Font file not found: $fontPath${NC}"
+        echo -e "    ${red}✗ Font file not found: $fontPath${nc}"
         return 1
     fi
     
@@ -79,45 +79,45 @@ installFont() {
     
     # Check if already installed
     if [ -f "$destinationPath" ]; then
-        echo -e "    ${YELLOW}⚠ Font already installed, skipping...${NC}"
+        echo -e "    ${yellow}⚠ Font already installed, skipping...${nc}"
         return 0
     fi
     
     # Create Fonts directory if it doesn't exist
-    mkdir -p "$FONTS_DIR"
+    mkdir -p "$fontsDir"
     
     # Copy font to Fonts directory
     if cp "$fontPath" "$destinationPath"; then
-        echo -e "    ${GREEN}✓ Installed successfully${NC}"
+        echo -e "    ${green}✓ Installed successfully${nc}"
         return 0
     else
-        echo -e "    ${RED}✗ Installation failed${NC}"
+        echo -e "    ${red}✗ Installation failed${nc}"
         return 1
     fi
 }
 
 # Function to install Google Fonts
 installGoogleFonts() {
-    local configPath=${1:-$CONFIG_PATH}
+    local configPath=${1:-$configPath}
     local variants=("${@:2}")
     
     if [ ${#variants[@]} -eq 0 ]; then
         variants=("Regular" "Bold" "Italic" "BoldItalic")
     fi
     
-    echo -e "${CYAN}=== Google Fonts Installation ===${NC}"
+    echo -e "${cyan}=== Google Fonts Installation ===${nc}"
     echo ""
     
     # Check if config file exists
     if [ ! -f "$configPath" ]; then
-        echo -e "${RED}✗ Configuration file not found: $configPath${NC}"
+        echo -e "${red}✗ Configuration file not found: $configPath${nc}"
         return 1
     fi
     
     # Check if jq is available
     if ! commandExists jq; then
-        echo -e "${RED}✗ jq is required to parse JSON. Please install it first.${NC}"
-        echo -e "${YELLOW}  brew install jq${NC}"
+        echo -e "${red}✗ jq is required to parse JSON. Please install it first.${nc}"
+        echo -e "${yellow}  brew install jq${nc}"
         return 1
     fi
     
@@ -125,12 +125,12 @@ installGoogleFonts() {
     local fontNames=$(jq -r '.googleFonts[]?' "$configPath" 2>/dev/null)
     
     if [ -z "$fontNames" ]; then
-        echo -e "${YELLOW}No fonts specified in configuration file.${NC}"
+        echo -e "${yellow}No fonts specified in configuration file.${nc}"
         return 0
     fi
     
     local fontCount=$(echo "$fontNames" | grep -c . || echo "0")
-    echo -e "${CYAN}Found $fontCount font(s) in configuration file.${NC}"
+    echo -e "${cyan}Found $fontCount font(s) in configuration file.${nc}"
     echo ""
     
     # Create temporary directory
@@ -145,7 +145,7 @@ installGoogleFonts() {
             continue
         fi
         
-        echo -e "${YELLOW}Processing: $fontName${NC}"
+        echo -e "${yellow}Processing: $fontName${nc}"
         
         local fontInstalled=false
         
@@ -161,7 +161,7 @@ installGoogleFonts() {
                     ((failedCount++))
                 fi
             else
-                echo -e "    ${YELLOW}⚠ Variant '$variant' not available, skipping...${NC}"
+                echo -e "    ${yellow}⚠ Variant '$variant' not available, skipping...${nc}"
             fi
         done
         
@@ -173,23 +173,23 @@ installGoogleFonts() {
     done <<< "$fontNames"
     
     # Clean up
-    echo -e "${CYAN}Cleaning up downloaded files...${NC}"
+    echo -e "${cyan}Cleaning up downloaded files...${nc}"
     rm -rf "$tempDir"
-    echo -e "${GREEN}✓ Temporary files removed successfully${NC}"
+    echo -e "${green}✓ Temporary files removed successfully${nc}"
     echo ""
     
-    echo -e "${CYAN}Summary:${NC}"
-    echo -e "  ${GREEN}Installed: $installedCount font file(s)${NC}"
+    echo -e "${cyan}Summary:${nc}"
+    echo -e "  ${green}Installed: $installedCount font file(s)${nc}"
     if [ $skippedCount -gt 0 ]; then
-        echo -e "  ${YELLOW}Skipped: $skippedCount font(s)${NC}"
+        echo -e "  ${yellow}Skipped: $skippedCount font(s)${nc}"
     fi
     if [ $failedCount -gt 0 ]; then
-        echo -e "  ${RED}Failed: $failedCount font file(s)${NC}"
+        echo -e "  ${red}Failed: $failedCount font file(s)${nc}"
     fi
     
     echo ""
-    echo -e "${GREEN}Font installation complete!${NC}"
-    echo -e "${YELLOW}Note: You may need to restart applications for new fonts to appear.${NC}"
+    echo -e "${green}Font installation complete!${nc}"
+    echo -e "${yellow}Note: You may need to restart applications for new fonts to appear.${nc}"
     
     return 0
 }

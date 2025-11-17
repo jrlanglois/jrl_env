@@ -5,15 +5,15 @@
 set -e
 
 # Colours for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-CYAN='\033[0;36m'
-NC='\033[0m' # No Colour
+red='\033[0;31m'
+green='\033[0;32m'
+yellow='\033[1;33m'
+cyan='\033[0;36m'
+nc='\033[0m' # No Colour
 
 # Get script directory
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-CONFIG_PATH="${SCRIPT_DIR}/../configs/cursorSettings.json"
+scriptDir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+configPath="${scriptDir}/../configs/cursorSettings.json"
 
 # Function to get Cursor settings path
 getCursorSettingsPath() {
@@ -22,14 +22,14 @@ getCursorSettingsPath() {
 
 # Function to configure Cursor settings
 configureCursor() {
-    local configPath=${1:-$CONFIG_PATH}
+    local configPath=${1:-$configPath}
     
-    echo -e "${CYAN}=== Cursor Configuration ===${NC}"
+    echo -e "${cyan}=== Cursor Configuration ===${nc}"
     echo ""
     
     # Check if config file exists
     if [ ! -f "$configPath" ]; then
-        echo -e "${RED}✗ Configuration file not found: $configPath${NC}"
+        echo -e "${red}✗ Configuration file not found: $configPath${nc}"
         return 1
     fi
     
@@ -39,41 +39,41 @@ configureCursor() {
     
     # Create Cursor User directory if it doesn't exist
     if [ ! -d "$cursorUserDir" ]; then
-        echo -e "${YELLOW}Creating Cursor User directory...${NC}"
+        echo -e "${yellow}Creating Cursor User directory...${nc}"
         mkdir -p "$cursorUserDir"
     fi
     
     # Check if jq is available
     if ! command -v jq >/dev/null 2>&1; then
-        echo -e "${RED}✗ jq is required to merge JSON. Please install it first.${NC}"
-        echo -e "${YELLOW}  brew install jq${NC}"
+        echo -e "${red}✗ jq is required to merge JSON. Please install it first.${nc}"
+        echo -e "${yellow}  brew install jq${nc}"
         return 1
     fi
     
     # Read existing settings if they exist
     local existingSettings="{}"
     if [ -f "$cursorSettingsPath" ]; then
-        echo -e "${YELLOW}Reading existing Cursor settings...${NC}"
+        echo -e "${yellow}Reading existing Cursor settings...${nc}"
         if ! existingSettings=$(cat "$cursorSettingsPath" 2>/dev/null | jq . 2>/dev/null); then
-            echo -e "${YELLOW}⚠ Failed to parse existing settings.json. Creating new file.${NC}"
+            echo -e "${yellow}⚠ Failed to parse existing settings.json. Creating new file.${nc}"
             existingSettings="{}"
         fi
     fi
     
     # Merge config settings with existing settings (config takes precedence)
-    echo -e "${YELLOW}Merging settings...${NC}"
+    echo -e "${yellow}Merging settings...${nc}"
     local mergedSettings
     if ! mergedSettings=$(jq -s '.[0] * .[1]' <(echo "$existingSettings") "$configPath"); then
-        echo -e "${RED}✗ Failed to merge settings${NC}"
+        echo -e "${red}✗ Failed to merge settings${nc}"
         return 1
     fi
     
     # Write to Cursor settings file
-    echo -e "${YELLOW}Writing settings to: $cursorSettingsPath${NC}"
+    echo -e "${yellow}Writing settings to: $cursorSettingsPath${nc}"
     echo "$mergedSettings" | jq . > "$cursorSettingsPath"
     
-    echo -e "${GREEN}✓ Cursor settings configured successfully!${NC}"
-    echo -e "${YELLOW}Note: You may need to restart Cursor for all changes to take effect.${NC}"
+    echo -e "${green}✓ Cursor settings configured successfully!${nc}"
+    echo -e "${yellow}Note: You may need to restart Cursor for all changes to take effect.${nc}"
     
     return 0
 }

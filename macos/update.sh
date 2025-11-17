@@ -5,37 +5,37 @@
 set -e
 
 # Colours for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-CYAN='\033[0;36m'
-NC='\033[0m' # No Colour
+red='\033[0;31m'
+green='\033[0;32m'
+yellow='\033[1;33m'
+cyan='\033[0;36m'
+nc='\033[0m' # No Colour
 
-echo -e "${CYAN}=== jrl_env Update ===${NC}"
+echo -e "${cyan}=== jrl_env Update ===${nc}"
 echo ""
 
 # Get repository root (parent of macos directory)
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
-MACOS_DIR="$SCRIPT_DIR"
+scriptDir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+repoRoot="$(cd "$scriptDir/.." && pwd)"
+macosDir="$scriptDir"
 
 # Check if we're in a git repository
-if [ ! -d "$REPO_ROOT/.git" ]; then
-    echo -e "${RED}✗ Not a git repository. Please clone the repository first.${NC}"
+if [ ! -d "$repoRoot/.git" ]; then
+    echo -e "${red}✗ Not a git repository. Please clone the repository first.${nc}"
     exit 1
 fi
 
-echo -e "${YELLOW}Pulling latest changes...${NC}"
-cd "$REPO_ROOT"
+echo -e "${yellow}Pulling latest changes...${nc}"
+cd "$repoRoot"
 
 if ! git pull; then
-    echo -e "${YELLOW}⚠ Git pull had issues. Continuing anyway...${NC}"
+    echo -e "${yellow}⚠ Git pull had issues. Continuing anyway...${nc}"
 fi
 
 echo ""
-echo -e "${YELLOW}Re-running setup...${NC}"
+echo -e "${yellow}Re-running setup...${nc}"
 echo ""
 
 # Run the setup script
-bash "$MACOS_DIR/setup.sh"
+bash "$macosDir/setup.sh"
 

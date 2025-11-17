@@ -5,15 +5,15 @@
 set -e
 
 # Colours for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-CYAN='\033[0;36m'
-NC='\033[0m' # No Colour
+red='\033[0;31m'
+green='\033[0;32m'
+yellow='\033[1;33m'
+cyan='\033[0;36m'
+nc='\033[0m' # No Colour
 
 # Get script directory
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-CONFIG_PATH="${SCRIPT_DIR}/../configs/repositories.json"
+scriptDir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+configPath="${scriptDir}/../configs/repositories.json"
 
 # Function to check if Git is installed
 isGitInstalled() {
@@ -72,7 +72,7 @@ cloneRepository() {
     local repoName=$(getRepositoryName "$repoUrl")
     
     if [ -z "$owner" ] || [ -z "$repoName" ]; then
-        echo -e "  ${RED}✗ Failed to extract owner or repository name from URL${NC}"
+        echo -e "  ${red}✗ Failed to extract owner or repository name from URL${nc}"
         return 1
     fi
     
@@ -84,53 +84,53 @@ cloneRepository() {
     
     # Check if already cloned
     if isRepositoryCloned "$repoUrl" "$workPath"; then
-        echo -e "  ${YELLOW}⚠ Repository already exists: $owner/$repoName${NC}"
+        echo -e "  ${yellow}⚠ Repository already exists: $owner/$repoName${nc}"
         echo -e "    Skipping clone. Use 'git pull' to update if needed."
         return 0
     fi
     
-    echo -e "  ${YELLOW}Cloning $owner/$repoName...${NC}"
+    echo -e "  ${yellow}Cloning $owner/$repoName...${nc}"
     
     # Clone with recursive flag to include submodules
     if git clone --recursive "$repoUrl" "$repoPath" 2>/dev/null; then
-        echo -e "    ${GREEN}✓ Cloned successfully${NC}"
+        echo -e "    ${green}✓ Cloned successfully${nc}"
         
         # Check if submodules were initialised
         if [ -f "${repoPath}/.gitmodules" ]; then
-            echo -e "    ${GREEN}✓ Submodules initialised${NC}"
+            echo -e "    ${green}✓ Submodules initialised${nc}"
         fi
         
         return 0
     else
-        echo -e "    ${RED}✗ Clone failed${NC}"
+        echo -e "    ${red}✗ Clone failed${nc}"
         return 1
     fi
 }
 
 # Function to clone all repositories
 cloneRepositories() {
-    local configPath=${1:-$CONFIG_PATH}
+    local configPath=${1:-$configPath}
     
-    echo -e "${CYAN}=== Repository Cloning ===${NC}"
+    echo -e "${cyan}=== Repository Cloning ===${nc}"
     echo ""
     
     # Check if Git is installed
     if ! isGitInstalled; then
-        echo -e "${RED}✗ Git is not installed.${NC}"
-        echo -e "${YELLOW}Please install Git first.${NC}"
+        echo -e "${red}✗ Git is not installed.${nc}"
+        echo -e "${yellow}Please install Git first.${nc}"
         return 1
     fi
     
     # Check if config file exists
     if [ ! -f "$configPath" ]; then
-        echo -e "${RED}✗ Configuration file not found: $configPath${NC}"
+        echo -e "${red}✗ Configuration file not found: $configPath${nc}"
         return 1
     fi
     
     # Check if jq is available
     if ! command -v jq >/dev/null 2>&1; then
-        echo -e "${RED}✗ jq is required to parse JSON. Please install it first.${NC}"
-        echo -e "${YELLOW}  sudo apt-get install -y jq${NC}"
+        echo -e "${red}✗ jq is required to parse JSON. Please install it first.${nc}"
+        echo -e "${yellow}  sudo apt-get install -y jq${nc}"
         return 1
     fi
     
@@ -142,25 +142,25 @@ cloneRepositories() {
     workPath=$(echo "$workPath" | sed "s|\$HOME|$HOME|g" | sed "s|\$USER|$USER|g")
     
     if [ -z "$workPath" ] || [ "$workPath" = "null" ]; then
-        echo -e "${RED}✗ JSON file must contain a 'workPathUnix' property.${NC}"
+        echo -e "${red}✗ JSON file must contain a 'workPathUnix' property.${nc}"
         return 1
     fi
     
     if [ -z "$repositories" ]; then
-        echo -e "${YELLOW}No repositories specified in configuration file.${NC}"
+        echo -e "${yellow}No repositories specified in configuration file.${nc}"
         return 0
     fi
     
     local repoCount=$(echo "$repositories" | grep -c . || echo "0")
-    echo -e "${CYAN}Work directory: $workPath${NC}"
-    echo -e "${CYAN}Found $repoCount repository/repositories in configuration file.${NC}"
+    echo -e "${cyan}Work directory: $workPath${nc}"
+    echo -e "${cyan}Found $repoCount repository/repositories in configuration file.${nc}"
     echo ""
     
     # Create work directory if it doesn't exist
     if [ ! -d "$workPath" ]; then
-        echo -e "${YELLOW}Creating work directory: $workPath${NC}"
+        echo -e "${yellow}Creating work directory: $workPath${nc}"
         mkdir -p "$workPath"
-        echo -e "${GREEN}✓ Work directory created${NC}"
+        echo -e "${green}✓ Work directory created${nc}"
         echo ""
     fi
     
@@ -174,7 +174,7 @@ cloneRepositories() {
             continue
         fi
         
-        echo -e "${YELLOW}Processing: $repoUrl${NC}"
+        echo -e "${yellow}Processing: $repoUrl${nc}"
         
         if cloneRepository "$repoUrl" "$workPath"; then
             ((clonedCount++))
@@ -187,17 +187,17 @@ cloneRepositories() {
         echo ""
     done <<< "$repositories"
     
-    echo -e "${CYAN}Summary:${NC}"
-    echo -e "  ${GREEN}Cloned: $clonedCount repository/repositories${NC}"
+    echo -e "${cyan}Summary:${nc}"
+    echo -e "  ${green}Cloned: $clonedCount repository/repositories${nc}"
     if [ $skippedCount -gt 0 ]; then
-        echo -e "  ${YELLOW}Skipped: $skippedCount repository/repositories (already exist)${NC}"
+        echo -e "  ${yellow}Skipped: $skippedCount repository/repositories (already exist)${nc}"
     fi
     if [ $failedCount -gt 0 ]; then
-        echo -e "  ${RED}Failed: $failedCount repository/repositories${NC}"
+        echo -e "  ${red}Failed: $failedCount repository/repositories${nc}"
     fi
     
     echo ""
-    echo -e "${GREEN}Repository cloning complete!${NC}"
+    echo -e "${green}Repository cloning complete!${nc}"
     
     return 0
 }
