@@ -33,27 +33,63 @@ downloadGoogleFont()
     normalisedName=$(echo "$fontName" | tr '[:upper:]' '[:lower:]' | tr ' ' '-')
     normalisedVariant=$(echo "$variant" | tr -d ' ')
 
-    local urlPatterns=(
-        "https://github.com/google/fonts/raw/main/ofl/${normalisedName}/${normalisedName}-${normalisedVariant}.ttf"
-        "https://github.com/google/fonts/raw/main/ofl/${normalisedName}/${normalisedVariant}.ttf"
-        "https://github.com/google/fonts/raw/main/apache/${normalisedName}/${normalisedName}-${normalisedVariant}.ttf"
-        "https://github.com/google/fonts/raw/main/apache/${normalisedName}/${normalisedVariant}.ttf"
-    )
+    # Map common variant names to possible file name patterns
+    local variantPatterns=()
+    case "$variant" in
+        "Regular")
+            variantPatterns=("Regular" "400" "normal" "regular")
+            ;;
+        "Bold")
+            variantPatterns=("Bold" "700" "bold" "Bold" "BoldRegular")
+            ;;
+        "Italic")
+            variantPatterns=("Italic" "400italic" "italic" "Italic" "RegularItalic")
+            ;;
+        "BoldItalic")
+            variantPatterns=("BoldItalic" "700italic" "bolditalic" "BoldItalic" "Bold-Italic")
+            ;;
+        *)
+            variantPatterns=("$normalisedVariant" "$variant")
+            ;;
+    esac
 
-    fileName="${normalisedName}-${normalisedVariant}.ttf"
-    filePath="${outputPath}/${fileName}"
+    # Try different URL patterns and variant names
+    for variantPattern in "${variantPatterns[@]}"; do
+        local testVariant
+        testVariant=$(echo "$variantPattern" | tr -d ' ')
+        
+        local urlPatterns=(
+            "https://github.com/google/fonts/raw/main/ofl/${normalisedName}/${normalisedName}-${testVariant}.ttf"
+            "https://github.com/google/fonts/raw/main/ofl/${normalisedName}/${testVariant}.ttf"
+            "https://github.com/google/fonts/raw/main/apache/${normalisedName}/${normalisedName}-${testVariant}.ttf"
+            "https://github.com/google/fonts/raw/main/apache/${normalisedName}/${testVariant}.ttf"
+            "https://github.com/google/fonts/raw/main/ufl/${normalisedName}/${normalisedName}-${testVariant}.ttf"
+            "https://github.com/google/fonts/raw/main/ufl/${normalisedName}/${testVariant}.ttf"
+        )
 
-    echo -e "  ${yellow}Downloading $fontName $variant...${nc}"
+        for url in "${urlPatterns[@]}"; do
+            # Use a temporary file name to avoid conflicts
+            local tempFileName
+            tempFileName="${normalisedName}-${testVariant}.ttf"
+            filePath="${outputPath}/${tempFileName}"
 
-    for url in "${urlPatterns[@]}"; do
-        if curl -fsSL -o "$filePath" "$url" 2>/dev/null && [ -f "$filePath" ] && [ -s "$filePath" ]; then
-            echo -e "    ${green}✓ Downloaded successfully${nc}"
-            echo "$filePath"
-            return 0
-        fi
+            # Try to download the file
+            if curl -fsSL -o "$filePath" "$url" 2>/dev/null && [ -f "$filePath" ] && [ -s "$filePath" ]; then
+                # Verify it's actually a font file (check file size and basic structure)
+                local fileSize
+                fileSize=$(stat -f%z "$filePath" 2>/dev/null || stat -c%s "$filePath" 2>/dev/null || echo "0")
+                if [ "$fileSize" -gt 1000 ]; then
+                    # Basic check: TTF/OTF files should have reasonable size
+                    echo -e "    ${green}✓ Downloaded $variant successfully${nc}"
+                    echo "$filePath"
+                    return 0
+                else
+                    rm -f "$filePath"
+                fi
+            fi
+        done
     done
 
-    echo -e "    ${red}✗ Download failed: font variant not found${nc}"
     return 1
 }
 
@@ -146,22 +182,26 @@ installGoogleFonts()
 
         echo -e "${yellow}Processing: $fontName${nc}"
         local fontInstalled=false
+        local anyVariantFound=false
 
         for variant in "${variants[@]}"; do
             local fontPath
-            fontPath=$(downloadGoogleFont "$fontName" "$variant" "$tempDir")
+            fontPath=$(downloadGoogleFont "$fontName" "$variant" "$tempDir" 2>/dev/null)
 
             if [ -n "$fontPath" ] && [ -f "$fontPath" ]; then
+                anyVariantFound=true
                 if installFont "$fontPath"; then
                     ((installedCount++))
                     fontInstalled=true
                 else
                     ((failedCount++))
                 fi
-            else
-                echo -e "    ${yellow}⚠ Variant '$variant' not available, skipping...${nc}"
             fi
         done
+
+        if [ "$fontInstalled" = false ] && [ "$anyVariantFound" = false ]; then
+            echo -e "  ${yellow}⚠ No variants available for this font${nc}"
+        fi
 
         if [ "$fontInstalled" = false ]; then
             ((skippedCount++))

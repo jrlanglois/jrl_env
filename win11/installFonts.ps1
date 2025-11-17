@@ -56,60 +56,82 @@ function downloadGoogleFont
     {
         # Normalise font name for URL (lowercase, spaces to hyphens)
         $normalisedName = $fontName.ToLower() -replace '\s+', '-'
-        $normalisedVariant = $variant -replace '\s+', ''
 
-        # Try different URL formats (some fonts use different naming)
-        $urlPatterns = @(
-            "https://github.com/google/fonts/raw/main/ofl/$normalisedName/$normalisedName-$normalisedVariant.ttf",
-            "https://github.com/google/fonts/raw/main/ofl/$normalisedName/$normalisedVariant.ttf",
-            "https://github.com/google/fonts/raw/main/apache/$normalisedName/$normalisedName-$normalisedVariant.ttf",
-            "https://github.com/google/fonts/raw/main/apache/$normalisedName/$normalisedVariant.ttf"
-        )
-
-        $fileName = "$normalisedName-$normalisedVariant.ttf"
-        $filePath = Join-Path $outputPath $fileName
-
-        Write-Host "  Downloading $fontName $variant..." -ForegroundColor Yellow
-
-        $downloadSuccess = $false
-        foreach ($fontUrl in $urlPatterns)
+        # Map common variant names to possible file name patterns
+        $variantPatterns = @()
+        switch ($variant)
         {
-            try
-            {
-                # Try to download with HEAD request first to check if file exists
-                $response = Invoke-WebRequest -Uri $fontUrl -Method Head -UseBasicParsing -ErrorAction Stop
+            "Regular" {
+                $variantPatterns = @("Regular", "400", "normal", "regular")
+            }
+            "Bold" {
+                $variantPatterns = @("Bold", "700", "bold", "BoldRegular")
+            }
+            "Italic" {
+                $variantPatterns = @("Italic", "400italic", "italic", "RegularItalic")
+            }
+            "BoldItalic" {
+                $variantPatterns = @("BoldItalic", "700italic", "bolditalic", "Bold-Italic")
+            }
+            default {
+                $variantPatterns = @($variant -replace '\s+', '', $variant)
+            }
+        }
 
-                if ($response.StatusCode -eq 200)
+        # Try different variant patterns and URL formats
+        foreach ($variantPattern in $variantPatterns)
+        {
+            $testVariant = $variantPattern -replace '\s+', ''
+            
+            # Try different repository paths and naming conventions
+            $urlPatterns = @(
+                "https://github.com/google/fonts/raw/main/ofl/$normalisedName/$normalisedName-$testVariant.ttf",
+                "https://github.com/google/fonts/raw/main/ofl/$normalisedName/$testVariant.ttf",
+                "https://github.com/google/fonts/raw/main/apache/$normalisedName/$normalisedName-$testVariant.ttf",
+                "https://github.com/google/fonts/raw/main/apache/$normalisedName/$testVariant.ttf",
+                "https://github.com/google/fonts/raw/main/ufl/$normalisedName/$normalisedName-$testVariant.ttf",
+                "https://github.com/google/fonts/raw/main/ufl/$normalisedName/$testVariant.ttf"
+            )
+
+            $fileName = "$normalisedName-$testVariant.ttf"
+            $filePath = Join-Path $outputPath $fileName
+
+            foreach ($fontUrl in $urlPatterns)
+            {
+                try
                 {
-                    # File exists, download it
+                    # Try to download the file
                     Invoke-WebRequest -Uri $fontUrl -OutFile $filePath -UseBasicParsing -ErrorAction Stop
 
-                    if (Test-Path $filePath -and (Get-Item $filePath).Length -gt 0)
+                    # Verify it's actually a font file (check file size)
+                    if (Test-Path $filePath -and (Get-Item $filePath).Length -gt 1000)
                     {
-                        Write-Host "    ✓ Downloaded successfully" -ForegroundColor Green
-                        $downloadSuccess = $true
-                        break
+                        Write-Host "    ✓ Downloaded $variant successfully" -ForegroundColor Green
+                        return $filePath
+                    }
+                    else
+                    {
+                        # File too small, probably not a valid font
+                        Remove-Item $filePath -Force -ErrorAction SilentlyContinue
                     }
                 }
-            }
-            catch
-            {
-                # Try next URL pattern
-                continue
+                catch
+                {
+                    # Try next URL pattern
+                    if (Test-Path $filePath)
+                    {
+                        Remove-Item $filePath -Force -ErrorAction SilentlyContinue
+                    }
+                    continue
+                }
             }
         }
 
-        if (-not $downloadSuccess)
-        {
-            Write-Host "    ✗ Download failed: font variant not found" -ForegroundColor Red
-            return $null
-        }
-
-        return $filePath
+        # No variant found
+        return $null
     }
     catch
     {
-        Write-Host "    ✗ Download failed: $_" -ForegroundColor Red
         return $null
     }
 }
@@ -272,6 +294,7 @@ function installGoogleFonts
         Write-Host "Processing: $fontName" -ForegroundColor Yellow
 
         $fontInstalled = $false
+        $anyVariantFound = $false
 
         # Try to download and install each variant
         foreach ($variant in $variants)
@@ -280,6 +303,7 @@ function installGoogleFonts
 
             if ($fontPath -and (Test-Path $fontPath))
             {
+                $anyVariantFound = $true
                 $downloadedFiles += $fontPath
 
                 if (installFont -fontPath $fontPath)
@@ -292,11 +316,11 @@ function installGoogleFonts
                     $failedCount++
                 }
             }
-            else
-            {
-                # Some fonts may not have all variants, which is fine
-                Write-Host "    ⚠ Variant '$variant' not available, skipping..." -ForegroundColor Yellow
-            }
+        }
+
+        if (-not $fontInstalled -and -not $anyVariantFound)
+        {
+            Write-Host "  ⚠ No variants available for this font" -ForegroundColor Yellow
         }
 
         if (-not $fontInstalled)
