@@ -13,6 +13,7 @@
         "EpicGames.EpicGamesLauncher",
         "Git.Git",
         "Git.GitLFS",
+        "TortoiseGit.TortoiseGit",
         "Google.AndroidStudio",
         "Google.Chrome",
         "Kitware.CMake",
