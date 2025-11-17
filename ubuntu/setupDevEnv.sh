@@ -138,6 +138,30 @@ PY
     fi
 }
 
+# Function to ensure essential tools are installed
+ensureEssentialTools()
+{
+    echo -e "${cyan}Ensuring essential tools are installed...${nc}"
+
+    local needsUpdate=false
+
+    if ! commandExists curl; then
+        echo -e "${yellow}Installing curl...${nc}"
+        sudo apt-get install -y curl
+        needsUpdate=true
+    fi
+
+    if ! commandExists wget; then
+        echo -e "${yellow}Installing wget...${nc}"
+        sudo apt-get install -y wget
+        needsUpdate=true
+    fi
+
+    if [ "$needsUpdate" = false ]; then
+        echo -e "${green}✓ Essential tools already installed${nc}"
+    fi
+}
+
 # Function to set zsh as default shell
 setZshAsDefault()
 {
@@ -184,65 +208,10 @@ setupDevEnv()
     sudo apt-get update
     echo ""
 
-    # Install zsh
-    if ! installZsh; then
+    # Ensure essential tools (curl, wget) are installed
+    if ! ensureEssentialTools; then
         success=false
     fi
-    echo ""
-
-    # Install Oh My Zsh
-    if ! installOhMyZsh; then
-        success=false
-    fi
-    echo ""
-
-    if ! configureOhMyZshTheme "$(getOhMyZshTheme)"; then
-        success=false
-    fi
-    echo ""
-
-    # Set zsh as default
-    if ! setZshAsDefault; then
-        success=false
-    fi
-    echo ""
-
-    echo -e "${cyan}=== Setup Complete ===${nc}"
-    if [ "$success" = true ]; then
-        echo -e "${green}Development environment setup completed successfully!${nc}"
-        echo -e "${yellow}Note: You may need to restart your terminal for all changes to take effect.${nc}"
-    else
-        echo -e "${yellow}Some steps may not have completed successfully. Please review the output above.${nc}"
-    fi
-
-    return 0
-}
-
-# Run setup if script is executed directly
-if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    setupDevEnv
-fi
-
-        echo -e "${green}✓ Default shell changed to zsh${nc}"
-        echo -e "${yellow}Note: This change will take effect after you log out and log back in.${nc}"
-        return 0
-    else
-        echo -e "${red}✗ Failed to change default shell${nc}"
-        return 1
-    fi
-}
-
-# Main setup function
-setupDevEnv()
-{
-    echo -e "${cyan}=== Ubuntu Development Environment Setup ===${nc}"
-    echo ""
-
-    local success=true
-
-    # Update package list
-    echo -e "${cyan}Updating package list...${nc}"
-    sudo apt-get update
     echo ""
 
     # Install zsh

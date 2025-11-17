@@ -7,7 +7,14 @@ set -e
 scriptDir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # shellcheck source=../common/colours.sh
-source "$scriptDir/../common/colours.sh"
+if [ -z "${red:-}" ]; then
+    if [ -f "$scriptDir/../common/colours.sh" ]; then
+        source "$scriptDir/../common/colours.sh"
+    else
+        echo "Error: colours.sh not found at $scriptDir/../common/colours.sh" >&2
+        exit 1
+    fi
+fi
 
 appsConfigPath="${scriptDir}/../configs/ubuntu.json"
 jqInstallHint="${yellow}  sudo apt-get install -y jq${nc}"
