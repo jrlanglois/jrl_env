@@ -14,6 +14,17 @@ param(
 
 $ErrorActionPreference = "Stop"
 
+# Get script directory
+$scriptRoot = $PSScriptRoot
+
+# Load logging module
+. "$scriptRoot\logging.ps1"
+
+# Initialize logging
+$logFile = initLogging
+logInfo "=== jrl_env Setup for Windows 11 ==="
+logInfo "Log file: $logFile"
+
 # Parse flags
 $runFonts = -not $skipFonts -and -not $appsOnly
 $runApps = -not $skipApps -or $appsOnly
@@ -22,35 +33,36 @@ $runCursor = -not $skipCursor -and -not $appsOnly
 $runRepos = -not $skipRepos -and -not $appsOnly
 
 if ($dryRun) {
-    Write-Host "=== DRY RUN MODE ===" -ForegroundColor Yellow
-    Write-Host "No changes will be made. This is a preview." -ForegroundColor Yellow
-    Write-Host ""
+    logWarn "=== DRY RUN MODE ==="
+    logWarn "No changes will be made. This is a preview."
 }
 
-Write-Host "=== jrl_env Setup for Windows 11 ===" -ForegroundColor Cyan
-Write-Host ""
+logInfo "=== jrl_env Setup for Windows 11 ==="
 
 # Validate configs first
-Write-Host "Validating configuration files..." -ForegroundColor Yellow
-& "$PSScriptRoot\validate.ps1"
+logInfo "Validating configuration files..."
+& "$scriptRoot\validate.ps1"
 if ($LASTEXITCODE -ne 0) {
-    Write-Warning "Validation had issues. Continuing anyway..."
+    logWarn "Validation had issues. Continuing anyway..."
 }
-Write-Host ""
 
 # Backup function
 function backupConfigs {
-    if ($noBackup -or $dryRun) { return }
+    if ($noBackup -or $dryRun) { 
+        logInfo "Backup skipped (noBackup or dryRun flag set)"
+        return 
+    }
     
     $backupDir = Join-Path $env:TEMP "jrl_env_backup_$(Get-Date -Format 'yyyyMMdd_HHmmss')"
     New-Item -ItemType Directory -Path $backupDir -Force | Out-Null
     
-    Write-Host "Creating backup..." -ForegroundColor Yellow
+    logInfo "Creating backup..."
     
     # Backup Git config
     $gitConfigPath = "$env:USERPROFILE\.gitconfig"
     if (Test-Path $gitConfigPath) {
         Copy-Item $gitConfigPath "$backupDir\gitconfig" -ErrorAction SilentlyContinue
+        logSuccess "Backed up Git config"
     }
     
     # Backup Cursor settings
@@ -59,36 +71,42 @@ function backupConfigs {
         $cursorBackupDir = Join-Path $backupDir "Cursor"
         New-Item -ItemType Directory -Path $cursorBackupDir -Force | Out-Null
         Copy-Item $cursorSettingsPath "$cursorBackupDir\settings.json" -ErrorAction SilentlyContinue
+        logSuccess "Backed up Cursor settings"
     }
     
-    Write-Host "  ✓ Backup created: $backupDir" -ForegroundColor Green
-    Write-Host ""
+    logSuccess "Backup created: $backupDir"
 }
 
 # Check dependencies
 function testDependencies {
+    logInfo "Checking dependencies..."
     $missing = @()
     
     if (-not (isGitInstalled)) {
         $missing += "Git"
+        logWarn "Git is not installed"
+    } else {
+        logSuccess "Git is installed"
     }
     
     if (-not (isWingetInstalled)) {
         $missing += "winget (Windows Package Manager)"
+        logWarn "winget is not installed"
+    } else {
+        logSuccess "winget is installed"
     }
     
     if ($missing.Count -gt 0) {
-        Write-Host "Missing dependencies:" -ForegroundColor Yellow
-        foreach ($dep in $missing) {
-            Write-Host "  ✗ $dep" -ForegroundColor Red
-        }
-        Write-Host ""
+        logWarn "Missing dependencies: $($missing -join ', ')"
         Write-Host "Some features may not work. Continue anyway? (Y/N): " -NoNewline -ForegroundColor Yellow
         $response = Read-Host
         if ($response -notmatch '^[Yy]') {
+            logError "Setup cancelled by user due to missing dependencies"
             exit 1
         }
-        Write-Host ""
+        logInfo "User chose to continue despite missing dependencies"
+    } else {
+        logSuccess "All dependencies are installed"
     }
 }
 
@@ -96,9 +114,6 @@ if (-not $dryRun) {
     testDependencies
     backupConfigs
 }
-
-# Get script directory
-$scriptRoot = $PSScriptRoot
 
 # Dot-source all required scripts
 . "$scriptRoot\updateStore.ps1"
@@ -109,97 +124,96 @@ $scriptRoot = $PSScriptRoot
 . "$scriptRoot\configureCursor.ps1"
 . "$scriptRoot\cloneRepositories.ps1"
 
-Write-Host "Starting complete environment setup..." -ForegroundColor Cyan
-Write-Host ""
+logInfo "Starting complete environment setup..."
 
 # 1. Update Windows Store and winget
-Write-Host "=== Step 1: Updating package managers ===" -ForegroundColor Yellow
-Write-Host ""
+logInfo "=== Step 1: Updating package managers ==="
 if (-not (updateWinget)) {
-    Write-Warning "winget update failed, continuing..."
+    logWarn "winget update failed, continuing..."
+} else {
+    logSuccess "winget updated successfully"
 }
-Write-Host ""
 if (-not (updateMicrosoftStore)) {
-    Write-Warning "Microsoft Store update failed, continuing..."
+    logWarn "Microsoft Store update failed, continuing..."
+} else {
+    logSuccess "Microsoft Store updated successfully"
 }
-Write-Host ""
 
 # 2. Configure Windows 11 settings
-Write-Host "=== Step 2: Configuring Windows 11 ===" -ForegroundColor Yellow
-Write-Host ""
+logInfo "=== Step 2: Configuring Windows 11 ==="
 if (-not (configureWin11)) {
-    Write-Warning "Windows 11 configuration had some issues, continuing..."
+    logWarn "Windows 11 configuration had some issues, continuing..."
+} else {
+    logSuccess "Windows 11 configuration completed"
 }
-Write-Host ""
 
 # 3. Install fonts
 if ($runFonts) {
     if ($dryRun) {
-        Write-Host "=== Step 3: Installing fonts (DRY RUN) ===" -ForegroundColor Yellow
-        Write-Host "Would install fonts from fonts.json" -ForegroundColor Gray
+        logInfo "=== Step 3: Installing fonts (DRY RUN) ==="
+        logInfo "Would install fonts from fonts.json"
     } else {
-        Write-Host "=== Step 3: Installing fonts ===" -ForegroundColor Yellow
-        Write-Host ""
+        logInfo "=== Step 3: Installing fonts ==="
         if (-not (installGoogleFonts)) {
-            Write-Warning "Font installation had some issues, continuing..."
+            logWarn "Font installation had some issues, continuing..."
+        } else {
+            logSuccess "Font installation completed"
         }
     }
-    Write-Host ""
 }
 
 # 4. Install applications
 if ($runApps) {
     if ($dryRun) {
-        Write-Host "=== Step 4: Installing applications (DRY RUN) ===" -ForegroundColor Yellow
-        Write-Host "Would install/update apps from win11Apps.json" -ForegroundColor Gray
+        logInfo "=== Step 4: Installing applications (DRY RUN) ==="
+        logInfo "Would install/update apps from win11Apps.json"
     } else {
-        Write-Host "=== Step 4: Installing applications ===" -ForegroundColor Yellow
-        Write-Host ""
+        logInfo "=== Step 4: Installing applications ==="
         if (-not (installOrUpdateApps)) {
-            Write-Warning "Application installation had some issues, continuing..."
+            logWarn "Application installation had some issues, continuing..."
+        } else {
+            logSuccess "Application installation completed"
         }
     }
-    Write-Host ""
 }
 
 # 5. Configure Git
 if ($runGit) {
     if ($dryRun) {
-        Write-Host "=== Step 5: Configuring Git (DRY RUN) ===" -ForegroundColor Yellow
-        Write-Host "Would configure Git from gitConfig.json" -ForegroundColor Gray
+        logInfo "=== Step 5: Configuring Git (DRY RUN) ==="
+        logInfo "Would configure Git from gitConfig.json"
     } else {
-        Write-Host "=== Step 5: Configuring Git ===" -ForegroundColor Yellow
-        Write-Host ""
+        logInfo "=== Step 5: Configuring Git ==="
         if (-not (configureGit)) {
-            Write-Warning "Git configuration had some issues, continuing..."
+            logWarn "Git configuration had some issues, continuing..."
+        } else {
+            logSuccess "Git configuration completed"
         }
     }
-    Write-Host ""
 }
 
 # 6. Configure Cursor
 if ($runCursor) {
     if ($dryRun) {
-        Write-Host "=== Step 6: Configuring Cursor (DRY RUN) ===" -ForegroundColor Yellow
-        Write-Host "Would configure Cursor from cursorSettings.json" -ForegroundColor Gray
+        logInfo "=== Step 6: Configuring Cursor (DRY RUN) ==="
+        logInfo "Would configure Cursor from cursorSettings.json"
     } else {
-        Write-Host "=== Step 6: Configuring Cursor ===" -ForegroundColor Yellow
-        Write-Host ""
+        logInfo "=== Step 6: Configuring Cursor ==="
         if (-not (configureCursor)) {
-            Write-Warning "Cursor configuration had some issues, continuing..."
+            logWarn "Cursor configuration had some issues, continuing..."
+        } else {
+            logSuccess "Cursor configuration completed"
         }
     }
-    Write-Host ""
 }
 
 # 7. Clone repositories (only on first run)
 if ($runRepos) {
     if ($dryRun) {
-        Write-Host "=== Step 7: Cloning repositories (DRY RUN) ===" -ForegroundColor Yellow
-        Write-Host "Would clone repositories from repositories.json" -ForegroundColor Gray
+        logInfo "=== Step 7: Cloning repositories (DRY RUN) ==="
+        logInfo "Would clone repositories from repositories.json"
     } else {
-        Write-Host "=== Step 7: Cloning repositories ===" -ForegroundColor Yellow
-        Write-Host ""
+        logInfo "=== Step 7: Cloning repositories ==="
         
         # Check if repositories have already been cloned
         $configPath = Join-Path (Join-Path $scriptRoot "..\configs") "repositories.json"
@@ -212,35 +226,33 @@ if ($runRepos) {
                 if (Test-Path $workPath) {
                     $ownerDirs = Get-ChildItem -Path $workPath -Directory -ErrorAction SilentlyContinue
                     if ($ownerDirs.Count -gt 0) {
-                        Write-Host "Repositories directory already exists with content. Skipping repository cloning." -ForegroundColor Yellow
-                        Write-Host "To clone repositories manually, run: .\win11\cloneRepositories.ps1" -ForegroundColor Gray
-                        Write-Host ""
+                        logWarn "Repositories directory already exists with content. Skipping repository cloning."
+                        logInfo "To clone repositories manually, run: .\win11\cloneRepositories.ps1"
                     } else {
                         if (-not (cloneRepositories)) {
-                            Write-Warning "Repository cloning had some issues, continuing..."
+                            logWarn "Repository cloning had some issues, continuing..."
+                        } else {
+                            logSuccess "Repository cloning completed"
                         }
-                        Write-Host ""
                     }
                 } else {
                     if (-not (cloneRepositories)) {
-                        Write-Warning "Repository cloning had some issues, continuing..."
+                        logWarn "Repository cloning had some issues, continuing..."
+                    } else {
+                        logSuccess "Repository cloning completed"
                     }
-                    Write-Host ""
                 }
             } catch {
-                Write-Warning "Could not check repository status, skipping clone step."
-                Write-Host ""
+                logWarn "Could not check repository status, skipping clone step."
             }
         } else {
-            Write-Host "Repository config not found, skipping clone step." -ForegroundColor Yellow
-            Write-Host ""
+            logWarn "Repository config not found, skipping clone step."
         }
     }
-    Write-Host ""
 }
 
-Write-Host "=== Setup Complete ===" -ForegroundColor Green
-Write-Host ""
-Write-Host "All setup tasks have been executed." -ForegroundColor Green
+logSuccess "=== Setup Complete ==="
+logInfo "All setup tasks have been executed."
+logInfo "Log file saved to: $logFile"
 Write-Host "Please review any warnings above and restart your computer if prompted." -ForegroundColor Yellow
 

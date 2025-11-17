@@ -46,36 +46,41 @@ runRepos=false && [ "$skipRepos" = false ] && [ "$appsOnly" = false ] && runRepo
 # Get script directory
 scriptDir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-if [ "$dryRun" = true ]; then
-    echo -e "${yellow}=== DRY RUN MODE ===${nc}"
-    echo -e "${yellow}No changes will be made. This is a preview.${nc}"
-    echo ""
-fi
+# Load logging functions
+source "$scriptDir/logging.sh"
 
-echo -e "${cyan}=== jrl_env Setup for macOS ===${nc}"
-echo ""
+# Initialize logging
+logFile=$(initLogging)
+logInfo "=== jrl_env Setup for macOS ==="
+logInfo "Log file: $logFile"
+
+if [ "$dryRun" = true ]; then
+    logWarn "=== DRY RUN MODE ==="
+    logWarn "No changes will be made. This is a preview."
+fi
 
 # Validate configs first
-echo -e "${yellow}Validating configuration files...${nc}"
+logInfo "Validating configuration files..."
 if ! bash "$scriptDir/validate.sh"; then
-    echo -e "${yellow}⚠ Validation had issues. Continuing anyway...${nc}"
+    logWarn "Validation had issues. Continuing anyway..."
 fi
-echo ""
 
 # Backup function
 backupConfigs() {
     if [ "$noBackup" = true ] || [ "$dryRun" = true ]; then
+        logInfo "Backup skipped (noBackup or dryRun flag set)"
         return 0
     fi
     
     backupDir="$TMPDIR/jrl_env_backup_$(date +%Y%m%d_%H%M%S)"
     mkdir -p "$backupDir"
     
-    echo -e "${yellow}Creating backup...${nc}"
+    logInfo "Creating backup..."
     
     # Backup Git config
     if [ -f "$HOME/.gitconfig" ]; then
         cp "$HOME/.gitconfig" "$backupDir/gitconfig" 2>/dev/null || true
+        logSuccess "Backed up Git config"
     fi
     
     # Backup Cursor settings
@@ -83,35 +88,41 @@ backupConfigs() {
     if [ -f "$cursorSettings" ]; then
         mkdir -p "$backupDir/Cursor"
         cp "$cursorSettings" "$backupDir/Cursor/settings.json" 2>/dev/null || true
+        logSuccess "Backed up Cursor settings"
     fi
     
-    echo -e "  ${green}✓ Backup created: $backupDir${nc}"
-    echo ""
+    logSuccess "Backup created: $backupDir"
 }
 
 # Check dependencies
 checkDependencies() {
+    logInfo "Checking dependencies..."
     missing=()
     
     if ! command -v git >/dev/null 2>&1; then
         missing+=("Git")
+        logWarn "Git is not installed"
+    else
+        logSuccess "Git is installed"
     fi
     
     if ! command -v brew >/dev/null 2>&1; then
         missing+=("Homebrew")
+        logWarn "Homebrew is not installed"
+    else
+        logSuccess "Homebrew is installed"
     fi
     
     if [ ${#missing[@]} -gt 0 ]; then
-        echo -e "${yellow}Missing dependencies:${nc}"
-        for dep in "${missing[@]}"; do
-            echo -e "  ${red}✗ $dep${nc}"
-        done
-        echo ""
+        logWarn "Missing dependencies: ${missing[*]}"
         read -p "Some features may not work. Continue anyway? (Y/N): " response
         if [[ ! "$response" =~ ^[Yy]$ ]]; then
+            logError "Setup cancelled by user due to missing dependencies"
             exit 1
         fi
-        echo ""
+        logInfo "User chose to continue despite missing dependencies"
+    else
+        logSuccess "All dependencies are installed"
     fi
 }
 
@@ -128,85 +139,83 @@ source "$scriptDir/configureGit.sh"
 source "$scriptDir/configureCursor.sh"
 source "$scriptDir/cloneRepositories.sh"
 
-echo -e "${cyan}Starting complete environment setup...${nc}"
-echo ""
+logInfo "Starting complete environment setup..."
 
 # 1. Setup development environment (zsh, Oh My Zsh, Homebrew)
-echo -e "${yellow}=== Step 1: Setting up development environment ===${nc}"
-echo ""
+logInfo "=== Step 1: Setting up development environment ==="
 if ! setupDevEnv; then
-    echo -e "${yellow}⚠ Development environment setup had some issues, continuing...${nc}"
+    logWarn "Development environment setup had some issues, continuing..."
+else
+    logSuccess "Development environment setup completed"
 fi
-echo ""
 
 # 2. Install fonts
 if [ "$runFonts" = true ]; then
     if [ "$dryRun" = true ]; then
-        echo -e "${yellow}=== Step 2: Installing fonts (DRY RUN) ===${nc}"
-        echo -e "Would install fonts from fonts.json"
+        logInfo "=== Step 2: Installing fonts (DRY RUN) ==="
+        logInfo "Would install fonts from fonts.json"
     else
-        echo -e "${yellow}=== Step 2: Installing fonts ===${nc}"
-        echo ""
+        logInfo "=== Step 2: Installing fonts ==="
         if ! installGoogleFonts; then
-            echo -e "${yellow}⚠ Font installation had some issues, continuing...${nc}"
+            logWarn "Font installation had some issues, continuing..."
+        else
+            logSuccess "Font installation completed"
         fi
     fi
-    echo ""
 fi
 
 # 3. Install applications
 if [ "$runApps" = true ]; then
     if [ "$dryRun" = true ]; then
-        echo -e "${yellow}=== Step 3: Installing applications (DRY RUN) ===${nc}"
-        echo -e "Would install/update apps from macosApps.json"
+        logInfo "=== Step 3: Installing applications (DRY RUN) ==="
+        logInfo "Would install/update apps from macosApps.json"
     else
-        echo -e "${yellow}=== Step 3: Installing applications ===${nc}"
-        echo ""
+        logInfo "=== Step 3: Installing applications ==="
         if ! installOrUpdateApps; then
-            echo -e "${yellow}⚠ Application installation had some issues, continuing...${nc}"
+            logWarn "Application installation had some issues, continuing..."
+        else
+            logSuccess "Application installation completed"
         fi
     fi
-    echo ""
 fi
 
 # 4. Configure Git
 if [ "$runGit" = true ]; then
     if [ "$dryRun" = true ]; then
-        echo -e "${yellow}=== Step 4: Configuring Git (DRY RUN) ===${nc}"
-        echo -e "Would configure Git from gitConfig.json"
+        logInfo "=== Step 4: Configuring Git (DRY RUN) ==="
+        logInfo "Would configure Git from gitConfig.json"
     else
-        echo -e "${yellow}=== Step 4: Configuring Git ===${nc}"
-        echo ""
+        logInfo "=== Step 4: Configuring Git ==="
         if ! configureGit; then
-            echo -e "${yellow}⚠ Git configuration had some issues, continuing...${nc}"
+            logWarn "Git configuration had some issues, continuing..."
+        else
+            logSuccess "Git configuration completed"
         fi
     fi
-    echo ""
 fi
 
 # 5. Configure Cursor
 if [ "$runCursor" = true ]; then
     if [ "$dryRun" = true ]; then
-        echo -e "${yellow}=== Step 5: Configuring Cursor (DRY RUN) ===${nc}"
-        echo -e "Would configure Cursor from cursorSettings.json"
+        logInfo "=== Step 5: Configuring Cursor (DRY RUN) ==="
+        logInfo "Would configure Cursor from cursorSettings.json"
     else
-        echo -e "${yellow}=== Step 5: Configuring Cursor ===${nc}"
-        echo ""
+        logInfo "=== Step 5: Configuring Cursor ==="
         if ! configureCursor; then
-            echo -e "${yellow}⚠ Cursor configuration had some issues, continuing...${nc}"
+            logWarn "Cursor configuration had some issues, continuing..."
+        else
+            logSuccess "Cursor configuration completed"
         fi
     fi
-    echo ""
 fi
 
 # 6. Clone repositories (only on first run)
 if [ "$runRepos" = true ]; then
     if [ "$dryRun" = true ]; then
-        echo -e "${yellow}=== Step 6: Cloning repositories (DRY RUN) ===${nc}"
-        echo -e "Would clone repositories from repositories.json"
+        logInfo "=== Step 6: Cloning repositories (DRY RUN) ==="
+        logInfo "Would clone repositories from repositories.json"
     else
-        echo -e "${yellow}=== Step 6: Cloning repositories ===${nc}"
-        echo ""
+        logInfo "=== Step 6: Cloning repositories ==="
         
         # Check if repositories have already been cloned
         configPath="$scriptDir/../configs/repositories.json"
@@ -220,35 +229,33 @@ if [ "$runRepos" = true ]; then
                 if [ -d "$workPath" ]; then
                     ownerDirs=$(find "$workPath" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | wc -l)
                     if [ "$ownerDirs" -gt 0 ]; then
-                        echo -e "${yellow}Repositories directory already exists with content. Skipping repository cloning.${nc}"
-                        echo -e "To clone repositories manually, run: ./macos/cloneRepositories.sh"
-                        echo ""
+                        logWarn "Repositories directory already exists with content. Skipping repository cloning."
+                        logInfo "To clone repositories manually, run: ./macos/cloneRepositories.sh"
                     else
                         if ! cloneRepositories; then
-                            echo -e "${yellow}⚠ Repository cloning had some issues, continuing...${nc}"
+                            logWarn "Repository cloning had some issues, continuing..."
+                        else
+                            logSuccess "Repository cloning completed"
                         fi
-                        echo ""
                     fi
                 else
                     if ! cloneRepositories; then
-                        echo -e "${yellow}⚠ Repository cloning had some issues, continuing...${nc}"
+                        logWarn "Repository cloning had some issues, continuing..."
+                    else
+                        logSuccess "Repository cloning completed"
                     fi
-                    echo ""
                 fi
             else
-                echo -e "${yellow}Could not determine work path, skipping clone step.${nc}"
-                echo ""
+                logWarn "Could not determine work path, skipping clone step."
             fi
         else
-            echo -e "${yellow}Repository config not found, skipping clone step.${nc}"
-            echo ""
+            logWarn "Repository config not found, skipping clone step."
         fi
     fi
-    echo ""
 fi
 
-echo -e "${green}=== Setup Complete ===${nc}"
-echo ""
-echo -e "${green}All setup tasks have been executed.${nc}"
+logSuccess "=== Setup Complete ==="
+logInfo "All setup tasks have been executed."
+logInfo "Log file saved to: $logFile"
 echo -e "${yellow}Please review any warnings above and restart your terminal if needed.${nc}"
 
