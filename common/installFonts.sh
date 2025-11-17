@@ -6,6 +6,7 @@
 # Source utilities and logging functions (utilities must be direct source)
 scriptDir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=../helpers/utilities.sh
+# shellcheck disable=SC1091 # Path is resolved at runtime
 source "$scriptDir/../helpers/utilities.sh"
 # shellcheck source=../helpers/logging.sh
 sourceIfExists "$scriptDir/../helpers/logging.sh"
@@ -29,7 +30,6 @@ downloadGoogleFont()
     local outputPath=${3:-$tempDirBase}
     local normalisedName
     local normalisedVariant
-    local fileName
     local filePath
 
     normalisedName=$(echo "$fontName" | tr '[:upper:]' '[:lower:]' | tr ' ' '-')
@@ -96,7 +96,7 @@ downloadGoogleFont()
     # This works for fonts like Bungee Spice that might not be in the GitHub repo structure
     if [ "$variant" = "Regular" ]; then
         local apiFontName
-        apiFontName=$(echo "$fontName" | sed 's/ /+/g')
+        apiFontName="${fontName// /+}"
         local cssUrl="https://fonts.googleapis.com/css2?family=${apiFontName}&display=swap"
         local cssContent
         cssContent=$(curl -fsSL "$cssUrl" 2>/dev/null)

@@ -10,6 +10,7 @@ repoRoot="$(cd "$scriptDir/.." && pwd)"
 macosDir="$scriptDir"
 
 # shellcheck source=../helpers/utilities.sh
+# shellcheck disable=SC1091 # Path is resolved at runtime
 sourceIfExists "$macosDir/../helpers/utilities.sh"
 # shellcheck source=../common/colours.sh
 sourceIfExists "$macosDir/../common/colours.sh"

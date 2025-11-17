@@ -1,5 +1,6 @@
 #!/bin/bash
 # Shared argument parsing logic for setup scripts
+# shellcheck disable=SC2034 # Variables are used by scripts that source this file
 
 # Parse setup script arguments
 # Sets global variables: skipFonts, skipApps, skipGit, skipCursor, skipRepos, skipSsh, appsOnly, dryRun, noBackup
@@ -45,31 +46,37 @@ determineRunFlags()
 {
     runFonts=false
     if [ "$skipFonts" = false ] && [ "$appsOnly" = false ]; then
+        # shellcheck disable=SC2034 # Used by scripts that source this file
         runFonts=true
     fi
 
     runApps=false
     if [ "$skipApps" = false ] || [ "$appsOnly" = true ]; then
+        # shellcheck disable=SC2034 # Used by scripts that source this file
         runApps=true
     fi
 
     runGit=false
     if [ "$skipGit" = false ] && [ "$appsOnly" = false ]; then
+        # shellcheck disable=SC2034 # Used by scripts that source this file
         runGit=true
     fi
 
     runCursor=false
     if [ "$skipCursor" = false ] && [ "$appsOnly" = false ]; then
+        # shellcheck disable=SC2034 # Used by scripts that source this file
         runCursor=true
     fi
 
     runRepos=false
     if [ "$skipRepos" = false ] && [ "$appsOnly" = false ]; then
+        # shellcheck disable=SC2034 # Used by scripts that source this file
         runRepos=true
     fi
 
     runSsh=false
     if [ "$skipSsh" = false ] && [ "$appsOnly" = false ]; then
+        # shellcheck disable=SC2034 # Used by scripts that source this file
         runSsh=true
     fi
 }

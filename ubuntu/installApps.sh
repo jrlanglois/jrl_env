@@ -1,12 +1,14 @@
 #!/bin/bash
 # Ubuntu wrapper for shared application installation logic
 # Reads from ubuntu.json configuration file
+# shellcheck disable=SC2034 # Variables are used by sourced common scripts
 
 set -e
 
 scriptDir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # shellcheck source=../helpers/utilities.sh
+# shellcheck disable=SC1091 # Path is resolved at runtime
 source "$scriptDir/../helpers/utilities.sh"
 # shellcheck source=../common/colours.sh
 sourceIfExists "$scriptDir/../common/colours.sh"

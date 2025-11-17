@@ -15,6 +15,7 @@ scriptDir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 osConfigPath="${scriptDir}/../configs/macos.json"
 
 # shellcheck source=../helpers/utilities.sh
+# shellcheck disable=SC1091 # Path is resolved at runtime
 source "$scriptDir/../helpers/utilities.sh"
 
 # Function to check if zsh is installed

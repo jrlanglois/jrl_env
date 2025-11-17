@@ -10,6 +10,7 @@ repoRoot="$(cd "$scriptDir/.." && pwd)"
 ubuntuDir="$scriptDir"
 
 # shellcheck source=../helpers/utilities.sh
+# shellcheck disable=SC1091 # Path is resolved at runtime
 sourceIfExists "$ubuntuDir/../helpers/utilities.sh"
 # shellcheck source=../common/colours.sh
 sourceIfExists "$ubuntuDir/../common/colours.sh"

@@ -1,5 +1,6 @@
 #!/bin/bash
 # Shared colour definitions for scripts
+# shellcheck disable=SC2034 # These variables are used by scripts that source this file
 
 red='\033[0;31m'
 green='\033[0;32m'

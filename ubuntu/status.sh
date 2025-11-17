@@ -7,6 +7,7 @@ scriptDir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 configsPath="$scriptDir/../configs"
 
 # shellcheck source=../helpers/utilities.sh
+# shellcheck disable=SC1091 # Path is resolved at runtime
 source "$scriptDir/../helpers/utilities.sh"
 # shellcheck source=../common/colours.sh
 sourceIfExists "$scriptDir/../common/colours.sh"
