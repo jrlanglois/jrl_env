@@ -104,7 +104,3 @@ function logDebug
     param([string]$message)
     writeLog -level "DEBUG" -message $message
 }
-
-# Export functions
-Export-ModuleMember -Function initLogging, getLogFile, writeLog, logInfo, logSuccess, logWarn, logError, logDebug
-

@@ -341,6 +341,3 @@ function installGoogleFonts
     
     return $true
 }
-
-# Export functions
-Export-ModuleMember -Function installGoogleFonts, isFontInstalled, downloadGoogleFont, installFont

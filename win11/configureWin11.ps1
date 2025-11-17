@@ -617,63 +617,144 @@ function configureWin11 {
     $success = $true
 
     # Configure regional settings
-    if (-not (configureRegionalSettings)) {
+    try
+    {
+        if (-not (configureRegionalSettings))
+        {
+            $success = $false
+        }
+    }
+    catch
+    {
+        Write-Warning "Failed to configure regional settings: $_"
         $success = $false
     }
 
     Write-Host ""
 
     # Configure 24-hour time
-    if (-not (configure24HourTime)) {
+    try
+    {
+        if (-not (configure24HourTime))
+        {
+            $success = $false
+        }
+    }
+    catch
+    {
+        Write-Warning "Failed to configure 24-hour time: $_"
         $success = $false
     }
 
     Write-Host ""
 
     # Configure dark mode
-    if (-not (configureDarkMode)) {
+    try
+    {
+        if (-not (configureDarkMode))
+        {
+            $success = $false
+        }
+    }
+    catch
+    {
+        Write-Warning "Failed to configure dark mode: $_"
         $success = $false
     }
 
     Write-Host ""
 
     # Configure File Explorer
-    if (-not (configureFileExplorer)) {
+    try
+    {
+        if (-not (configureFileExplorer))
+        {
+            $success = $false
+        }
+    }
+    catch
+    {
+        Write-Warning "Failed to configure File Explorer: $_"
         $success = $false
     }
 
     Write-Host ""
 
     # Configure privacy settings
-    if (-not (configurePrivacySettings)) {
+    try
+    {
+        if (-not (configurePrivacySettings))
+        {
+            $success = $false
+        }
+    }
+    catch
+    {
+        Write-Warning "Failed to configure privacy settings: $_"
         $success = $false
     }
 
     Write-Host ""
 
     # Configure taskbar
-    if (-not (configureTaskbar)) {
+    try
+    {
+        if (-not (configureTaskbar))
+        {
+            $success = $false
+        }
+    }
+    catch
+    {
+        Write-Warning "Failed to configure taskbar: $_"
         $success = $false
     }
 
     Write-Host ""
 
     # Enable Developer Mode
-    if (-not (enableDeveloperMode)) {
+    try
+    {
+        if (-not (enableDeveloperMode))
+        {
+            $success = $false
+        }
+    }
+    catch
+    {
+        Write-Warning "Failed to enable Developer Mode: $_"
         $success = $false
     }
 
     Write-Host ""
 
     # Disable notifications
-    if (-not (disableNotifications)) {
+    try
+    {
+        if (-not (disableNotifications))
+        {
+            $success = $false
+        }
+    }
+    catch
+    {
+        Write-Warning "Failed to disable notifications: $_"
         $success = $false
     }
 
     Write-Host ""
 
     # Enable WSL2
-    if (-not (enableWSL2)) {
+    try
+    {
+        if (-not (enableWSL2))
+        {
+            $success = $false
+        }
+    }
+    catch
+    {
+        Write-Warning "Failed to enable WSL2: $_"
         $success = $false
     }
 

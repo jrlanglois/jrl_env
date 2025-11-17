@@ -286,6 +286,3 @@ function cloneRepositories
     
     return ($failedCount -eq 0)
 }
-
-# Export functions
-Export-ModuleMember -Function cloneRepositories, cloneRepository, isRepositoryCloned, getRepositoryName

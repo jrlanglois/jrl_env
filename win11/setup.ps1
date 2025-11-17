@@ -145,33 +145,49 @@ if (-not $dryRun)
 logInfo "Starting complete environment setup..."
 
 # 1. Update Windows Store and winget
-logInfo "=== Step 1: Updating package managers ==="
-if (-not (updateWinget))
+if ($dryRun)
 {
-    logWarn "winget update failed, continuing..."
+    logInfo "=== Step 1: Updating package managers (DRY RUN) ==="
+    logInfo "Would update winget and Microsoft Store"
 }
 else
 {
-    logSuccess "winget updated successfully"
-}
-if (-not (updateMicrosoftStore))
-{
-    logWarn "Microsoft Store update failed, continuing..."
-}
-else
-{
-    logSuccess "Microsoft Store updated successfully"
+    logInfo "=== Step 1: Updating package managers ==="
+    if (-not (updateWinget))
+    {
+        logWarn "winget update failed, continuing..."
+    }
+    else
+    {
+        logSuccess "winget updated successfully"
+    }
+    if (-not (updateMicrosoftStore))
+    {
+        logWarn "Microsoft Store update failed, continuing..."
+    }
+    else
+    {
+        logSuccess "Microsoft Store updated successfully"
+    }
 }
 
 # 2. Configure Windows 11 settings
-logInfo "=== Step 2: Configuring Windows 11 ==="
-if (-not (configureWin11))
+if ($dryRun)
 {
-    logWarn "Windows 11 configuration had some issues, continuing..."
+    logInfo "=== Step 2: Configuring Windows 11 (DRY RUN) ==="
+    logInfo "Would configure Windows 11 settings (regional, time, dark mode, File Explorer, privacy, taskbar, Developer Mode, notifications, WSL2)"
 }
 else
 {
-    logSuccess "Windows 11 configuration completed"
+    logInfo "=== Step 2: Configuring Windows 11 ==="
+    if (-not (configureWin11))
+    {
+        logWarn "Windows 11 configuration had some issues, continuing..."
+    }
+    else
+    {
+        logSuccess "Windows 11 configuration completed"
+    }
 }
 
 # 3. Install fonts

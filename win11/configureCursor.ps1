@@ -86,6 +86,3 @@ function configureCursor
         return $false
     }
 }
-
-# Export functions
-Export-ModuleMember -Function configureCursor, getCursorSettingsPath

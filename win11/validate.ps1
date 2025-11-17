@@ -22,7 +22,7 @@ function validateJsonFile
     
     if (-not (Test-Path $filePath))
     {
-        $script:errors += "$description: File not found: $filePath"
+        $script:errors += "${description}: File not found: $filePath"
         return $false
     }
     
@@ -36,7 +36,7 @@ function validateJsonFile
     }
     catch
     {
-        $script:errors += "$description: Invalid JSON - $_"
+        $script:errors += "${description}: Invalid JSON - $_"
         return $false
     }
 }
@@ -54,35 +54,35 @@ function validateAppsJson
         {
             if (-not $content.winget -and -not $content.windowsStore)
             {
-                $script:warnings += "$platform apps: No apps specified"
+                $script:warnings += "${platform} apps: No apps specified"
             }
             if ($content.winget -and $content.winget.Count -eq 0)
             {
-                $script:warnings += "$platform apps: winget array is empty"
+                $script:warnings += "${platform} apps: winget array is empty"
             }
             if ($content.windowsStore -and $content.windowsStore.Count -eq 0)
             {
-                $script:warnings += "$platform apps: windowsStore array is empty"
+                $script:warnings += "${platform} apps: windowsStore array is empty"
             }
         }
         elseif ($platform -eq "macos")
         {
             if (-not $content.brew -and -not $content.brewCask)
             {
-                $script:warnings += "$platform apps: No apps specified"
+                $script:warnings += "${platform} apps: No apps specified"
             }
         }
         elseif ($platform -eq "ubuntu")
         {
             if (-not $content.apt -and -not $content.snap)
             {
-                $script:warnings += "$platform apps: No apps specified"
+                $script:warnings += "${platform} apps: No apps specified"
             }
         }
     }
     catch
     {
-        $script:errors += "$platform apps: Validation failed - $_"
+        $script:errors += "${platform} apps: Validation failed - $_"
     }
 }
 
@@ -221,7 +221,7 @@ Write-Host ""
 if ($errors.Count -eq 0 -and $warnings.Count -eq 0)
 {
     Write-Host "✓ All configuration files are valid!" -ForegroundColor Green
-    return $true
+    exit 0
 }
 else
 {
@@ -244,11 +244,11 @@ else
         }
         Write-Host ""
         Write-Host "✗ Validation failed. Please fix errors before running setup." -ForegroundColor Red
-        return $false
+        exit 1
     }
     else
     {
         Write-Host "✓ Validation passed with warnings." -ForegroundColor Green
-        return $true
+        exit 0
     }
 }
