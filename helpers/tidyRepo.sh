@@ -9,6 +9,9 @@ set -o igncr 2>/dev/null || true
 scriptDir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 tidyPy="$scriptDir/tidy.py"
 
+# Avoid interactive pagers when tidy scripts emit diffs
+export PAGER=cat
+
 defaultPath="$(cd "$scriptDir/.." && pwd)"
 dryRunFlag=""
 targetPath="$defaultPath"
