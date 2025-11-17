@@ -60,8 +60,8 @@ fi
 scriptDir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Load logging functions
-# shellcheck source=ubuntu/logging.sh
-source "$scriptDir/logging.sh"
+# shellcheck source=common/logging.sh
+source "$scriptDir/../common/logging.sh"
 
 # Initialize logging
 logFile=$(initLogging)

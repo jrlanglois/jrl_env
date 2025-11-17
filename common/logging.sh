@@ -1,6 +1,5 @@
 #!/bin/bash
-# Logging functions for Bash scripts
-# Provides functions to log messages to both console and log file
+# Shared logging functions for Bash scripts across platforms
 
 # Global variables
 logFilePath=""
@@ -9,14 +8,10 @@ logDirectory=""
 # Initialize logging
 initLogging()
 {
-    local logDirDefault="${LOG_DIR:-$TMPDIR/jrl_env_logs}"
-    local logDir="$logDirDefault"
+    local tmpBase="${TMPDIR:-/tmp}"
+    local logDir="${LOG_DIR:-$tmpBase/jrl_env_logs}"
     local timestamp
     local initMessage
-
-    if [ $# -gt 0 ] && [ -n "$1" ]; then
-        logDir="$1"
-    fi
 
     # Create log directory if it doesn't exist
     mkdir -p "$logDir"
@@ -108,3 +103,4 @@ logDebug()
 {
     writeLog "DEBUG" "$@"
 }
+
