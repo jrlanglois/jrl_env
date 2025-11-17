@@ -47,9 +47,9 @@ At a glance:
 - Supports dry runs and optional `.bak` backups
 
 ```
-python helpers/convertToAllman.py --dryRun
-python helpers/convertToAllman.py --path macos
-python helpers/convertToAllman.py --createBackup
+python3 helpers/convertToAllman.py --dryRun
+python3 helpers/convertToAllman.py --path macos
+python3 helpers/convertToAllman.py --createBackup
 ```
 
 ## Full pipeline

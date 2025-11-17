@@ -7,7 +7,7 @@ scriptDir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 repoRoot="$(cd "$scriptDir/.." && pwd)"
 
 echo "=== Running convertToAllman.py ==="
-python "$scriptDir/convertToAllman.py"
+python3 "$scriptDir/convertToAllman.py"
 
 echo ""
 echo "=== Running tidyRepo.sh ==="
