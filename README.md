@@ -29,67 +29,52 @@ jrl_env/
 
 ## Quick Start
 
-### Windows 11
+### First Time Setup
 
+Clone the repository and run the setup script for your platform:
+
+**Windows 11:**
 ```powershell
-# Setup development environment
-. .\win11\setupDevEnv.ps1
-setupDevEnv
-
-# Install fonts
-. .\win11\installFonts.ps1
-installGoogleFonts
-
-# Install applications
-. .\win11\installApps.ps1
-installOrUpdateApps
-
-# Configure Git
-. .\win11\configureGit.ps1
-configureGit
-
-# Configure Cursor
-. .\win11\configureCursor.ps1
-configureCursor
-
-# Clone repositories
-. .\win11\cloneRepositories.ps1
-cloneRepositories
+git clone https://github.com/jrlanglois/jrl_env.git
+cd jrl_env
+.\win11\setup.ps1
 ```
 
-### macOS / Ubuntu
-
+**macOS:**
 ```bash
-# Setup development environment (zsh, Oh My Zsh, Homebrew/apt)
-./macos/setupDevEnv.sh
-# or
-./ubuntu/setupDevEnv.sh
-
-# Install fonts
-./macos/installFonts.sh
-# or
-./ubuntu/installFonts.sh
-
-# Install applications
-./macos/installApps.sh
-# or
-./ubuntu/installApps.sh
-
-# Configure Git
-./macos/configureGit.sh
-# or
-./ubuntu/configureGit.sh
-
-# Configure Cursor
-./macos/configureCursor.sh
-# or
-./ubuntu/configureCursor.sh
-
-# Clone repositories
-./macos/cloneRepositories.sh
-# or
-./ubuntu/cloneRepositories.sh
+git clone https://github.com/jrlanglois/jrl_env.git
+cd jrl_env
+./macos/setup.sh
 ```
+
+**Ubuntu:**
+```bash
+git clone https://github.com/jrlanglois/jrl_env.git
+cd jrl_env
+./ubuntu/setup.sh
+```
+
+The setup script will run all configuration and installation tasks automatically.
+
+### Updating
+
+After making changes and pushing to the repository, update other machines:
+
+**Windows 11:**
+```powershell
+cd jrl_env
+.\win11\update.ps1
+```
+
+**macOS / Ubuntu:**
+```bash
+cd jrl_env
+./macos/update.sh
+# or
+./ubuntu/update.sh
+```
+
+The update script will pull the latest changes and re-run the setup.
 
 ## Configuration
 
