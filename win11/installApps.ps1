@@ -2,7 +2,8 @@
 . "$PSScriptRoot\updateStore.ps1"
 
 # Function to check if an app is installed via winget
-function isAppInstalled {
+function isAppInstalled
+{
     <#
     .SYNOPSIS
     Checks if a specific application is installed via winget.
@@ -17,7 +18,8 @@ function isAppInstalled {
     Boolean. Returns $true if the app is installed, $false otherwise.
 
     .EXAMPLE
-    if (isAppInstalled "Microsoft.VisualStudioCode") {
+    if (isAppInstalled "Microsoft.VisualStudioCode")
+    {
         Write-Host "VS Code is installed"
     }
     #>
@@ -26,24 +28,29 @@ function isAppInstalled {
         [string]$appId
     )
 
-    try {
+    try
+    {
         $result = winget list --id $appId --accept-source-agreements 2>$null
-        if ($LASTEXITCODE -eq 0) {
+        if ($LASTEXITCODE -eq 0)
+        {
             # Check if the output contains the app ID (winget list returns 0 even if not found in some cases)
             $listOutput = winget list --id $appId --accept-source-agreements 2>$null | Out-String
-            if ($listOutput -match $appId) {
+            if ($listOutput -match $appId)
+            {
                 return $true
             }
         }
     }
-    catch {
+    catch
+    {
         Write-Error "Failed to check if app is installed: $_"
     }
     return $false
 }
 
 # Function to install or update apps from JSON config file
-function installOrUpdateApps {
+function installOrUpdateApps
+{
     <#
     .SYNOPSIS
     Installs or updates applications listed in a JSON configuration file.
@@ -72,50 +79,60 @@ function installOrUpdateApps {
     )
 
     # Check if winget is installed, prompt user to install if not available
-    if (-not (isWingetInstalled)) {
+    if (-not (isWingetInstalled))
+    {
         Write-Host "winget (Windows Package Manager) is not installed." -ForegroundColor Yellow
         $response = Read-Host "Would you like to install winget now? (Y/N)"
-        if ($response -match '^[Yy]') {
-            if (-not (installWinget)) {
+        if ($response -match '^[Yy]')
+        {
+            if (-not (installWinget))
+            {
                 Write-Error "Failed to install winget. Please install Windows Package Manager manually or run as Administrator."
                 return $false
             }
         }
-        else {
+        else
+        {
             Write-Error "winget is required to install/update apps. Please install it manually or run this script again and choose 'Y' when prompted."
             return $false
         }
     }
 
     # Check if config file exists
-    if (-not (Test-Path $configPath)) {
+    if (-not (Test-Path $configPath))
+    {
         Write-Error "Configuration file not found: $configPath"
         return $false
     }
 
     # Read and parse JSON file
-    try {
+    try
+    {
         $jsonContent = Get-Content $configPath -Raw | ConvertFrom-Json
         
         # Handle both object format (with winget/windowsStore) and array format (legacy)
         $wingetApps = @()
         $storeApps = @()
         
-        if ($jsonContent.PSObject.Properties.Name -contains "winget") {
+        if ($jsonContent.PSObject.Properties.Name -contains "winget")
+        {
             # New format with separate arrays
             $wingetApps = $jsonContent.winget
             $storeApps = $jsonContent.windowsStore
         }
-        elseif ($jsonContent -is [Array]) {
+        elseif ($jsonContent -is [Array])
+        {
             # Legacy format - treat as winget apps
             $wingetApps = $jsonContent
         }
-        else {
+        else
+        {
             Write-Error "JSON file must contain either an object with 'winget' and 'windowsStore' arrays, or a simple array of app identifiers."
             return $false
         }
     }
-    catch {
+    catch
+    {
         Write-Error "Failed to parse JSON file: $_"
         return $false
     }
@@ -129,45 +146,57 @@ function installOrUpdateApps {
     $failedCount = 0
 
     # Process winget apps
-    if ($wingetApps.Count -gt 0) {
+    if ($wingetApps.Count -gt 0)
+    {
         Write-Host "=== Processing winget apps ===" -ForegroundColor Cyan
         Write-Host ""
         
-        foreach ($appId in $wingetApps) {
+        foreach ($appId in $wingetApps)
+        {
             Write-Host "Processing: $appId" -ForegroundColor Yellow
 
-            if (isAppInstalled $appId) {
+            if (isAppInstalled $appId)
+            {
                 Write-Host "  App is installed. Updating..." -ForegroundColor Cyan
-                try {
+                try
+                {
                     winget upgrade --id $appId --accept-package-agreements --accept-source-agreements --silent 2>&1 | Out-Null
-                    if ($LASTEXITCODE -eq 0) {
+                    if ($LASTEXITCODE -eq 0)
+                    {
                         Write-Host "  ✓ Updated successfully" -ForegroundColor Green
                         $updatedCount++
                     }
-                    else {
+                    else
+                    {
                         Write-Host "  ⚠ Update check completed (may already be up to date)" -ForegroundColor Yellow
                         $updatedCount++
                     }
                 }
-                catch {
+                catch
+                {
                     Write-Host "  ✗ Update failed: $_" -ForegroundColor Red
                     $failedCount++
                 }
             }
-            else {
+            else
+            {
                 Write-Host "  App is not installed. Installing..." -ForegroundColor Cyan
-                try {
+                try
+                {
                     winget install --id $appId --accept-package-agreements --accept-source-agreements --silent 2>&1 | Out-Null
-                    if ($LASTEXITCODE -eq 0) {
+                    if ($LASTEXITCODE -eq 0)
+                    {
                         Write-Host "  ✓ Installed successfully" -ForegroundColor Green
                         $installedCount++
                     }
-                    else {
+                    else
+                    {
                         Write-Host "  ✗ Installation failed (exit code: $LASTEXITCODE)" -ForegroundColor Red
                         $failedCount++
                     }
                 }
-                catch {
+                catch
+                {
                     Write-Host "  ✗ Installation failed: $_" -ForegroundColor Red
                     $failedCount++
                 }
@@ -177,26 +206,32 @@ function installOrUpdateApps {
     }
 
     # Process Windows Store apps
-    if ($storeApps.Count -gt 0) {
+    if ($storeApps.Count -gt 0)
+    {
         Write-Host "=== Processing Windows Store apps ===" -ForegroundColor Cyan
         Write-Host ""
         
-        foreach ($appId in $storeApps) {
+        foreach ($appId in $storeApps)
+        {
             Write-Host "Processing: $appId" -ForegroundColor Yellow
             Write-Host "  Installing from Windows Store..." -ForegroundColor Cyan
             
-            try {
+            try
+            {
                 winget install --id $appId --source msstore --accept-package-agreements --accept-source-agreements --silent 2>&1 | Out-Null
-                if ($LASTEXITCODE -eq 0) {
+                if ($LASTEXITCODE -eq 0)
+                {
                     Write-Host "  ✓ Installed successfully" -ForegroundColor Green
                     $installedCount++
                 }
-                else {
+                else
+                {
                     Write-Host "  ✗ Installation failed (exit code: $LASTEXITCODE)" -ForegroundColor Red
                     $failedCount++
                 }
             }
-            catch {
+            catch
+            {
                 Write-Host "  ✗ Installation failed: $_" -ForegroundColor Red
                 $failedCount++
             }
@@ -208,10 +243,10 @@ function installOrUpdateApps {
     Write-Host "Summary:" -ForegroundColor Cyan
     Write-Host "  Installed: $installedCount" -ForegroundColor Green
     Write-Host "  Updated: $updatedCount" -ForegroundColor Green
-    if ($failedCount -gt 0) {
+    if ($failedCount -gt 0)
+    {
         Write-Host "  Failed: $failedCount" -ForegroundColor Red
     }
 
     return $true
 }
-

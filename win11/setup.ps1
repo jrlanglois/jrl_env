@@ -32,7 +32,8 @@ $runGit = -not $skipGit -and -not $appsOnly
 $runCursor = -not $skipCursor -and -not $appsOnly
 $runRepos = -not $skipRepos -and -not $appsOnly
 
-if ($dryRun) {
+if ($dryRun)
+{
     logWarn "=== DRY RUN MODE ==="
     logWarn "No changes will be made. This is a preview."
 }
@@ -42,13 +43,16 @@ logInfo "=== jrl_env Setup for Windows 11 ==="
 # Validate configs first
 logInfo "Validating configuration files..."
 & "$scriptRoot\validate.ps1"
-if ($LASTEXITCODE -ne 0) {
+if ($LASTEXITCODE -ne 0)
+{
     logWarn "Validation had issues. Continuing anyway..."
 }
 
 # Backup function
-function backupConfigs {
-    if ($noBackup -or $dryRun) { 
+function backupConfigs
+{
+    if ($noBackup -or $dryRun)
+    { 
         logInfo "Backup skipped (noBackup or dryRun flag set)"
         return 
     }
@@ -60,14 +64,16 @@ function backupConfigs {
     
     # Backup Git config
     $gitConfigPath = "$env:USERPROFILE\.gitconfig"
-    if (Test-Path $gitConfigPath) {
+    if (Test-Path $gitConfigPath)
+    {
         Copy-Item $gitConfigPath "$backupDir\gitconfig" -ErrorAction SilentlyContinue
         logSuccess "Backed up Git config"
     }
     
     # Backup Cursor settings
     $cursorSettingsPath = "$env:APPDATA\Cursor\User\settings.json"
-    if (Test-Path $cursorSettingsPath) {
+    if (Test-Path $cursorSettingsPath)
+    {
         $cursorBackupDir = Join-Path $backupDir "Cursor"
         New-Item -ItemType Directory -Path $cursorBackupDir -Force | Out-Null
         Copy-Item $cursorSettingsPath "$cursorBackupDir\settings.json" -ErrorAction SilentlyContinue
@@ -78,39 +84,51 @@ function backupConfigs {
 }
 
 # Check dependencies
-function testDependencies {
+function testDependencies
+{
     logInfo "Checking dependencies..."
     $missing = @()
     
-    if (-not (isGitInstalled)) {
+    if (-not (isGitInstalled))
+    {
         $missing += "Git"
         logWarn "Git is not installed"
-    } else {
+    }
+    else
+    {
         logSuccess "Git is installed"
     }
     
-    if (-not (isWingetInstalled)) {
+    if (-not (isWingetInstalled))
+    {
         $missing += "winget (Windows Package Manager)"
         logWarn "winget is not installed"
-    } else {
+    }
+    else
+    {
         logSuccess "winget is installed"
     }
     
-    if ($missing.Count -gt 0) {
+    if ($missing.Count -gt 0)
+    {
         logWarn "Missing dependencies: $($missing -join ', ')"
         Write-Host "Some features may not work. Continue anyway? (Y/N): " -NoNewline -ForegroundColor Yellow
         $response = Read-Host
-        if ($response -notmatch '^[Yy]') {
+        if ($response -notmatch '^[Yy]')
+        {
             logError "Setup cancelled by user due to missing dependencies"
             exit 1
         }
         logInfo "User chose to continue despite missing dependencies"
-    } else {
+    }
+    else
+    {
         logSuccess "All dependencies are installed"
     }
 }
 
-if (-not $dryRun) {
+if (-not $dryRun)
+{
     testDependencies
     backupConfigs
 }
@@ -128,124 +146,183 @@ logInfo "Starting complete environment setup..."
 
 # 1. Update Windows Store and winget
 logInfo "=== Step 1: Updating package managers ==="
-if (-not (updateWinget)) {
+if (-not (updateWinget))
+{
     logWarn "winget update failed, continuing..."
-} else {
+}
+else
+{
     logSuccess "winget updated successfully"
 }
-if (-not (updateMicrosoftStore)) {
+if (-not (updateMicrosoftStore))
+{
     logWarn "Microsoft Store update failed, continuing..."
-} else {
+}
+else
+{
     logSuccess "Microsoft Store updated successfully"
 }
 
 # 2. Configure Windows 11 settings
 logInfo "=== Step 2: Configuring Windows 11 ==="
-if (-not (configureWin11)) {
+if (-not (configureWin11))
+{
     logWarn "Windows 11 configuration had some issues, continuing..."
-} else {
+}
+else
+{
     logSuccess "Windows 11 configuration completed"
 }
 
 # 3. Install fonts
-if ($runFonts) {
-    if ($dryRun) {
+if ($runFonts)
+{
+    if ($dryRun)
+    {
         logInfo "=== Step 3: Installing fonts (DRY RUN) ==="
         logInfo "Would install fonts from fonts.json"
-    } else {
+    }
+    else
+    {
         logInfo "=== Step 3: Installing fonts ==="
-        if (-not (installGoogleFonts)) {
+        if (-not (installGoogleFonts))
+        {
             logWarn "Font installation had some issues, continuing..."
-        } else {
+        }
+        else
+        {
             logSuccess "Font installation completed"
         }
     }
 }
 
 # 4. Install applications
-if ($runApps) {
-    if ($dryRun) {
+if ($runApps)
+{
+    if ($dryRun)
+    {
         logInfo "=== Step 4: Installing applications (DRY RUN) ==="
         logInfo "Would install/update apps from win11Apps.json"
-    } else {
+    }
+    else
+    {
         logInfo "=== Step 4: Installing applications ==="
-        if (-not (installOrUpdateApps)) {
+        if (-not (installOrUpdateApps))
+        {
             logWarn "Application installation had some issues, continuing..."
-        } else {
+        }
+        else
+        {
             logSuccess "Application installation completed"
         }
     }
 }
 
 # 5. Configure Git
-if ($runGit) {
-    if ($dryRun) {
+if ($runGit)
+{
+    if ($dryRun)
+    {
         logInfo "=== Step 5: Configuring Git (DRY RUN) ==="
         logInfo "Would configure Git from gitConfig.json"
-    } else {
+    }
+    else
+    {
         logInfo "=== Step 5: Configuring Git ==="
-        if (-not (configureGit)) {
+        if (-not (configureGit))
+        {
             logWarn "Git configuration had some issues, continuing..."
-        } else {
+        }
+        else
+        {
             logSuccess "Git configuration completed"
         }
     }
 }
 
 # 6. Configure Cursor
-if ($runCursor) {
-    if ($dryRun) {
+if ($runCursor)
+{
+    if ($dryRun)
+    {
         logInfo "=== Step 6: Configuring Cursor (DRY RUN) ==="
         logInfo "Would configure Cursor from cursorSettings.json"
-    } else {
+    }
+    else
+    {
         logInfo "=== Step 6: Configuring Cursor ==="
-        if (-not (configureCursor)) {
+        if (-not (configureCursor))
+        {
             logWarn "Cursor configuration had some issues, continuing..."
-        } else {
+        }
+        else
+        {
             logSuccess "Cursor configuration completed"
         }
     }
 }
 
 # 7. Clone repositories (only on first run)
-if ($runRepos) {
-    if ($dryRun) {
+if ($runRepos)
+{
+    if ($dryRun)
+    {
         logInfo "=== Step 7: Cloning repositories (DRY RUN) ==="
         logInfo "Would clone repositories from repositories.json"
-    } else {
+    }
+    else
+    {
         logInfo "=== Step 7: Cloning repositories ==="
         
         # Check if repositories have already been cloned
         $configPath = Join-Path (Join-Path $scriptRoot "..\configs") "repositories.json"
-        if (Test-Path $configPath) {
-            try {
+        if (Test-Path $configPath)
+        {
+            try
+            {
                 $jsonContent = Get-Content $configPath -Raw | ConvertFrom-Json
                 $workPath = $jsonContent.workPathWindows
                 
                 # Check if work directory exists and has any owner subdirectories
-                if (Test-Path $workPath) {
+                if (Test-Path $workPath)
+                {
                     $ownerDirs = Get-ChildItem -Path $workPath -Directory -ErrorAction SilentlyContinue
-                    if ($ownerDirs.Count -gt 0) {
+                    if ($ownerDirs.Count -gt 0)
+                    {
                         logWarn "Repositories directory already exists with content. Skipping repository cloning."
                         logInfo "To clone repositories manually, run: .\win11\cloneRepositories.ps1"
-                    } else {
-                        if (-not (cloneRepositories)) {
+                    }
+                    else
+                    {
+                        if (-not (cloneRepositories))
+                        {
                             logWarn "Repository cloning had some issues, continuing..."
-                        } else {
+                        }
+                        else
+                        {
                             logSuccess "Repository cloning completed"
                         }
                     }
-                } else {
-                    if (-not (cloneRepositories)) {
+                }
+                else
+                {
+                    if (-not (cloneRepositories))
+                    {
                         logWarn "Repository cloning had some issues, continuing..."
-                    } else {
+                    }
+                    else
+                    {
                         logSuccess "Repository cloning completed"
                     }
                 }
-            } catch {
+            }
+            catch
+            {
                 logWarn "Could not check repository status, skipping clone step."
             }
-        } else {
+        }
+        else
+        {
             logWarn "Repository config not found, skipping clone step."
         }
     }

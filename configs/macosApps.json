@@ -1,5 +1,6 @@
 {
-    "brew": [
+    "brew": 
+    [
         "git",
         "curl",
         "wget",
@@ -24,7 +25,8 @@
         "exa",
         "fd"
     ],
-    "brewCask": [
+    "brewCask": 
+    [
         "google-chrome",
         "firefox",
         "visual-studio-code",

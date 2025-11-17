@@ -1,9 +1,11 @@
 {
-    "user": {
+    "user": 
+    {
         "name": "Joël R. Langlois",
         "email": "your.email@example.com"
     },
-    "defaults": {
+    "defaults": 
+    {
         "init.defaultBranch": "main",
         "color.ui": "auto",
         "pull.rebase": "false",
@@ -12,7 +14,8 @@
         "rebase.autoStash": "true",
         "merge.ff": "false"
     },
-    "aliases": {
+    "aliases": 
+    {
         "st": "status",
         "co": "checkout",
         "br": "branch",

@@ -1,5 +1,6 @@
 {
-    "apt": [
+    "apt": 
+    [
         "git",
         "curl",
         "wget",
@@ -48,7 +49,8 @@
         "libglu1-mesa-dev",
         "mesa-common-dev"
     ],
-    "snap": [
+    "snap": 
+    [
         "code",
         "slack",
         "spotify",

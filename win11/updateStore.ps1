@@ -1,5 +1,6 @@
 # Function to check if winget is installed
-function isWingetInstalled {
+function isWingetInstalled
+{
     <#
     .SYNOPSIS
     Checks if Windows Package Manager (winget) is installed and available.
@@ -11,24 +12,29 @@ function isWingetInstalled {
     Boolean. Returns $true if winget is available, $false otherwise.
 
     .EXAMPLE
-    if (isWingetInstalled) {
+    if (isWingetInstalled)
+    {
         Write-Host "winget is available"
     }
     #>
-    try {
+    try
+    {
         $wingetVersion = winget --version 2>$null
-        if ($LASTEXITCODE -eq 0) {
+        if ($LASTEXITCODE -eq 0)
+        {
             return $true
         }
         return $false
     }
-    catch {
+    catch
+    {
         return $false
     }
 }
 
 # Function to install winget (Windows Package Manager)
-function installWinget {
+function installWinget
+{
     <#
     .SYNOPSIS
     Installs Windows Package Manager (winget) if it's not already installed.
@@ -49,17 +55,20 @@ function installWinget {
     param()
 
     # Check if already installed
-    if (isWingetInstalled) {
+    if (isWingetInstalled)
+    {
         Write-Host "winget is already installed." -ForegroundColor Green
         return $true
     }
 
     Write-Host "Installing winget (Windows Package Manager)..." -ForegroundColor Cyan
 
-    try {
+    try
+    {
         # Check if running as administrator
         $isAdmin = ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
-        if (-not $isAdmin) {
+        if (-not $isAdmin)
+        {
             Write-Error "Administrative privileges are required to install winget. Please run PowerShell as Administrator."
             return $false
         }
@@ -81,23 +90,27 @@ function installWinget {
 
         # Verify installation
         Start-Sleep -Seconds 2
-        if (isWingetInstalled) {
+        if (isWingetInstalled)
+        {
             Write-Host "winget installed successfully!" -ForegroundColor Green
             return $true
         }
-        else {
+        else
+        {
             Write-Warning "winget installation completed, but it may not be available in this session. Please restart PowerShell."
             return $false
         }
     }
-    catch {
+    catch
+    {
         Write-Error "Failed to install winget: $_"
         return $false
     }
 }
 
 # Function to update Microsoft Store using winget
-function updateMicrosoftStore {
+function updateMicrosoftStore
+{
     <#
     .SYNOPSIS
     Updates the Microsoft Store application using winget.
@@ -118,16 +131,20 @@ function updateMicrosoftStore {
     param()
 
     # Check if winget is installed, prompt user to install if not available
-    if (-not (isWingetInstalled)) {
+    if (-not (isWingetInstalled))
+    {
         Write-Host "winget (Windows Package Manager) is not installed." -ForegroundColor Yellow
         $response = Read-Host "Would you like to install winget now? (Y/N)"
-        if ($response -match '^[Yy]') {
-            if (-not (installWinget)) {
+        if ($response -match '^[Yy]')
+        {
+            if (-not (installWinget))
+            {
                 Write-Error "Failed to install winget. Please install Windows Package Manager manually or run as Administrator."
                 return $false
             }
         }
-        else {
+        else
+        {
             Write-Error "winget is required to update Microsoft Store. Please install it manually or run this script again and choose 'Y' when prompted."
             return $false
         }
@@ -135,27 +152,32 @@ function updateMicrosoftStore {
 
     Write-Host "Updating Microsoft Store using winget..." -ForegroundColor Cyan
 
-    try {
+    try
+    {
         # Update Microsoft Store specifically
         winget upgrade "Microsoft.WindowsStore" --accept-package-agreements --accept-source-agreements
 
-        if ($LASTEXITCODE -eq 0) {
+        if ($LASTEXITCODE -eq 0)
+        {
             Write-Host "Microsoft Store update completed successfully." -ForegroundColor Green
             return $true
         }
-        else {
+        else
+        {
             Write-Warning "Microsoft Store update may have failed or no update was available. Exit code: $LASTEXITCODE"
             return $false
         }
     }
-    catch {
+    catch
+    {
         Write-Error "Failed to update Microsoft Store: $_"
         return $false
     }
 }
 
 # Function to update winget (Windows Package Manager) itself
-function updateWinget {
+function updateWinget
+{
     <#
     .SYNOPSIS
     Updates Windows Package Manager (winget) to the latest version.
@@ -176,24 +198,28 @@ function updateWinget {
     param()
 
     # Check if winget is installed
-    if (-not (isWingetInstalled)) {
+    if (-not (isWingetInstalled))
+    {
         Write-Error "winget is not installed. Please install it first using installWinget."
         return $false
     }
 
     Write-Host "Updating winget (Windows Package Manager)..." -ForegroundColor Cyan
 
-    try {
+    try
+    {
         # Check if running as administrator
         $isAdmin = ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
-        if (-not $isAdmin) {
+        if (-not $isAdmin)
+        {
             Write-Warning "Administrative privileges are recommended for updating winget. Continuing anyway..."
         }
 
         # Update winget by upgrading the DesktopAppInstaller
         winget upgrade --id Microsoft.DesktopAppInstaller --accept-package-agreements --accept-source-agreements
 
-        if ($LASTEXITCODE -eq 0) {
+        if ($LASTEXITCODE -eq 0)
+        {
             Write-Host "winget update completed successfully." -ForegroundColor Green
             
             # Refresh environment variables
@@ -201,12 +227,14 @@ function updateWinget {
             
             return $true
         }
-        else {
+        else
+        {
             Write-Warning "winget update may have failed or no update was available. Exit code: $LASTEXITCODE"
             return $false
         }
     }
-    catch {
+    catch
+    {
         Write-Error "Failed to update winget: $_"
         return $false
     }

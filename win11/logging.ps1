@@ -5,14 +5,16 @@ $script:logFilePath = $null
 $script:logDirectory = $null
 
 # Initialize logging
-function initLogging {
+function initLogging
+{
     param(
         [Parameter(Mandatory=$false)]
         [string]$logDirectory = (Join-Path $env:TEMP "jrl_env_logs")
     )
     
     # Create log directory if it doesn't exist
-    if (-not (Test-Path $logDirectory)) {
+    if (-not (Test-Path $logDirectory))
+    {
         New-Item -ItemType Directory -Path $logDirectory -Force | Out-Null
     }
     
@@ -30,12 +32,14 @@ function initLogging {
 }
 
 # Get current log file path
-function getLogFile {
+function getLogFile
+{
     return $script:logFilePath
 }
 
 # Write log entry
-function writeLog {
+function writeLog
+{
     param(
         [Parameter(Mandatory=$true)]
         [ValidateSet("INFO", "SUCCESS", "WARN", "ERROR", "DEBUG")]
@@ -45,7 +49,8 @@ function writeLog {
         [string]$message
     )
     
-    if (-not $script:logFilePath) {
+    if (-not $script:logFilePath)
+    {
         # Initialize logging if not already done
         initLogging | Out-Null
     }
@@ -57,7 +62,8 @@ function writeLog {
     Add-Content -Path $script:logFilePath -Value $logEntry
     
     # Also write to console with appropriate colour
-    $color = switch ($level) {
+    $color = switch ($level)
+    {
         "INFO"    { "White" }
         "SUCCESS" { "Green" }
         "WARN"    { "Yellow" }
@@ -69,27 +75,32 @@ function writeLog {
 }
 
 # Convenience functions
-function logInfo {
+function logInfo
+{
     param([string]$message)
     writeLog -level "INFO" -message $message
 }
 
-function logSuccess {
+function logSuccess
+{
     param([string]$message)
     writeLog -level "SUCCESS" -message $message
 }
 
-function logWarn {
+function logWarn
+{
     param([string]$message)
     writeLog -level "WARN" -message $message
 }
 
-function logError {
+function logError
+{
     param([string]$message)
     writeLog -level "ERROR" -message $message
 }
 
-function logDebug {
+function logDebug
+{
     param([string]$message)
     writeLog -level "DEBUG" -message $message
 }

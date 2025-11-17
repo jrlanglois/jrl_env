@@ -102,10 +102,12 @@ This repository follows consistent coding style conventions:
 
 - **Naming**: camelCase for variable names and function names (e.g., `logInfo`, `backupConfigs`, `isWingetInstalled`).
 - **Indentation**: 4 spaces, no tabs.
+- **Braces**: Allman style (opening brace/bracket on its own line) where possible. Applies to code blocks, JSON objects, and JSON arrays.
 - **Boolean functions**: Use `is/was/{verb}` prefixes for clarity (e.g., `isGitInstalled`, `isRepositoryCloned`).
 - **Spelling**: Canadian English conventions (`-ise` for verbs, `-our` for nouns like `colour`, `behaviour`).
+- **JSON formatting**: 4-space indentation, CRLF line endings.
 
-These conventions apply to all PowerShell (`.ps1`) and Bash (`.sh`) scripts in this repository.
+These conventions apply to all PowerShell (`.ps1`) and Bash (`.sh`) scripts in this repository. Note: PowerShell has some syntax quirks that may prevent Allman braces in certain cases (e.g., pipeline operations), but we use them wherever possible.
 
 ## Requirements
 
