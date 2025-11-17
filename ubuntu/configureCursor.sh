@@ -16,12 +16,14 @@ scriptDir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 configPath="${scriptDir}/../configs/cursorSettings.json"
 
 # Function to get Cursor settings path
-getCursorSettingsPath() {
+getCursorSettingsPath()
+{
     echo "$HOME/.config/Cursor/User/settings.json"
 }
 
 # Function to configure Cursor settings
-configureCursor() {
+configureCursor()
+{
     local configPath=${1:-$configPath}
 
     echo -e "${cyan}=== Cursor Configuration ===${nc}"

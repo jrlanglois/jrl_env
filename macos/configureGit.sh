@@ -12,7 +12,8 @@ cyan='\033[0;36m'
 nc='\033[0m' # No Colour
 
 # Function to check if Git is installed
-isGitInstalled() {
+isGitInstalled()
+{
     if command -v git >/dev/null 2>&1; then
         return 0
     fi
@@ -20,7 +21,8 @@ isGitInstalled() {
 }
 
 # Function to configure Git user information
-configureGitUser() {
+configureGitUser()
+{
     echo -e "${cyan}Configuring Git user information...${nc}"
 
     # Check current user name
@@ -63,7 +65,8 @@ configureGitUser() {
 }
 
 # Function to configure Git defaults
-configureGitDefaults() {
+configureGitDefaults()
+{
     echo -e "${cyan}Configuring Git default settings...${nc}"
 
     echo -e "${yellow}Setting default branch name to 'main'...${nc}"
@@ -99,7 +102,8 @@ configureGitDefaults() {
 }
 
 # Function to configure Git aliases
-configureGitAliases() {
+configureGitAliases()
+{
     echo -e "${cyan}Configuring Git aliases...${nc}"
 
     # Common aliases
@@ -137,7 +141,8 @@ configureGitAliases() {
 }
 
 # Main configuration function
-configureGit() {
+configureGit()
+{
     echo -e "${cyan}=== Git Configuration ===${nc}"
     echo ""
 

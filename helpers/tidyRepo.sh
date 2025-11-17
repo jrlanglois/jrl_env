@@ -18,8 +18,7 @@ path="$defaultPath"
 dryRun=false
 
 # Parse arguments
-while [[ $# -gt 0 ]]
-do
+while [[ $# -gt 0 ]]; do
     case $1 in
         --dry-run|--dryRun|-d)
             dryRun=true
@@ -31,8 +30,7 @@ do
             ;;
         *)
             # If first arg doesn't start with -, treat as path
-            if [[ ! "$1" =~ ^- ]]
-            then
+            if [[ ! "$1" =~ ^- ]]; then
                 path="$1"
             fi
             shift
@@ -50,8 +48,7 @@ nc='\033[0m' # No Color
 # Find all relevant files
 files=$(find "$path" -type f \( -name "*.ps1" -o -name "*.sh" -o -name "*.json" -o -name "*.md" \) 2>/dev/null)
 
-if [ -z "$files" ]
-then
+if [ -z "$files" ]; then
     echo -e "${yellow}No files found to process.${nc}"
     exit 0
 fi
@@ -62,8 +59,7 @@ totalTabCount=0
 totalWhitespaceCount=0
 
 # Process each file
-while IFS= read -r file
-do
+while IFS= read -r file; do
     fileCount=$((fileCount + 1))
 
     # Call tidyFile function - user output goes to stderr, stats to stdout
@@ -73,8 +69,7 @@ do
     tabCount=$(echo "$stats" | cut -d'|' -f2)
     whitespaceCount=$(echo "$stats" | cut -d'|' -f3)
 
-    if [ "$modified" = true ]
-    then
+    if [ "$modified" = true ]; then
         modifiedCount=$((modifiedCount + 1))
     fi
 
@@ -84,30 +79,24 @@ do
 done <<< "$files"
 
 # Summary
-if [ "$dryRun" = true ]
-then
+if [ "$dryRun" = true ]; then
     echo ""
     echo -e "${yellow}DRY RUN: Would process $fileCount file(s)${nc}"
-    if [ "$totalTabCount" -gt 0 ]
-    then
+    if [ "$totalTabCount" -gt 0 ]; then
         echo -e "${yellow}  Would convert $totalTabCount tab(s) to spaces${nc}"
     fi
-    if [ "$totalWhitespaceCount" -gt 0 ]
-    then
+    if [ "$totalWhitespaceCount" -gt 0 ]; then
         echo -e "${yellow}  Would trim trailing whitespace from $totalWhitespaceCount line(s)${nc}"
     fi
 else
     echo ""
     echo -e "${cyan}Processed $fileCount file(s)${nc}"
-    if [ "$modifiedCount" -gt 0 ]
-    then
+    if [ "$modifiedCount" -gt 0 ]; then
         echo -e "${green}Modified $modifiedCount file(s)${nc}"
-        if [ "$totalTabCount" -gt 0 ]
-        then
+        if [ "$totalTabCount" -gt 0 ]; then
             echo -e "${green}  Converted $totalTabCount tab(s) to spaces${nc}"
         fi
-        if [ "$totalWhitespaceCount" -gt 0 ]
-        then
+        if [ "$totalWhitespaceCount" -gt 0 ]; then
             echo -e "${green}  Trimmed trailing whitespace from $totalWhitespaceCount line(s)${nc}"
         fi
     else

@@ -28,7 +28,8 @@ if ! command -v jq >/dev/null 2>&1; then
 fi
 
 # Function to validate JSON file
-validateJsonFile() {
+validateJsonFile()
+{
     local file_path=$1
     local description=$2
 
@@ -47,7 +48,8 @@ validateJsonFile() {
 }
 
 # Function to validate apps JSON
-validateAppsJson() {
+validateAppsJson()
+{
     local file_path=$1
     local platform=$2
 
@@ -69,7 +71,8 @@ validateAppsJson() {
 }
 
 # Function to validate repositories JSON
-validateRepositoriesJson() {
+validateRepositoriesJson()
+{
     local file_path=$1
 
     local work_path_win=$(jq -r '.workPathWindows' "$file_path" 2>/dev/null)
@@ -88,7 +91,8 @@ validateRepositoriesJson() {
 }
 
 # Function to validate Git config JSON
-validateGitConfigJson() {
+validateGitConfigJson()
+{
     local file_path=$1
 
     local has_user=$(jq 'has("user")' "$file_path" 2>/dev/null)

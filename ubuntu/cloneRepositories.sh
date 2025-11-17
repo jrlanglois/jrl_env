@@ -16,7 +16,8 @@ scriptDir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 configPath="${scriptDir}/../configs/repositories.json"
 
 # Function to check if Git is installed
-isGitInstalled() {
+isGitInstalled()
+{
     if command -v git >/dev/null 2>&1; then
         return 0
     fi
@@ -24,7 +25,8 @@ isGitInstalled() {
 }
 
 # Function to check if a repository is already cloned
-isRepositoryCloned() {
+isRepositoryCloned()
+{
     local repoUrl=$1
     local workPath=$2
 
@@ -45,7 +47,8 @@ isRepositoryCloned() {
 }
 
 # Function to get username/organization from URL
-getRepositoryOwner() {
+getRepositoryOwner()
+{
     local repoUrl=$1
     # Extract username/organization from URL (handles both HTTPS and SSH)
     # Try HTTPS pattern first (github.com/username/), then SSH pattern (:username/)
@@ -58,13 +61,15 @@ getRepositoryOwner() {
 }
 
 # Function to get repository name from URL
-getRepositoryName() {
+getRepositoryName()
+{
     local repoUrl=$1
     echo "$repoUrl" | sed -E 's|.*[:/]([^/]+?)(\.git)?$|\1|'
 }
 
 # Function to clone a single repository recursively
-cloneRepository() {
+cloneRepository()
+{
     local repoUrl=$1
     local workPath=$2
 
@@ -108,7 +113,8 @@ cloneRepository() {
 }
 
 # Function to clone all repositories
-cloneRepositories() {
+cloneRepositories()
+{
     local configPath=${1:-$configPath}
 
     echo -e "${cyan}=== Repository Cloning ===${nc}"

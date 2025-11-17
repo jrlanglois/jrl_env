@@ -77,3 +77,37 @@ Trims whitespace and converts tabs to spaces in all code files in a repository.
 - Use dry-run mode to preview changes before applying them
 - The `tidy` scripts can be sourced/imported by other scripts to reuse the tidying functionality
 
+## convertToAllman.py
+
+Enforces the repository's Allman brace style across Bash scripts.
+
+### Features
+
+- Converts function definitions to Allman braces
+- Splits `} else {` blocks across multiple lines
+- Keeps `if/while/for` keywords inline (e.g., `if [ … ]; then`)
+- Supports dry-run mode and optional backups
+- Processes every `.sh` file beneath the specified path
+
+### Usage
+
+```bash
+# Preview changes without writing to disk
+python helpers/convertToAllman.py --dryRun
+
+# Convert all .sh files under a specific directory
+python helpers/convertToAllman.py --path macos
+
+# Create .bak backups before writing changes
+python helpers/convertToAllman.py --createBackup
+```
+
+## formatRepo.sh
+
+Runs the full formatting pipeline (Allman conversion followed by whitespace tidy) in a single command.
+
+```bash
+./helpers/formatRepo.sh
+```
+
+

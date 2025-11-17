@@ -17,12 +17,14 @@ configPath="${scriptDir}/../configs/fonts.json"
 fontsDir="$HOME/Library/Fonts"
 
 # Function to check if a command exists
-commandExists() {
+commandExists()
+{
     command -v "$1" >/dev/null 2>&1
 }
 
 # Function to check if a font is installed
-isFontInstalled() {
+isFontInstalled()
+{
     local fontName=$1
     if [ -f "${FONTS_DIR}/${fontName}" ] || find "$fontsDir" -iname "*${fontName}*" -type f | grep -q .; then
         return 0
@@ -31,7 +33,8 @@ isFontInstalled() {
 }
 
 # Function to download a Google Font
-downloadGoogleFont() {
+downloadGoogleFont()
+{
     local fontName=$1
     local variant=${2:-"Regular"}
     local outputPath=${3:-$TMPDIR}
@@ -66,7 +69,8 @@ downloadGoogleFont() {
 }
 
 # Function to install a font
-installFont() {
+installFont()
+{
     local fontPath=$1
 
     if [ ! -f "$fontPath" ]; then
@@ -97,7 +101,8 @@ installFont() {
 }
 
 # Function to install Google Fonts
-installGoogleFonts() {
+installGoogleFonts()
+{
     local configPath=${1:-$configPath}
     local variants=("${@:2}")
 

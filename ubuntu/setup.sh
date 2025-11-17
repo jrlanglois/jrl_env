@@ -66,7 +66,8 @@ if ! bash "$scriptDir/validate.sh"; then
 fi
 
 # Backup function
-backupConfigs() {
+backupConfigs()
+{
     if [ "$noBackup" = true ] || [ "$dryRun" = true ]; then
         logInfo "Backup skipped (noBackup or dryRun flag set)"
         return 0
@@ -95,7 +96,8 @@ backupConfigs() {
 }
 
 # Check dependencies
-checkDependencies() {
+checkDependencies()
+{
     logInfo "Checking dependencies..."
     missing=()
 

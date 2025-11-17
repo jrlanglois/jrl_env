@@ -16,12 +16,14 @@ scriptDir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 configPath="${scriptDir}/../configs/macosApps.json"
 
 # Function to check if a command exists
-commandExists() {
+commandExists()
+{
     command -v "$1" >/dev/null 2>&1
 }
 
 # Function to check if Homebrew is installed
-isBrewInstalled() {
+isBrewInstalled()
+{
     if commandExists brew; then
         return 0
     fi
@@ -29,7 +31,8 @@ isBrewInstalled() {
 }
 
 # Function to check if a brew package is installed
-isBrewPackageInstalled() {
+isBrewPackageInstalled()
+{
     local package=$1
     if brew list "$package" &>/dev/null; then
         return 0
@@ -38,7 +41,8 @@ isBrewPackageInstalled() {
 }
 
 # Function to check if a brew cask is installed
-isBrewCaskInstalled() {
+isBrewCaskInstalled()
+{
     local cask=$1
     if brew list --cask "$cask" &>/dev/null; then
         return 0
@@ -47,7 +51,8 @@ isBrewCaskInstalled() {
 }
 
 # Function to install or update apps
-installOrUpdateApps() {
+installOrUpdateApps()
+{
     local configPath=${1:-$configPath}
 
     echo -e "${cyan}=== macOS Application Installation ===${nc}"

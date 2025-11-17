@@ -16,12 +16,14 @@ scriptDir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 configPath="${scriptDir}/../configs/ubuntuApps.json"
 
 # Function to check if a command exists
-commandExists() {
+commandExists()
+{
     command -v "$1" >/dev/null 2>&1
 }
 
 # Function to check if a package is installed via apt
-isAptPackageInstalled() {
+isAptPackageInstalled()
+{
     local package=$1
     if dpkg -l | grep -q "^ii  $package "; then
         return 0
@@ -30,7 +32,8 @@ isAptPackageInstalled() {
 }
 
 # Function to check if a snap is installed
-isSnapInstalled() {
+isSnapInstalled()
+{
     local snap=$1
     if snap list "$snap" &>/dev/null 2>&1; then
         return 0
@@ -39,7 +42,8 @@ isSnapInstalled() {
 }
 
 # Function to install or update apps
-installOrUpdateApps() {
+installOrUpdateApps()
+{
     local configPath=${1:-$configPath}
 
     echo -e "${cyan}=== Ubuntu Application Installation ===${nc}"

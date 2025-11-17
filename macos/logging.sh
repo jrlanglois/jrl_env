@@ -7,7 +7,8 @@ logFilePath=""
 logDirectory=""
 
 # Initialize logging
-initLogging() {
+initLogging()
+{
     local logDir="${1:-$TMPDIR/jrl_env_logs}"
 
     # Create log directory if it doesn't exist
@@ -27,12 +28,14 @@ initLogging() {
 }
 
 # Get current log file path
-getLogFile() {
+getLogFile()
+{
     echo "$logFilePath"
 }
 
 # Write log entry
-writeLog() {
+writeLog()
+{
     local level="$1"
     shift
     local message="$*"
@@ -72,22 +75,27 @@ writeLog() {
 }
 
 # Convenience functions
-logInfo() {
+logInfo()
+{
     writeLog "INFO" "$@"
 }
 
-logSuccess() {
+logSuccess()
+{
     writeLog "SUCCESS" "$@"
 }
 
-logWarn() {
+logWarn()
+{
     writeLog "WARN" "$@"
 }
 
-logError() {
+logError()
+{
     writeLog "ERROR" "$@"
 }
 
-logDebug() {
+logDebug()
+{
     writeLog "DEBUG" "$@"
 }

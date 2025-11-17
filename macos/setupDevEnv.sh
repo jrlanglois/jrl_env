@@ -12,12 +12,14 @@ cyan='\033[0;36m'
 nc='\033[0m' # No Colour
 
 # Function to check if a command exists
-commandExists() {
+commandExists()
+{
     command -v "$1" >/dev/null 2>&1
 }
 
 # Function to check if zsh is installed
-isZshInstalled() {
+isZshInstalled()
+{
     if commandExists zsh; then
         return 0
     fi
@@ -25,7 +27,8 @@ isZshInstalled() {
 }
 
 # Function to check if Oh My Zsh is installed
-isOhMyZshInstalled() {
+isOhMyZshInstalled()
+{
     if [ -d "$HOME/.oh-my-zsh" ]; then
         return 0
     fi
@@ -33,7 +36,8 @@ isOhMyZshInstalled() {
 }
 
 # Function to check if Homebrew is installed
-isBrewInstalled() {
+isBrewInstalled()
+{
     if commandExists brew; then
         return 0
     fi
@@ -41,7 +45,8 @@ isBrewInstalled() {
 }
 
 # Function to install zsh
-installZsh() {
+installZsh()
+{
     echo -e "${cyan}Installing zsh...${nc}"
 
     if isZshInstalled; then
@@ -69,7 +74,8 @@ installZsh() {
 }
 
 # Function to install Oh My Zsh
-installOhMyZsh() {
+installOhMyZsh()
+{
     echo -e "${cyan}Installing Oh My Zsh...${nc}"
 
     if isOhMyZshInstalled; then
@@ -88,7 +94,8 @@ installOhMyZsh() {
 }
 
 # Function to install Homebrew
-installBrew() {
+installBrew()
+{
     echo -e "${cyan}Installing Homebrew...${nc}"
 
     if isBrewInstalled; then
@@ -123,7 +130,8 @@ installBrew() {
 }
 
 # Function to set zsh as default shell
-setZshAsDefault() {
+setZshAsDefault()
+{
     echo -e "${cyan}Setting zsh as default shell...${nc}"
 
     if ! isZshInstalled; then
@@ -153,7 +161,8 @@ setZshAsDefault() {
 }
 
 # Main setup function
-setupDevEnv() {
+setupDevEnv()
+{
     echo -e "${cyan}=== macOS Development Environment Setup ===${nc}"
     echo ""
 
