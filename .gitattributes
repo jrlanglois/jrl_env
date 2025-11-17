@@ -5,12 +5,6 @@
 *.gitmodules text eol=lf
 *.sh text eol=lf
 
-# PowerShell scripts use CRLF (Windows standard)
-*.ps1 text eol=crlf
-
-# JSON config files - use LF for cross-platform compatibility
-*.json text eol=lf
-
 # Various misc binary files:
 *.7z binary
 *.a binary

@@ -96,6 +96,17 @@ To adapt this setup for your own machines:
 
 The scripts are designed to be modular and configurable. Update the JSON files in `configs/` to match your needs, and adjust script paths or logic as required for your environment.
 
+## Style Guide
+
+This repository follows consistent coding style conventions:
+
+- **Naming**: camelCase for variable names and function names (e.g., `logInfo`, `backupConfigs`, `isWingetInstalled`).
+- **Indentation**: 4 spaces, no tabs.
+- **Boolean functions**: Use `is/was/{verb}` prefixes for clarity (e.g., `isGitInstalled`, `isRepositoryCloned`).
+- **Spelling**: Canadian English conventions (`-ise` for verbs, `-our` for nouns like `colour`, `behaviour`).
+
+These conventions apply to all PowerShell (`.ps1`) and Bash (`.sh`) scripts in this repository.
+
 ## Requirements
 
 - **Windows**: PowerShell 5.1+, winget (Windows Package Manager)
