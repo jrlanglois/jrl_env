@@ -12,7 +12,8 @@
         "push.default": "simple",
         "push.autoSetupRemote": "true",
         "rebase.autoStash": "true",
-        "merge.ff": "false"
+        "merge.ff": "false",
+        "fetch.parallel": "8"
     },
     "aliases":
     {
