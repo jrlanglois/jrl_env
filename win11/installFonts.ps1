@@ -82,7 +82,7 @@ function downloadGoogleFont
         foreach ($variantPattern in $variantPatterns)
         {
             $testVariant = $variantPattern -replace '\s+', ''
-            
+
             # Try different repository paths and naming conventions
             $urlPatterns = @(
                 "https://github.com/google/fonts/raw/main/ofl/$normalisedName/$normalisedName-$testVariant.ttf",
@@ -127,6 +127,117 @@ function downloadGoogleFont
             }
         }
 
+        # Fallback: Try to get font URL from Google Fonts CSS API
+        # This works for fonts like Bungee Spice that might not be in the GitHub repo structure
+        if ($variant -eq "Regular")
+        {
+            $apiFontName = $fontName -replace '\s+', '+'
+            $cssUrl = "https://fonts.googleapis.com/css2?family=$apiFontName&display=swap"
+
+            try
+            {
+                $cssContent = Invoke-WebRequest -Uri $cssUrl -UseBasicParsing -ErrorAction Stop | Select-Object -ExpandProperty Content
+
+                if ($cssContent)
+                {
+                    $fontUrl = $null
+                    $fileExt = "ttf"
+
+                    # Try to find TTF first (more compatible across OS)
+                    if ($cssContent -match 'url\(https://fonts\.gstatic\.com/[^)]+\.ttf\)')
+                    {
+                        $fontUrl = $matches[0] -replace 'url\(([^)]+)\)', '$1'
+                    }
+                    # If no TTF found, try WOFF2 (web font format)
+                    elseif ($cssContent -match 'url\(https://fonts\.gstatic\.com/[^)]+\.woff2\)')
+                    {
+                        $fontUrl = $matches[0] -replace 'url\(([^)]+)\)', '$1'
+                        $fileExt = "woff2"
+                    }
+
+                    if ($fontUrl)
+                    {
+                        $fileName = "$normalisedName-$variant.$fileExt"
+                        $filePath = Join-Path $outputPath $fileName
+
+                        try
+                        {
+                            Invoke-WebRequest -Uri $fontUrl -OutFile $filePath -UseBasicParsing -ErrorAction Stop
+
+                            if (Test-Path $filePath -and (Get-Item $filePath).Length -gt 1000)
+                            {
+                                # If we got WOFF2, try to convert to TTF
+                                if ($fileExt -eq "woff2")
+                                {
+                                    $ttfPath = Join-Path $outputPath "$normalisedName-$variant.ttf"
+                                    $converted = $false
+
+                                    # Try Node.js with woff2 package
+                                    if (Get-Command node -ErrorAction SilentlyContinue)
+                                    {
+                                        try
+                                        {
+                                            # Check if woff2 package is available, install if needed
+                                            $woff2Module = npm list -g woff2 2>$null
+                                            if (-not $woff2Module)
+                                            {
+                                                Write-Host "    Installing woff2 npm package..." -ForegroundColor Cyan
+                                                npm install -g woff2 2>$null | Out-Null
+                                            }
+
+                                            # Try to convert using woff2
+                                            $convertResult = node -e "const woff2 = require('woff2'); const fs = require('fs'); const input = fs.readFileSync('$filePath'); const output = woff2.decompress(input); fs.writeFileSync('$ttfPath', output);" 2>$null
+
+                                            if (Test-Path $ttfPath -and (Get-Item $ttfPath).Length -gt 1000)
+                                            {
+                                                Remove-Item $filePath -Force -ErrorAction SilentlyContinue
+                                                $filePath = $ttfPath
+                                                $converted = $true
+                                                Write-Host "    ✓ Downloaded and converted $variant successfully (via Google Fonts API)" -ForegroundColor Green
+                                            }
+                                        }
+                                        catch
+                                        {
+                                            # Conversion failed, continue to warning
+                                        }
+                                    }
+
+                                    if (-not $converted)
+                                    {
+                                        Write-Host "    ⚠ Downloaded WOFF2 format (Windows cannot install WOFF2 directly)" -ForegroundColor Yellow
+                                        Write-Host "    ⚠ File saved at: $filePath" -ForegroundColor Yellow
+                                        Write-Host "    ⚠ Convert to TTF using:" -ForegroundColor Yellow
+                                        Write-Host "      - Online: https://cloudconvert.com/woff2-converter" -ForegroundColor Yellow
+                                        Write-Host "      - Node.js: npm install -g woff2" -ForegroundColor Yellow
+                                    }
+                                }
+                                else
+                                {
+                                    Write-Host "    ✓ Downloaded $variant successfully (via Google Fonts API)" -ForegroundColor Green
+                                }
+                                return $filePath
+                            }
+                            else
+                            {
+                                Remove-Item $filePath -Force -ErrorAction SilentlyContinue
+                            }
+                        }
+                        catch
+                        {
+                            if (Test-Path $filePath)
+                            {
+                                Remove-Item $filePath -Force -ErrorAction SilentlyContinue
+                            }
+                        }
+                    }
+                }
+            }
+            catch
+            {
+                # CSS API failed, continue
+            }
+        }
+
         # No variant found
         return $null
     }
@@ -149,6 +260,16 @@ function installFont
         if (-not (Test-Path $fontPath))
         {
             Write-Host "    ✗ Font file not found: $fontPath" -ForegroundColor Red
+            return $false
+        }
+
+        # Check if file is WOFF2 (web font format, Windows cannot install directly)
+        $fileExt = [System.IO.Path]::GetExtension($fontPath).ToLower()
+        if ($fileExt -eq ".woff2")
+        {
+            Write-Host "    ⚠ WOFF2 format cannot be directly installed on Windows" -ForegroundColor Yellow
+            Write-Host "    ⚠ File saved at: $fontPath" -ForegroundColor Yellow
+            Write-Host "    ⚠ Convert to TTF first using an online tool or woff2 tools" -ForegroundColor Yellow
             return $false
         }
 
@@ -232,9 +353,6 @@ function installGoogleFonts
         [string[]]$variants = @("Regular", "Bold", "Italic", "BoldItalic")
     )
 
-    Write-Host "=== Google Fonts Installation ===" -ForegroundColor Cyan
-    Write-Host ""
-
     # Check if config file exists
     if (-not (Test-Path $configPath))
     {
@@ -242,126 +360,29 @@ function installGoogleFonts
         return $false
     }
 
-    # Check for admin privileges (needed for font installation)
-    $isAdmin = ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
-    if (-not $isAdmin)
+    # Use Python script for parallel processing
+    $pythonScript = Join-Path (Join-Path $PSScriptRoot "..\helpers") "installFonts.py"
+
+    if (-not (Test-Path $pythonScript))
     {
-        Write-Error "Administrative privileges are required to install fonts. Please run PowerShell as Administrator."
+        Write-Error "Python script not found: $pythonScript"
         return $false
     }
 
-    # Parse JSON configuration
-    try
+    # Check for Python
+    if (-not (Get-Command python -ErrorAction SilentlyContinue) -and -not (Get-Command python3 -ErrorAction SilentlyContinue))
     {
-        $jsonContent = Get-Content $configPath -Raw | ConvertFrom-Json
-
-        if (-not $jsonContent.PSObject.Properties.Name -contains "googleFonts")
-        {
-            Write-Error "JSON file must contain a 'googleFonts' array."
-            return $false
-        }
-
-        $fontNames = $jsonContent.googleFonts
-
-        if ($fontNames.Count -eq 0)
-        {
-            Write-Host "No fonts specified in configuration file." -ForegroundColor Yellow
-            return $true
-        }
-
-        Write-Host "Found $($fontNames.Count) font(s) in configuration file." -ForegroundColor Cyan
-        Write-Host ""
-
-    }
-    catch
-    {
-        Write-Error "Failed to parse JSON file: $_"
+        Write-Error "Python is required for font installation. Please install it first."
         return $false
     }
 
-    # Create temporary directory for downloads
-    $tempDir = Join-Path $env:TEMP "GoogleFonts_$(Get-Date -Format 'yyyyMMdd_HHmmss')"
-    New-Item -ItemType Directory -Path $tempDir -Force | Out-Null
+    $pythonCmd = if (Get-Command python -ErrorAction SilentlyContinue) { "python" } else { "python3" }
 
-    $installedCount = 0
-    $skippedCount = 0
-    $failedCount = 0
-    $downloadedFiles = @()
+    # Build arguments
+    $installDir = "$env:WINDIR\Fonts"  # Windows uses system font folder
+    $args = @($configPath, $installDir) + $variants
 
-    # Process each font
-    foreach ($fontName in $fontNames)
-    {
-        Write-Host "Processing: $fontName" -ForegroundColor Yellow
-
-        $fontInstalled = $false
-        $anyVariantFound = $false
-
-        # Try to download and install each variant
-        foreach ($variant in $variants)
-        {
-            $fontPath = downloadGoogleFont -fontName $fontName -variant $variant -outputPath $tempDir
-
-            if ($fontPath -and (Test-Path $fontPath))
-            {
-                $anyVariantFound = $true
-                $downloadedFiles += $fontPath
-
-                if (installFont -fontPath $fontPath)
-                {
-                    $installedCount++
-                    $fontInstalled = $true
-                }
-                else
-                {
-                    $failedCount++
-                }
-            }
-        }
-
-        if (-not $fontInstalled -and -not $anyVariantFound)
-        {
-            Write-Host "  ⚠ No variants available for this font" -ForegroundColor Yellow
-        }
-
-        if (-not $fontInstalled)
-        {
-            $skippedCount++
-        }
-
-        Write-Host ""
-    }
-
-    # Clean up downloaded files
-    Write-Host "Cleaning up downloaded files..." -ForegroundColor Cyan
-    try
-    {
-        if (Test-Path $tempDir)
-        {
-            Remove-Item -Path $tempDir -Recurse -Force -ErrorAction Stop
-            Write-Host "✓ Temporary files removed successfully" -ForegroundColor Green
-        }
-    }
-    catch
-    {
-        Write-Warning "Failed to clean up temporary files: $_"
-        Write-Host "You may need to manually delete: $tempDir" -ForegroundColor Yellow
-    }
-
-    Write-Host ""
-    Write-Host "Summary:" -ForegroundColor Cyan
-    Write-Host "  Installed: $installedCount font file(s)" -ForegroundColor Green
-    if ($skippedCount -gt 0)
-    {
-        Write-Host "  Skipped: $skippedCount font(s)" -ForegroundColor Yellow
-    }
-    if ($failedCount -gt 0)
-    {
-        Write-Host "  Failed: $failedCount font file(s)" -ForegroundColor Red
-    }
-
-    Write-Host ""
-    Write-Host "Font installation complete!" -ForegroundColor Green
-    Write-Host "Note: You may need to restart applications for new fonts to appear." -ForegroundColor Yellow
-
-    return $true
+    # Call Python script
+    & $pythonCmd $pythonScript $args
+    return $LASTEXITCODE -eq 0
 }

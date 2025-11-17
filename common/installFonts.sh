@@ -57,7 +57,7 @@ downloadGoogleFont()
     for variantPattern in "${variantPatterns[@]}"; do
         local testVariant
         testVariant=$(echo "$variantPattern" | tr -d ' ')
-        
+
         local urlPatterns=(
             "https://github.com/google/fonts/raw/main/ofl/${normalisedName}/${normalisedName}-${testVariant}.ttf"
             "https://github.com/google/fonts/raw/main/ofl/${normalisedName}/${testVariant}.ttf"
@@ -90,6 +90,67 @@ downloadGoogleFont()
         done
     done
 
+    # Fallback: Try to get font URL from Google Fonts CSS API
+    # This works for fonts like Bungee Spice that might not be in the GitHub repo structure
+    if [ "$variant" = "Regular" ]; then
+        local apiFontName
+        apiFontName=$(echo "$fontName" | sed 's/ /+/g')
+        local cssUrl="https://fonts.googleapis.com/css2?family=${apiFontName}&display=swap"
+        local cssContent
+        cssContent=$(curl -fsSL "$cssUrl" 2>/dev/null)
+
+        if [ -n "$cssContent" ]; then
+            # Extract font URLs from the CSS - prefer TTF over WOFF2 for OS compatibility
+            local fontUrl
+            local fileExt="ttf"
+
+            # Try to find TTF first (more compatible across OS)
+            fontUrl=$(echo "$cssContent" | grep -oE 'url\(https://fonts\.gstatic\.com/[^)]+\.ttf\)' | head -1 | sed 's/url(\(.*\))/\1/')
+
+            # If no TTF found, try WOFF2 (web font format, may need conversion)
+            if [ -z "$fontUrl" ]; then
+                fontUrl=$(echo "$cssContent" | grep -oE 'url\(https://fonts\.gstatic\.com/[^)]+\.woff2\)' | head -1 | sed 's/url(\(.*\))/\1/')
+                fileExt="woff2"
+            fi
+
+            if [ -n "$fontUrl" ]; then
+                local tempFileName
+                tempFileName="${normalisedName}-${variant}.${fileExt}"
+                filePath="${outputPath}/${tempFileName}"
+
+                if curl -fsSL -o "$filePath" "$fontUrl" 2>/dev/null && [ -f "$filePath" ] && [ -s "$filePath" ]; then
+                    local fileSize
+                    fileSize=$(stat -f%z "$filePath" 2>/dev/null || stat -c%s "$filePath" 2>/dev/null || echo "0")
+                    if [ "$fileSize" -gt 1000 ]; then
+                        # If we got WOFF2, try to convert to TTF if woff2_decompress is available
+                        if [ "$fileExt" = "woff2" ]; then
+                            if commandExists woff2_decompress; then
+                                local ttfPath="${outputPath}/${normalisedName}-${variant}.ttf"
+                                if woff2_decompress "$filePath" -o "$ttfPath" 2>/dev/null && [ -f "$ttfPath" ]; then
+                                    rm -f "$filePath"
+                                    filePath="$ttfPath"
+                                    echo -e "    ${green}✓ Downloaded and converted $variant successfully (via Google Fonts API)${nc}"
+                                else
+                                    echo -e "    ${yellow}⚠ Downloaded WOFF2 format (may not be installable on all systems)${nc}"
+                                    echo -e "    ${yellow}  Install woff2 tools to convert: sudo apt-get install woff2${nc}"
+                                fi
+                            else
+                                echo -e "    ${yellow}⚠ Downloaded WOFF2 format (may not be installable on all systems)${nc}"
+                                echo -e "    ${yellow}  Install woff2 tools to convert: sudo apt-get install woff2${nc}"
+                            fi
+                        else
+                            echo -e "    ${green}✓ Downloaded $variant successfully (via Google Fonts API)${nc}"
+                        fi
+                        echo "$filePath"
+                        return 0
+                    else
+                        rm -f "$filePath"
+                    fi
+                fi
+            fi
+        fi
+    fi
+
     return 1
 }
 
@@ -99,6 +160,16 @@ installFont()
 
     if [ ! -f "$fontPath" ]; then
         echo -e "    ${red}✗ Font file not found: $fontPath${nc}"
+        return 1
+    fi
+
+    # Check if file is WOFF2 (web font format, not directly installable on most OS)
+    local fileExt
+    fileExt=$(echo "$fontPath" | sed 's/.*\.//' | tr '[:upper:]' '[:lower:]')
+    if [ "$fileExt" = "woff2" ]; then
+        echo -e "    ${yellow}⚠ WOFF2 format cannot be directly installed${nc}"
+        echo -e "    ${yellow}  File saved at: $fontPath${nc}"
+        echo -e "    ${yellow}  Convert to TTF first using woff2 tools${nc}"
         return 1
     fi
 
@@ -134,7 +205,6 @@ installGoogleFonts()
 {
     local configPath=${1:-$fontsConfigPath}
     local variants=("${@:2}")
-    local jqHint="${jqInstallHint:-${yellow}Please install jq via your package manager.${nc}}"
 
     fontInstallDir="${fontInstallDirPath:?fontInstallDirPath must be set}"
 
@@ -142,93 +212,33 @@ installGoogleFonts()
         variants=("Regular" "Bold" "Italic" "BoldItalic")
     fi
 
-    echo -e "${cyan}=== Google Fonts Installation ===${nc}"
-    echo ""
-
     if [ ! -f "$configPath" ]; then
         echo -e "${red}✗ Configuration file not found: $configPath${nc}"
         return 1
     fi
 
-    if ! commandExists jq; then
-        echo -e "${red}✗ jq is required to parse JSON. Please install it first.${nc}"
-        echo -e "  $jqHint"
+    # Use Python script for parallel processing
+    local scriptDir
+    scriptDir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    local pythonScript="${scriptDir}/../helpers/installFonts.py"
+
+    if [ ! -f "$pythonScript" ]; then
+        echo -e "${red}✗ Python script not found: $pythonScript${nc}"
         return 1
     fi
 
-    local fontNames
-    fontNames=$(jq -r '.googleFonts[]?' "$configPath" 2>/dev/null)
-
-    if [ -z "$fontNames" ]; then
-        echo -e "${yellow}No fonts specified in configuration file.${nc}"
-        return 0
+    if ! commandExists python3; then
+        echo -e "${red}✗ python3 is required for font installation. Please install it first.${nc}"
+        return 1
     fi
 
-    local fontCount
-    fontCount=$(echo "$fontNames" | grep -c . || echo "0")
-    echo -e "${cyan}Found $fontCount font(s) in configuration file.${nc}"
-    echo ""
+    # Build variant arguments
+    local variantArgs=()
+    for variant in "${variants[@]}"; do
+        variantArgs+=("$variant")
+    done
 
-    local tempDir
-    tempDir=$(mktemp -d -t GoogleFonts.XXXXXX)
-    local installedCount=0
-    local skippedCount=0
-    local failedCount=0
-
-    while IFS= read -r fontName; do
-        if [ -z "$fontName" ]; then
-            continue
-        fi
-
-        echo -e "${yellow}Processing: $fontName${nc}"
-        local fontInstalled=false
-        local anyVariantFound=false
-
-        for variant in "${variants[@]}"; do
-            local fontPath
-            fontPath=$(downloadGoogleFont "$fontName" "$variant" "$tempDir" 2>/dev/null)
-
-            if [ -n "$fontPath" ] && [ -f "$fontPath" ]; then
-                anyVariantFound=true
-                if installFont "$fontPath"; then
-                    ((installedCount++))
-                    fontInstalled=true
-                else
-                    ((failedCount++))
-                fi
-            fi
-        done
-
-        if [ "$fontInstalled" = false ] && [ "$anyVariantFound" = false ]; then
-            echo -e "  ${yellow}⚠ No variants available for this font${nc}"
-        fi
-
-        if [ "$fontInstalled" = false ]; then
-            ((skippedCount++))
-        fi
-
-        echo ""
-    done <<< "$fontNames"
-
-    echo -e "${cyan}Cleaning up downloaded files...${nc}"
-    rm -rf "$tempDir"
-    echo -e "${green}✓ Temporary files removed successfully${nc}"
-    echo ""
-
-    refreshFontCache
-
-    echo -e "${cyan}Summary:${nc}"
-    echo -e "  ${green}Installed: $installedCount font file(s)${nc}"
-    if [ $skippedCount -gt 0 ]; then
-        echo -e "  ${yellow}Skipped: $skippedCount font(s)${nc}"
-    fi
-    if [ $failedCount -gt 0 ]; then
-        echo -e "  ${red}Failed: $failedCount font file(s)${nc}"
-    fi
-
-    echo ""
-    echo -e "${green}Font installation complete!${nc}"
-    echo -e "${yellow}Note: You may need to restart applications for new fonts to appear.${nc}"
-
-    return 0
+    # Call Python script
+    python3 "$pythonScript" "$configPath" "$fontInstallDir" "${variantArgs[@]}"
+    return $?
 }
