@@ -126,4 +126,3 @@ configureGithubSsh()
     echo -e "${green}✓ GitHub SSH configuration complete${nc}"
     return 0
 }
-

@@ -115,4 +115,3 @@ function Configure-GithubSsh {
     logSuccess "GitHub SSH configuration complete."
     return $true
 }
-

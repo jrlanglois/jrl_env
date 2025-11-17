@@ -4,8 +4,8 @@
 
 set -e
 
-# shellcheck source=../common/colors.sh
-source "$scriptDir/../common/colors.sh"
+# shellcheck source=../common/colours.sh
+source "$scriptDir/../common/colours.sh"
 
 scriptDir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 configsPath="$scriptDir/../configs"

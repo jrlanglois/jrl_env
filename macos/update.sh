@@ -9,8 +9,8 @@ scriptDir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 repoRoot="$(cd "$scriptDir/.." && pwd)"
 macosDir="$scriptDir"
 
-# shellcheck source=../common/colors.sh
-source "$macosDir/../common/colors.sh"
+# shellcheck source=../common/colours.sh
+source "$macosDir/../common/colours.sh"
 
 echo -e "${cyan}=== jrl_env Update ===${nc}"
 echo ""

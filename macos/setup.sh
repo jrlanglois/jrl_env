@@ -7,8 +7,8 @@ set -e
 # Get script directory
 scriptDir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# shellcheck source=../common/colors.sh
-source "$scriptDir/../common/colors.sh"
+# shellcheck source=../common/colours.sh
+source "$scriptDir/../common/colours.sh"
 
 # Parse arguments
 skipFonts=false

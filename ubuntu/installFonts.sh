@@ -10,8 +10,8 @@ fontInstallDirPath="$HOME/.local/share/fonts"
 jqInstallHint="${yellow}  sudo apt-get install -y jq${nc}"
 fontCacheCmd="fc-cache -f -v \"$fontInstallDirPath\" &>/dev/null || true"
 
-# shellcheck source=../common/colors.sh
-source "$scriptDir/../common/colors.sh"
+# shellcheck source=../common/colours.sh
+source "$scriptDir/../common/colours.sh"
 
 # shellcheck source=../common/installFonts.sh
 source "$scriptDir/../common/installFonts.sh"

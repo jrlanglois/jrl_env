@@ -9,8 +9,8 @@ cursorConfigPath="${scriptDir}/../configs/cursorSettings.json"
 cursorSettingsPath="$HOME/.config/Cursor/User/settings.json"
 jqInstallHint="${yellow}  sudo apt-get install -y jq${nc}"
 
-# shellcheck source=../common/colors.sh
-source "$scriptDir/../common/colors.sh"
+# shellcheck source=../common/colours.sh
+source "$scriptDir/../common/colours.sh"
 
 # shellcheck source=../common/configureCursor.sh
 source "$scriptDir/../common/configureCursor.sh"
