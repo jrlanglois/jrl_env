@@ -30,15 +30,15 @@ fi
 # Function to validate JSON file
 validateJsonFile()
 {
-    local file_path=$1
+    local filePath=$1
     local description=$2
 
-    if [ ! -f "$file_path" ]; then
-        errors+=("$description: File not found: $file_path")
+    if [ ! -f "$filePath" ]; then
+        errors+=("$description: File not found: $filePath")
         return 1
     fi
 
-    if jq empty "$file_path" 2>/dev/null; then
+    if jq empty "$filePath" 2>/dev/null; then
         echo -e "${green}✓ $description${nc}"
         return 0
     else
@@ -50,25 +50,25 @@ validateJsonFile()
 # Function to validate apps JSON
 validateAppsJson()
 {
-    local file_path=$1
+    local filePath=$1
     local platform=$2
-    local brew_count
-    local cask_count
-    local apt_count
-    local snap_count
+    local brewCount
+    local caskCount
+    local aptCount
+    local snapCount
 
     if [ "$platform" = "macos" ]; then
-        brew_count=$(jq '.brew | length' "$file_path" 2>/dev/null || echo "0")
-        cask_count=$(jq '.brewCask | length' "$file_path" 2>/dev/null || echo "0")
+        brewCount=$(jq '.brew | length' "$filePath" 2>/dev/null || echo "0")
+        caskCount=$(jq '.brewCask | length' "$filePath" 2>/dev/null || echo "0")
 
-        if [ "$brew_count" = "0" ] && [ "$cask_count" = "0" ]; then
+        if [ "$brewCount" = "0" ] && [ "$caskCount" = "0" ]; then
             warnings+=("$platform apps: No apps specified")
         fi
     elif [ "$platform" = "ubuntu" ]; then
-        apt_count=$(jq '.apt | length' "$file_path" 2>/dev/null || echo "0")
-        snap_count=$(jq '.snap | length' "$file_path" 2>/dev/null || echo "0")
+        aptCount=$(jq '.apt | length' "$filePath" 2>/dev/null || echo "0")
+        snapCount=$(jq '.snap | length' "$filePath" 2>/dev/null || echo "0")
 
-        if [ "$apt_count" = "0" ] && [ "$snap_count" = "0" ]; then
+        if [ "$aptCount" = "0" ] && [ "$snapCount" = "0" ]; then
             warnings+=("$platform apps: No apps specified")
         fi
     fi
@@ -77,22 +77,22 @@ validateAppsJson()
 # Function to validate repositories JSON
 validateRepositoriesJson()
 {
-    local file_path=$1
-    local work_path_win
-    local work_path_unix
-    local repo_count
+    local filePath=$1
+    local workPathWin
+    local workPathUnix
+    local repoCount
 
-    work_path_win=$(jq -r '.workPathWindows' "$file_path" 2>/dev/null)
-    work_path_unix=$(jq -r '.workPathUnix' "$file_path" 2>/dev/null)
+    workPathWin=$(jq -r '.workPathWindows' "$filePath" 2>/dev/null)
+    workPathUnix=$(jq -r '.workPathUnix' "$filePath" 2>/dev/null)
 
-    if [ -z "$work_path_win" ] || [ "$work_path_win" = "null" ]; then
-        if [ -z "$work_path_unix" ] || [ "$work_path_unix" = "null" ]; then
+    if [ -z "$workPathWin" ] || [ "$workPathWin" = "null" ]; then
+        if [ -z "$workPathUnix" ] || [ "$workPathUnix" = "null" ]; then
             errors+=("repositories: Missing workPathWindows or workPathUnix")
         fi
     fi
 
-    repo_count=$(jq '.repositories | length' "$file_path" 2>/dev/null || echo "0")
-    if [ "$repo_count" = "0" ]; then
+    repoCount=$(jq '.repositories | length' "$filePath" 2>/dev/null || echo "0")
+    if [ "$repoCount" = "0" ]; then
         warnings+=("repositories: No repositories specified")
     fi
 }
@@ -100,22 +100,22 @@ validateRepositoriesJson()
 # Function to validate Git config JSON
 validateGitConfigJson()
 {
-    local file_path=$1
-    local has_user
-    local user_name
-    local user_email
+    local filePath=$1
+    local hasUser
+    local userName
+    local userEmail
 
-    has_user=$(jq 'has("user")' "$file_path" 2>/dev/null)
-    if [ "$has_user" != "true" ]; then
+    hasUser=$(jq 'has("user")' "$filePath" 2>/dev/null)
+    if [ "$hasUser" != "true" ]; then
         warnings+=("gitConfig: No user section specified")
     else
-        user_name=$(jq -r '.user.name' "$file_path" 2>/dev/null)
-        user_email=$(jq -r '.user.email' "$file_path" 2>/dev/null)
+        userName=$(jq -r '.user.name' "$filePath" 2>/dev/null)
+        userEmail=$(jq -r '.user.email' "$filePath" 2>/dev/null)
 
-        if [ -z "$user_name" ] || [ "$user_name" = "null" ]; then
+        if [ -z "$userName" ] || [ "$userName" = "null" ]; then
             warnings+=("gitConfig: Missing user.name")
         fi
-        if [ -z "$user_email" ] || [ "$user_email" = "null" ]; then
+        if [ -z "$userEmail" ] || [ "$userEmail" = "null" ]; then
             warnings+=("gitConfig: Missing user.email")
         fi
     fi
@@ -136,8 +136,8 @@ fi
 
 # Other configs
 if validateJsonFile "$configsPath/fonts.json" "fonts.json"; then
-    font_count=$(jq '.googleFonts | length' "$configsPath/fonts.json" 2>/dev/null || echo "0")
-    if [ "$font_count" = "0" ]; then
+    fontCount=$(jq '.googleFonts | length' "$configsPath/fonts.json" 2>/dev/null || echo "0")
+    if [ "$fontCount" = "0" ]; then
         warnings+=("fonts: No fonts specified")
     fi
 fi

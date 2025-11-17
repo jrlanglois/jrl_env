@@ -86,18 +86,18 @@ installOhMyZsh()
 setZshAsDefault()
 {
     echo -e "${cyan}Setting zsh as default shell...${nc}"
-    local ZSH_PATH
-    local CURRENT_SHELL
-
     if ! isZshInstalled; then
         echo -e "${red}✗ zsh is not installed. Please install it first.${nc}"
         return 1
     fi
 
-    ZSH_PATH=$(which zsh)
-    CURRENT_SHELL="$SHELL"
+    local zshPath
+    local currentShell
 
-    if [ "$CURRENT_SHELL" = "$ZSH_PATH" ]; then
+    zshPath=$(which zsh)
+    currentShell="$SHELL"
+
+    if [ "$currentShell" = "$zshPath" ]; then
         echo -e "${green}✓ zsh is already the default shell${nc}"
         return 0
     fi
@@ -105,7 +105,7 @@ setZshAsDefault()
     echo -e "${yellow}Changing default shell to zsh...${nc}"
     echo -e "${yellow}You may be prompted for your password.${nc}"
 
-    if sudo chsh -s "$ZSH_PATH" "$USER"; then
+    if sudo chsh -s "$zshPath" "$USER"; then
         echo -e "${green}✓ Default shell changed to zsh${nc}"
         echo -e "${yellow}Note: This change will take effect after you log out and log back in.${nc}"
         return 0

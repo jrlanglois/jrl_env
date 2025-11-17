@@ -15,7 +15,6 @@ nc='\033[0m' # No Colour
 scriptDir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 configPath="${scriptDir}/../configs/fonts.json"
 fontsDir="$HOME/.local/share/fonts"
-FONTS_DIR="$fontsDir"
 
 # Function to check if a command exists
 commandExists()
@@ -27,7 +26,7 @@ commandExists()
 isFontInstalled()
 {
     local fontName=$1
-    if [ -f "${FONTS_DIR}/${fontName}" ] || find "$fontsDir" -iname "*${fontName}*" -type f 2>/dev/null | grep -q .; then
+    if [ -f "${fontsDir}/${fontName}" ] || find "$fontsDir" -iname "*${fontName}*" -type f 2>/dev/null | grep -q .; then
         return 0
     fi
     return 1
@@ -86,7 +85,7 @@ installFont()
     fi
 
     fontName=$(basename "$fontPath")
-    destinationPath="${FONTS_DIR}/${fontName}"
+    destinationPath="${fontsDir}/${fontName}"
 
     # Check if already installed
     if [ -f "$destinationPath" ]; then
