@@ -25,6 +25,8 @@ getCursorSettingsPath()
 configureCursor()
 {
     local configPath=${1:-$configPath}
+    local cursorSettingsPath
+    local cursorUserDir
 
     echo -e "${cyan}=== Cursor Configuration ===${nc}"
     echo ""
@@ -36,8 +38,8 @@ configureCursor()
     fi
 
     # Get Cursor settings path
-    local cursorSettingsPath=$(getCursorSettingsPath)
-    local cursorUserDir=$(dirname "$cursorSettingsPath")
+    cursorSettingsPath=$(getCursorSettingsPath)
+    cursorUserDir=$(dirname "$cursorSettingsPath")
 
     # Create Cursor User directory if it doesn't exist
     if [ ! -d "$cursorUserDir" ]; then
@@ -56,7 +58,7 @@ configureCursor()
     local existingSettings="{}"
     if [ -f "$cursorSettingsPath" ]; then
         echo -e "${yellow}Reading existing Cursor settings...${nc}"
-        if ! existingSettings=$(cat "$cursorSettingsPath" 2>/dev/null | jq . 2>/dev/null); then
+        if ! existingSettings=$(jq . "$cursorSettingsPath" 2>/dev/null); then
             echo -e "${yellow}⚠ Failed to parse existing settings.json. Creating new file.${nc}"
             existingSettings="{}"
         fi

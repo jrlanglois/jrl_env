@@ -188,7 +188,8 @@ def tidyFile(path: Path, dryRun: bool, preferredNewline: str | None) -> TidyStat
     newText, stats = tidyContent(originalText, preferredNewline)
 
     if stats.modified and not dryRun:
-        path.write_text(newText, encoding="utf-8", newline="")
+        with path.open("w", encoding="utf-8", newline="") as destination:
+            destination.write(newText)
 
     return stats
 

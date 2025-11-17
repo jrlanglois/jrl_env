@@ -23,6 +23,7 @@
         "tree",
         "jq",
         "ripgrep",
+        "shellcheck",
         "bat",
         "exa",
         "fd-find",

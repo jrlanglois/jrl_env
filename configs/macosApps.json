@@ -23,7 +23,8 @@
         "ripgrep",
         "bat",
         "exa",
-        "fd"
+        "fd",
+        "shellcheck"
     ],
     "brewCask":
     [

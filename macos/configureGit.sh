@@ -26,14 +26,16 @@ configureGitUser()
     echo -e "${cyan}Configuring Git user information...${nc}"
 
     # Check current user name
-    local currentName=$(git config --global user.name 2>/dev/null || echo "")
-    local currentEmail=$(git config --global user.email 2>/dev/null || echo "")
+    local currentName
+    local currentEmail
+    currentName=$(git config --global user.name 2>/dev/null || echo "")
+    currentEmail=$(git config --global user.email 2>/dev/null || echo "")
 
     if [ -n "$currentName" ] && [ -n "$currentEmail" ]; then
         echo -e "${yellow}Current Git user configuration:${nc}"
         echo -e "  Name:  $currentName"
         echo -e "  Email: $currentEmail"
-        read -p "Keep existing configuration? (Y/N): " keepExisting
+        read -r -p "Keep existing configuration? (Y/N): " keepExisting
         if [[ "$keepExisting" =~ ^[Yy]$ ]]; then
             echo -e "${green}✓ Keeping existing configuration${nc}"
             return 0
@@ -42,17 +44,17 @@ configureGitUser()
 
     # Get user name
     if [ -z "$currentName" ]; then
-        read -p "Enter your name: " userName
+        read -r -p "Enter your name: " userName
     else
-        read -p "Enter your name [$currentName]: " userName
+        read -r -p "Enter your name [$currentName]: " userName
         userName=${userName:-$currentName}
     fi
 
     # Get user email
     if [ -z "$currentEmail" ]; then
-        read -p "Enter your email: " userEmail
+        read -r -p "Enter your email: " userEmail
     else
-        read -p "Enter your email [$currentEmail]: " userEmail
+        read -r -p "Enter your email [$currentEmail]: " userEmail
         userEmail=${userEmail:-$currentEmail}
     fi
 
