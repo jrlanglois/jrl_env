@@ -1,22 +1,25 @@
 # Helpers
 
-Utility scripts for keeping the repo consistent.  
+Utility scripts for keeping the repo consistent.
 At a glance:
 
 | Script | Purpose | Typical command |
 | --- | --- | --- |
-| `tidy.ps1` / `tidy.sh` | Clean a single file (tabs → spaces, trim whitespace) | `./helpers/tidy.sh file.sh` |
-| `tidyRepo.ps1` / `tidyRepo.sh` | Clean every file under a path | `./helpers/tidyRepo.sh --dry-run` |
+| `tidy.py` (via `tidy.ps1` / `tidy.sh`) | Clean a single file (tabs → spaces, trim whitespace, enforce CRLF for supported extensions) | `./helpers/tidy.sh file.sh` |
+| `tidyRepo.py` (via `tidyRepo.ps1` / `tidyRepo.sh`) | Clean every file under a path | `./helpers/tidyRepo.sh --dry-run` |
 | `convertToAllman.py` | Enforce Allman braces + inline `if …; then` style | `python helpers/convertToAllman.py` |
 | `formatRepo.sh` | Run the whole formatting pipeline (Allman + tidy) | `./helpers/formatRepo.sh` |
 
+All helper scripts use Allman-style control blocks and camelCase identifiers for consistency.
+
 ## Whitespace tidy
 
-### `tidy.ps1` / `tidy.sh`
+### `tidy.py` (via `tidy.ps1` / `tidy.sh`)
 
 - Converts tabs to four spaces
 - Trims trailing whitespace and blank line spam
 - Supports dry runs
+- Forces CRLF endings for `.ps1`, `.sh`, `.json`, and `.md`
 
 ```
 # Windows
@@ -26,7 +29,7 @@ At a glance:
 ./helpers/tidy.sh path/to/file.sh [--dry-run]
 ```
 
-### `tidyRepo.ps1` / `tidyRepo.sh`
+### `tidyRepo.py` (via `tidyRepo.ps1` / `tidyRepo.sh`)
 
 - Recursively runs the single-file tidy across `.ps1`, `.sh`, `.json`, and `.md`
 - Shares the same flags as the single-file version (`--dry-run`, `--path`, etc.)

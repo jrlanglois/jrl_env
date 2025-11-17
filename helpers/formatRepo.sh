@@ -3,6 +3,9 @@
 
 set -e
 
+# Allow CRLF scripts to run under Git Bash on Windows
+set -o igncr 2>/dev/null || true
+
 scriptDir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 repoRoot="$(cd "$scriptDir/.." && pwd)"
 
@@ -15,4 +18,3 @@ bash "$scriptDir/tidyRepo.sh" "$repoRoot"
 
 echo ""
 echo "Formatting complete."
-
