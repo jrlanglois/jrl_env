@@ -16,6 +16,7 @@ skipApps=false
 skipGit=false
 skipCursor=false
 skipRepos=false
+skipSsh=false
 appsOnly=false
 dryRun=false
 noBackup=false
@@ -27,6 +28,7 @@ while [[ $# -gt 0 ]]; do
         --skip-git) skipGit=true ;;
         --skip-cursor) skipCursor=true ;;
         --skip-repos) skipRepos=true ;;
+        --skip-ssh) skipSsh=true ;;
         --apps-only) appsOnly=true ;;
         --dry-run) dryRun=true ;;
         --no-backup) noBackup=true ;;
@@ -55,6 +57,10 @@ fi
 runRepos=false
 if [ "$skipRepos" = false ] && [ "$appsOnly" = false ]; then
     runRepos=true
+fi
+runSsh=false
+if [ "$skipSsh" = false ] && [ "$appsOnly" = false ]; then
+    runSsh=true
 fi
 
 # Load logging functions
@@ -160,6 +166,8 @@ source "$scriptDir/installApps.sh"
 source "$scriptDir/configureGit.sh"
 # shellcheck source=ubuntu/configureCursor.sh
 source "$scriptDir/configureCursor.sh"
+# shellcheck source=ubuntu/configureGithubSsh.sh
+source "$scriptDir/configureGithubSsh.sh"
 # shellcheck source=ubuntu/cloneRepositories.sh
 source "$scriptDir/cloneRepositories.sh"
 
@@ -218,13 +226,28 @@ if [ "$runGit" = true ]; then
     fi
 fi
 
-# 5. Configure Cursor
+# 5. Configure GitHub SSH
+if [ "$runSsh" = true ]; then
+    if [ "$dryRun" = true ]; then
+        logInfo "=== Step 5: Configuring GitHub SSH (DRY RUN) ==="
+        logInfo "Would generate SSH keys for GitHub."
+    else
+        logInfo "=== Step 5: Configuring GitHub SSH ==="
+        if ! configureGithubSsh; then
+            logWarn "GitHub SSH configuration had some issues, continuing..."
+        else
+            logSuccess "GitHub SSH configuration completed"
+        fi
+    fi
+fi
+
+# 6. Configure Cursor
 if [ "$runCursor" = true ]; then
     if [ "$dryRun" = true ]; then
-        logInfo "=== Step 5: Configuring Cursor (DRY RUN) ==="
+        logInfo "=== Step 6: Configuring Cursor (DRY RUN) ==="
         logInfo "Would configure Cursor from cursorSettings.json"
     else
-        logInfo "=== Step 5: Configuring Cursor ==="
+        logInfo "=== Step 6: Configuring Cursor ==="
         if ! configureCursor; then
             logWarn "Cursor configuration had some issues, continuing..."
         else
@@ -233,13 +256,13 @@ if [ "$runCursor" = true ]; then
     fi
 fi
 
-# 6. Clone repositories (only on first run)
+# 7. Clone repositories (only on first run)
 if [ "$runRepos" = true ]; then
     if [ "$dryRun" = true ]; then
-        logInfo "=== Step 6: Cloning repositories (DRY RUN) ==="
+        logInfo "=== Step 7: Cloning repositories (DRY RUN) ==="
         logInfo "Would clone repositories from repositories.json"
     else
-        logInfo "=== Step 6: Cloning repositories ==="
+        logInfo "=== Step 7: Cloning repositories ==="
 
         # Check if repositories have already been cloned
         configPath="$scriptDir/../configs/repositories.json"

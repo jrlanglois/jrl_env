@@ -90,10 +90,11 @@ Edit JSON files in `configs/` to customize:
 - **Apps**: Application packages to install via winget/brew/apt
 - **Fonts**: Google Fonts to download and install
 - **Repositories**: Git repositories to clone (organized by owner)
-- **Git**: User info, defaults, and aliases
+- **Git**: User info, defaults, aliases, and GitHub username/email for SSH
 - **Cursor**: Editor settings and preferences
 - **Shell**: Per-OS shell preferences (e.g., `ohMyZshTheme`)
 - **Cruft**: Packages to uninstall (e.g., Ubuntu `apt` wildcard patterns)
+- **Commands**: Optional `preInstall`/`postInstall` command objects (name, shell, command, runOnce)
 
 ## Using This Repository
 
@@ -104,6 +105,22 @@ To adapt this setup for your own machines:
 3. **Use as a template** for building your own environment setup system
 
 The scripts are designed to be modular and configurable. Update the JSON files in `configs/` to match your needs, and adjust script paths or logic as required for your environment.
+
+### GitHub SSH Automation
+
+Each platform now includes an interactive helper to generate and register GitHub SSH keys using the data from `configs/gitConfig.json`:
+
+- macOS / Ubuntu: `./macos/configureGithubSsh.sh` and `./ubuntu/configureGithubSsh.sh`
+- Windows 11: `.\win11\configureGithubSsh.ps1`
+
+During full setup you can skip this step with `--skip-ssh` (macOS/Ubuntu) or `-skipSsh` (Windows). The helpers:
+
+1. Read the email and `usernameGitHub` fields from `gitConfig.json`
+2. Generate an `ed25519` key pair (default `id_ed25519_github`)
+3. Add the key to the local SSH agent when possible
+4. Copy the public key to the clipboard and optionally open the GitHub SSH settings page
+
+Re-run the script any time you need to rotate keys or target a new GitHub account.
 
 ## Style Guide
 

@@ -7,6 +7,7 @@ param(
     [switch]$skipGit,
     [switch]$skipCursor,
     [switch]$skipRepos,
+    [switch]$skipSsh,
     [switch]$appsOnly,
     [switch]$dryRun,
     [switch]$noBackup
@@ -31,6 +32,7 @@ $runApps = -not $skipApps -or $appsOnly
 $runGit = -not $skipGit -and -not $appsOnly
 $runCursor = -not $skipCursor -and -not $appsOnly
 $runRepos = -not $skipRepos -and -not $appsOnly
+$runSsh = -not $skipSsh -and -not $appsOnly
 
 $configPath = Join-Path (Join-Path $scriptRoot "..\configs") "win11.json"
 $osConfig = Get-Content $configPath -Raw | ConvertFrom-Json
@@ -203,6 +205,7 @@ if (-not $dryRun)
 . "$scriptRoot\installApps.ps1"
 . "$scriptRoot\configureGit.ps1"
 . "$scriptRoot\configureCursor.ps1"
+. "$scriptRoot\configureGithubSsh.ps1"
 . "$scriptRoot\cloneRepositories.ps1"
 
 logInfo "Starting complete environment setup..."
@@ -319,17 +322,39 @@ if ($runGit)
     }
 }
 
-# 6. Configure Cursor
+# 6. Configure GitHub SSH
+if ($runSsh)
+{
+    if ($dryRun)
+    {
+        logInfo "=== Step 6: Configuring GitHub SSH (DRY RUN) ==="
+        logInfo "Would generate SSH keys for GitHub."
+    }
+    else
+    {
+        logInfo "=== Step 6: Configuring GitHub SSH ==="
+        if (-not (Configure-GithubSsh))
+        {
+            logWarn "GitHub SSH configuration had some issues, continuing..."
+        }
+        else
+        {
+            logSuccess "GitHub SSH configuration completed"
+        }
+    }
+}
+
+# 7. Configure Cursor
 if ($runCursor)
 {
     if ($dryRun)
     {
-        logInfo "=== Step 6: Configuring Cursor (DRY RUN) ==="
+        logInfo "=== Step 7: Configuring Cursor (DRY RUN) ==="
         logInfo "Would configure Cursor from cursorSettings.json"
     }
     else
     {
-        logInfo "=== Step 6: Configuring Cursor ==="
+        logInfo "=== Step 7: Configuring Cursor ==="
         if (-not (configureCursor))
         {
             logWarn "Cursor configuration had some issues, continuing..."
@@ -341,12 +366,12 @@ if ($runCursor)
     }
 }
 
-# 7. Clone repositories (only on first run)
+# 8. Clone repositories (only on first run)
 if ($runRepos)
 {
     if ($dryRun)
     {
-        logInfo "=== Step 7: Cloning repositories (DRY RUN) ==="
+        logInfo "=== Step 8: Cloning repositories (DRY RUN) ==="
         logInfo "Would clone repositories from repositories.json"
     }
     else

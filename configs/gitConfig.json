@@ -2,7 +2,8 @@
     "user":
     {
         "name": "Joël R. Langlois",
-        "email": "joel.r.langlois@gmail.com"
+        "email": "joel.r.langlois@gmail.com",
+        "usernameGitHub": "jrlanglois"
     },
     "defaults":
     {
