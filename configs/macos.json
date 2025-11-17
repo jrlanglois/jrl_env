@@ -83,6 +83,12 @@
                 "runOnce": false,
                 "shell": "zsh",
                 "command": "omz update"
+            },
+            {
+                "name": "installXcode",
+                "runOnce": true,
+                "shell": "bash",
+                "command": "xcodes install 26.1.1"
             }
         ]
     }
