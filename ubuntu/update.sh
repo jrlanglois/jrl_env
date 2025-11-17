@@ -9,27 +9,31 @@ scriptDir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 repoRoot="$(cd "$scriptDir/.." && pwd)"
 ubuntuDir="$scriptDir"
 
+# shellcheck source=../helpers/utilities.sh
+sourceIfExists "$ubuntuDir/../helpers/utilities.sh"
 # shellcheck source=../common/colours.sh
-source "$ubuntuDir/../common/colours.sh"
+sourceIfExists "$ubuntuDir/../common/colours.sh"
+# shellcheck source=../helpers/logging.sh
+sourceIfExists "$ubuntuDir/../helpers/logging.sh"
 
-echo -e "${cyan}=== jrl_env Update ===${nc}"
+logSection "jrl_env Update"
 echo ""
 
 # Check if we're in a git repository
 if [ ! -d "$repoRoot/.git" ]; then
-    echo -e "${red}✗ Not a git repository. Please clone the repository first.${nc}"
+    logError "Not a git repository. Please clone the repository first."
     exit 1
 fi
 
-echo -e "${yellow}Pulling latest changes...${nc}"
+logNote "Pulling latest changes..."
 cd "$repoRoot"
 
 if ! git pull; then
-    echo -e "${yellow}⚠ Git pull had issues. Continuing anyway...${nc}"
+    logWarning "Git pull had issues. Continuing anyway..."
 fi
 
 echo ""
-echo -e "${yellow}Re-running setup...${nc}"
+logNote "Re-running setup..."
 echo ""
 
 # Run the setup script

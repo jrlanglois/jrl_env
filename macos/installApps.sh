@@ -7,16 +7,13 @@ set -e
 # Get script directory
 scriptDir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+# shellcheck source=../helpers/utilities.sh
+source "$scriptDir/../helpers/utilities.sh"
 # shellcheck source=../common/colours.sh
-source "$scriptDir/../common/colours.sh"
+sourceIfExists "$scriptDir/../common/colours.sh"
 
 appsConfigPath="${scriptDir}/../configs/macos.json"
-jqInstallHint="${yellow}  brew install jq${nc}"
-
-commandExists()
-{
-    command -v "$1" >/dev/null 2>&1
-}
+jqInstallHint="  brew install jq"
 
 installApps_checkPrimary()
 {
@@ -52,71 +49,7 @@ installApps_extractPrimary='.brew[]?'
 installApps_extractSecondary='.brewCask[]?'
 
 # shellcheck source=../common/installApps.sh
-source "$scriptDir/../common/installApps.sh"
-
-runConfigCommands()
-{
-    local phase=$1
-
-    if [ ! -f "$appsConfigPath" ]; then
-        return
-    fi
-
-    if ! commandExists jq; then
-        echo -e "${yellow}⚠ jq is not available; skipping ${phase} commands.${nc}"
-        return
-    fi
-
-    local cmdJsonList
-    cmdJsonList=$(jq -c --arg phase "$phase" '.commands[$phase] // [] | .[]' "$appsConfigPath" 2>/dev/null)
-    if [ -z "$cmdJsonList" ]; then
-        return
-    fi
-
-    local cacheDir="$HOME/.cache/jrl_env/commands"
-    mkdir -p "$cacheDir"
-
-    while IFS= read -r cmdJson; do
-        [ -z "$cmdJson" ] && continue
-
-        local name shell command runOnce
-        name=$(echo "$cmdJson" | jq -r '.name // "command"' 2>/dev/null)
-        shell=$(echo "$cmdJson" | jq -r '.shell // "bash"' 2>/dev/null)
-        command=$(echo "$cmdJson" | jq -r '.command // ""' 2>/dev/null)
-        runOnce=$(echo "$cmdJson" | jq -r '.runOnce // false' 2>/dev/null)
-
-        if [ -z "$command" ] || [ "$command" = "null" ]; then
-            continue
-        fi
-
-        local safeName
-        safeName=$(echo "${phase}_${name}" | tr -cs '[:alnum:]_' '_')
-        local flagFile="${cacheDir}/${safeName}.flag"
-
-        if [ "$runOnce" = "true" ] && [ -f "$flagFile" ]; then
-            echo -e "${yellow}Skipping $name (run once already executed).${nc}"
-            continue
-        fi
-
-        if ! commandExists "$shell"; then
-            echo -e "${red}✗ Command shell '$shell' not available for $name.${nc}"
-            continue
-        fi
-
-        echo -e "${cyan}Running $name...${nc}"
-        if "$shell" -lc "$command"; then
-            echo -e "${green}✓ $name completed${nc}"
-            if [ "$runOnce" = "true" ]; then
-                touch "$flagFile"
-            fi
-        else
-            echo -e "${red}✗ $name failed${nc}"
-        fi
-    done <<< "$cmdJsonList"
-}
-
-# shellcheck source=../common/installApps.sh
-source "$scriptDir/../common/installApps.sh"
+sourceIfExists "$scriptDir/../common/installApps.sh"
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     runConfigCommands "preInstall"

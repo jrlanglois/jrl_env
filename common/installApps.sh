@@ -3,10 +3,12 @@
 
 # shellcheck disable=SC2154 # colours supplied by wrappers
 
-commandExists()
-{
-    command -v "$1" >/dev/null 2>&1
-}
+# Source utilities and logging functions (utilities must be direct source)
+scriptDir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=../helpers/utilities.sh
+source "$scriptDir/../helpers/utilities.sh"
+# shellcheck source=../helpers/logging.sh
+sourceIfExists "$scriptDir/../helpers/logging.sh"
 
 installPackages()
 {
@@ -23,7 +25,7 @@ installPackages()
         return 0
     fi
 
-    echo -e "${cyan}=== Processing ${label} ===${nc}"
+    logSection "Processing ${label}"
     echo ""
 
     while IFS= read -r packageName; do
@@ -31,24 +33,24 @@ installPackages()
             continue
         fi
 
-        echo -e "${yellow}Processing: $packageName${nc}"
+        logNote "Processing: $packageName"
 
         if "$checkFunction" "$packageName"; then
-            echo -e "  ${cyan}Already installed. Updating...${nc}"
+            logInfo "  Already installed. Updating..."
             if "$updateFunction" "$packageName"; then
-                echo -e "  ${green}✓ Updated successfully${nc}"
+                logSuccess "  Updated successfully"
                 ((updatedCount++))
             else
-                echo -e "  ${yellow}⚠ Update check completed (may already be up to date)${nc}"
+                logWarning "  Update check completed (may already be up to date)"
                 ((updatedCount++))
             fi
         else
-            echo -e "  ${cyan}Not installed. Installing...${nc}"
+            logInfo "  Not installed. Installing..."
             if "$installFunction" "$packageName"; then
-                echo -e "  ${green}✓ Installed successfully${nc}"
+                logSuccess "  Installed successfully"
                 ((installedCount++))
             else
-                echo -e "  ${red}✗ Installation failed${nc}"
+                logError "  Installation failed"
                 ((failedCount++))
             fi
         fi
@@ -70,7 +72,7 @@ installFromConfig()
     local updateFunction=$6
 
     local packages
-    packages=$(jq -r "$packageExtractor" "$configPath" 2>/dev/null || echo "")
+    packages=$(getJsonArray "$configPath" "$packageExtractor")
 
     installPackages "$packages" "$checkFunction" "$installFunction" "$updateFunction" "$packageLabel"
 
@@ -86,20 +88,18 @@ installFromConfig()
 installApps()
 {
     local configPath=${1:-$appsConfigPath}
-    local jqHint="${jqInstallHint:-${yellow}Please install jq via your package manager.${nc}}"
+    local jqHint="${jqInstallHint:-Please install jq via your package manager.}"
 
     if [ ! -f "$configPath" ]; then
-        echo -e "${red}✗ Configuration file not found: $configPath${nc}"
+        logError "Configuration file not found: $configPath"
         return 1
     fi
 
-    if ! commandExists jq; then
-        echo -e "${red}✗ jq is required to parse JSON. Please install it first.${nc}"
-        echo -e "  $jqHint"
+    if ! requireJq "$jqHint"; then
         return 1
     fi
 
-    echo -e "${cyan}=== Application Installation ===${nc}"
+    logSection "Application Installation"
     echo ""
 
     local totalInstalled=0
@@ -116,12 +116,119 @@ installApps()
     totalUpdated=$((totalUpdated + installFromConfig_updated))
     totalFailed=$((totalFailed + installFromConfig_failed))
 
-    echo -e "${cyan}Summary:${nc}"
-    echo -e "  ${green}Installed: $totalInstalled${nc}"
-    echo -e "  ${green}Updated: $totalUpdated${nc}"
+    logInfo "Summary:"
+    logSuccess "  Installed: $totalInstalled"
+    logSuccess "  Updated: $totalUpdated"
     if [ $totalFailed -gt 0 ]; then
-        echo -e "  ${red}Failed: $totalFailed${nc}"
+        logError "  Failed: $totalFailed"
     fi
 
     return 0
+}
+
+# Parse a command JSON object into variables
+# Sets: cmdName, cmdShell, cmdCommand, cmdRunOnce
+parseCommandJson()
+{
+    local cmdJson="$1"
+    cmdName=$(echo "$cmdJson" | jq -r '.name // "command"' 2>/dev/null)
+    cmdShell=$(echo "$cmdJson" | jq -r '.shell // "bash"' 2>/dev/null)
+    cmdCommand=$(echo "$cmdJson" | jq -r '.command // ""' 2>/dev/null)
+    cmdRunOnce=$(echo "$cmdJson" | jq -r '.runOnce // false' 2>/dev/null)
+}
+
+# Get the flag file path for a run-once command
+getCommandFlagFile()
+{
+    local phase="$1"
+    local name="$2"
+    local cacheDir="$HOME/.cache/jrl_env/commands"
+    mkdir -p "$cacheDir"
+    local safeName
+    safeName=$(echo "${phase}_${name}" | tr -cs '[:alnum:]_' '_')
+    echo "${cacheDir}/${safeName}.flag"
+}
+
+# Check if a run-once command has already been executed
+isCommandAlreadyRun()
+{
+    local flagFile="$1"
+    [ -f "$flagFile" ]
+}
+
+# Mark a run-once command as executed
+markCommandAsRun()
+{
+    local flagFile="$1"
+    touch "$flagFile"
+}
+
+# Execute a single command from the config
+executeConfigCommand()
+{
+    local phase="$1"
+    local cmdJson="$2"
+    local configPath="${3:-$appsConfigPath}"
+
+    [ -z "$cmdJson" ] && return 0
+
+    local cmdName cmdShell cmdCommand cmdRunOnce
+    parseCommandJson "$cmdJson"
+
+    if [ -z "$cmdCommand" ] || [ "$cmdCommand" = "null" ]; then
+        return 0
+    fi
+
+    local flagFile
+    flagFile=$(getCommandFlagFile "$phase" "$cmdName")
+
+    if [ "$cmdRunOnce" = "true" ] && isCommandAlreadyRun "$flagFile"; then
+        logWarning "Skipping $cmdName (run once already executed)."
+        return 0
+    fi
+
+    if ! commandExists "$cmdShell"; then
+        logError "Command shell '$cmdShell' not available for $cmdName."
+        return 1
+    fi
+
+    logInfo "Running $cmdName..."
+    if "$cmdShell" -lc "$cmdCommand"; then
+        logSuccess "$cmdName completed"
+        if [ "$cmdRunOnce" = "true" ]; then
+            markCommandAsRun "$flagFile"
+        fi
+        return 0
+    else
+        logError "$cmdName failed"
+        return 1
+    fi
+}
+
+# Run commands from a specific phase (preInstall/postInstall)
+runConfigCommands()
+{
+    local phase="$1"
+    local configPath="${2:-$appsConfigPath}"
+    local jqHint="${jqInstallHint:-Please install jq via your package manager.}"
+
+    if [ ! -f "$configPath" ]; then
+        return 0
+    fi
+
+    if ! requireJq "$jqHint"; then
+        logWarning "jq is not available; skipping ${phase} commands."
+        return 0
+    fi
+
+    local cmdJsonList
+    cmdJsonList=$(jq -c --arg phase "$phase" '.commands[$phase] // [] | .[]' "$configPath" 2>/dev/null)
+
+    if [ -z "$cmdJsonList" ]; then
+        return 0
+    fi
+
+    while IFS= read -r cmdJson; do
+        executeConfigCommand "$phase" "$cmdJson" "$configPath"
+    done <<< "$cmdJsonList"
 }

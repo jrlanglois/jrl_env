@@ -3,13 +3,15 @@
 
 # shellcheck disable=SC2154 # colour variables provided by callers
 
+# Source utilities and logging functions (utilities must be direct source)
+scriptDir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=../helpers/utilities.sh
+source "$scriptDir/../helpers/utilities.sh"
+# shellcheck source=../helpers/logging.sh
+sourceIfExists "$scriptDir/../helpers/logging.sh"
+
 tempDirBase="${TMPDIR:-/tmp}"
 fontInstallDir=""
-
-commandExists()
-{
-    command -v "$1" >/dev/null 2>&1
-}
 
 isFontInstalled()
 {
@@ -80,7 +82,7 @@ downloadGoogleFont()
                 fileSize=$(stat -f%z "$filePath" 2>/dev/null || stat -c%s "$filePath" 2>/dev/null || echo "0")
                 if [ "$fileSize" -gt 1000 ]; then
                     # Basic check: TTF/OTF files should have reasonable size
-                    echo -e "    ${green}✓ Downloaded $variant successfully${nc}"
+                    logSuccess "    Downloaded $variant successfully"
                     echo "$filePath"
                     return 0
                 else
@@ -129,17 +131,17 @@ downloadGoogleFont()
                                 if woff2_decompress "$filePath" -o "$ttfPath" 2>/dev/null && [ -f "$ttfPath" ]; then
                                     rm -f "$filePath"
                                     filePath="$ttfPath"
-                                    echo -e "    ${green}✓ Downloaded and converted $variant successfully (via Google Fonts API)${nc}"
+                                    logSuccess "    Downloaded and converted $variant successfully (via Google Fonts API)"
                                 else
-                                    echo -e "    ${yellow}⚠ Downloaded WOFF2 format (may not be installable on all systems)${nc}"
-                                    echo -e "    ${yellow}  Install woff2 tools to convert: sudo apt-get install woff2${nc}"
+                                    logWarning "    Downloaded WOFF2 format (may not be installable on all systems)"
+                                    logNote "    Install woff2 tools to convert: sudo apt-get install woff2"
                                 fi
                             else
-                                echo -e "    ${yellow}⚠ Downloaded WOFF2 format (may not be installable on all systems)${nc}"
-                                echo -e "    ${yellow}  Install woff2 tools to convert: sudo apt-get install woff2${nc}"
+                                logWarning "    Downloaded WOFF2 format (may not be installable on all systems)"
+                                logNote "    Install woff2 tools to convert: sudo apt-get install woff2"
                             fi
                         else
-                            echo -e "    ${green}✓ Downloaded $variant successfully (via Google Fonts API)${nc}"
+                            logSuccess "    Downloaded $variant successfully (via Google Fonts API)"
                         fi
                         echo "$filePath"
                         return 0
@@ -159,7 +161,7 @@ installFont()
     local fontPath=$1
 
     if [ ! -f "$fontPath" ]; then
-        echo -e "    ${red}✗ Font file not found: $fontPath${nc}"
+        logError "    Font file not found: $fontPath"
         return 1
     fi
 
@@ -167,9 +169,9 @@ installFont()
     local fileExt
     fileExt=$(echo "$fontPath" | sed 's/.*\.//' | tr '[:upper:]' '[:lower:]')
     if [ "$fileExt" = "woff2" ]; then
-        echo -e "    ${yellow}⚠ WOFF2 format cannot be directly installed${nc}"
-        echo -e "    ${yellow}  File saved at: $fontPath${nc}"
-        echo -e "    ${yellow}  Convert to TTF first using woff2 tools${nc}"
+        logWarning "    WOFF2 format cannot be directly installed"
+        logNote "    File saved at: $fontPath"
+        logNote "    Convert to TTF first using woff2 tools"
         return 1
     fi
 
@@ -179,17 +181,17 @@ installFont()
     destinationPath="${fontInstallDir}/${fontName}"
 
     if [ -f "$destinationPath" ]; then
-        echo -e "    ${yellow}⚠ Font already installed, skipping...${nc}"
+        logWarning "    Font already installed, skipping..."
         return 0
     fi
 
     mkdir -p "$fontInstallDir"
 
     if cp "$fontPath" "$destinationPath"; then
-        echo -e "    ${green}✓ Installed successfully${nc}"
+        logSuccess "    Installed successfully"
         return 0
     else
-        echo -e "    ${red}✗ Installation failed${nc}"
+        logError "    Installation failed"
         return 1
     fi
 }
@@ -213,7 +215,7 @@ installGoogleFonts()
     fi
 
     if [ ! -f "$configPath" ]; then
-        echo -e "${red}✗ Configuration file not found: $configPath${nc}"
+        logError "Configuration file not found: $configPath"
         return 1
     fi
 
@@ -223,12 +225,12 @@ installGoogleFonts()
     local pythonScript="${scriptDir}/../helpers/installFonts.py"
 
     if [ ! -f "$pythonScript" ]; then
-        echo -e "${red}✗ Python script not found: $pythonScript${nc}"
+        logError "Python script not found: $pythonScript"
         return 1
     fi
 
     if ! commandExists python3; then
-        echo -e "${red}✗ python3 is required for font installation. Please install it first.${nc}"
+        logError "python3 is required for font installation. Please install it first."
         return 1
     fi
 

@@ -1,6 +1,36 @@
 # Helpers
 
-Utility scripts for keeping the repo consistent.
+Utility scripts and shared modules for keeping the repo consistent and DRY.
+
+## Shared Modules
+
+### `utilities.sh`
+Generic Bash utility functions used across the codebase:
+- **`sourceIfExists(filePath)`**: Safely source a file if it exists, otherwise echo an error to stderr. Used throughout all `.sh` files to prevent failures when optional files are missing.
+
+### `logging.sh`
+Shared Bash logging functions for consistent output formatting. All scripts should use these instead of raw `echo` statements:
+- **`logInfo(message)`**: Print an info message in cyan
+- **`logSuccess(message)`**: Print a success message with green checkmark
+- **`logError(message)`**: Print an error message with red cross
+- **`logWarning(message)`**: Print a warning message with yellow warning symbol
+- **`logNote(message)`**: Print a note in yellow
+- **`logSection(message)`**: Print a section header in cyan with `===` borders
+
+**Note**: Requires `common/colours.sh` to be sourced first.
+
+### `logging.py`
+Shared Python logging functions for consistent output formatting in Python scripts:
+- **`printInfo(message)`**: Print an info message in cyan
+- **`printSuccess(message)`**: Print a success message in green
+- **`printError(message)`**: Print an error message in red
+- **`printWarning(message)`**: Print a warning message in yellow
+- **`printSection(message)`**: Print a section header in cyan with `===` borders
+- **`safePrint(*args, **kwargs)`**: Thread-safe print function (uses a lock)
+- **`colourise(text, code, enable)`**: Apply ANSI colour codes to text if enabled
+
+## Formatting Scripts
+
 At a glance:
 
 | Script | Purpose | Typical command |

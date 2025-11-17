@@ -4,7 +4,13 @@
 import argparse
 import os
 import re
+import sys
 from pathlib import Path
+
+# Import shared logging utilities
+scriptDir = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, scriptDir)
+from logging import printSection, printInfo, printSuccess, printWarning
 
 
 def parseArguments():
@@ -162,14 +168,15 @@ def main():
             )
 
     summaryHeader = "DRY RUN SUMMARY" if args.dryRun else "UPDATE SUMMARY"
-    print(f"\n=== {summaryHeader} ===")
-    print(f"Processed files: {len(shellFiles)}")
-    print(f"Files changed : {totalChanged}")
-    print(f"Function braces updated: {totalFunctionUpdates}")
-    print(f"Else braces updated    : {totalElseUpdates}")
-    print(f"Inline if updates      : {totalIfUpdates}")
-    print(f"Inline while updates   : {totalWhileUpdates}")
-    print(f"Inline for updates     : {totalForUpdates}")
+    print()
+    printSection(summaryHeader)
+    printInfo(f"Processed files: {len(shellFiles)}")
+    printInfo(f"Files changed : {totalChanged}")
+    printInfo(f"Function braces updated: {totalFunctionUpdates}")
+    printInfo(f"Else braces updated    : {totalElseUpdates}")
+    printInfo(f"Inline if updates      : {totalIfUpdates}")
+    printInfo(f"Inline while updates   : {totalWhileUpdates}")
+    printInfo(f"Inline for updates     : {totalForUpdates}")
 
 
 if __name__ == "__main__":

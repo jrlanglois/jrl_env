@@ -4,10 +4,12 @@
 
 set -e
 
-# shellcheck source=../common/colours.sh
-source "$scriptDir/../common/colours.sh"
-
 scriptDir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# shellcheck source=../helpers/utilities.sh
+source "$scriptDir/../helpers/utilities.sh"
+# shellcheck source=../common/colours.sh
+sourceIfExists "$scriptDir/../common/colours.sh"
 configsPath="$scriptDir/../configs"
 
 errors=()

@@ -7,65 +7,22 @@ set -e
 # Get script directory
 scriptDir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+# shellcheck source=../helpers/utilities.sh
+source "$scriptDir/../helpers/utilities.sh"
 # shellcheck source=../common/colours.sh
-source "$scriptDir/../common/colours.sh"
+sourceIfExists "$scriptDir/../common/colours.sh"
+# shellcheck source=../common/setupArgs.sh
+sourceIfExists "$scriptDir/../common/setupArgs.sh"
 
 # Parse arguments
-skipFonts=false
-skipApps=false
-skipGit=false
-skipCursor=false
-skipRepos=false
-skipSsh=false
-appsOnly=false
-dryRun=false
-noBackup=false
-
-while [[ $# -gt 0 ]]; do
-    case $1 in
-        --skip-fonts) skipFonts=true ;;
-        --skip-apps) skipApps=true ;;
-        --skip-git) skipGit=true ;;
-        --skip-cursor) skipCursor=true ;;
-        --skip-repos) skipRepos=true ;;
-        --skip-ssh) skipSsh=true ;;
-        --apps-only) appsOnly=true ;;
-        --dry-run) dryRun=true ;;
-        --no-backup) noBackup=true ;;
-        *) echo -e "${red}Unknown option: $1${nc}"; exit 1 ;;
-    esac
-    shift
-done
+parseSetupArgs "$@"
 
 # Determine what to run
-runFonts=false
-if [ "$skipFonts" = false ] && [ "$appsOnly" = false ]; then
-    runFonts=true
-fi
-runApps=false
-if [ "$skipApps" = false ] || [ "$appsOnly" = true ]; then
-    runApps=true
-fi
-runGit=false
-if [ "$skipGit" = false ] && [ "$appsOnly" = false ]; then
-    runGit=true
-fi
-runCursor=false
-if [ "$skipCursor" = false ] && [ "$appsOnly" = false ]; then
-    runCursor=true
-fi
-runRepos=false
-if [ "$skipRepos" = false ] && [ "$appsOnly" = false ]; then
-    runRepos=true
-fi
-runSsh=false
-if [ "$skipSsh" = false ] && [ "$appsOnly" = false ]; then
-    runSsh=true
-fi
+determineRunFlags
 
 # Load logging functions
-# shellcheck source=common/logging.sh
-source "$scriptDir/../common/logging.sh"
+# shellcheck source=../common/logging.sh
+sourceIfExists "$scriptDir/../common/logging.sh"
 
 # Initialize logging
 logFile=$(initLogging)
@@ -157,19 +114,19 @@ fi
 
 # Source all required scripts
 # shellcheck source=ubuntu/setupDevEnv.sh
-source "$scriptDir/setupDevEnv.sh"
+sourceIfExists "$scriptDir/setupDevEnv.sh"
 # shellcheck source=ubuntu/installFonts.sh
-source "$scriptDir/installFonts.sh"
+sourceIfExists "$scriptDir/installFonts.sh"
 # shellcheck source=ubuntu/installApps.sh
-source "$scriptDir/installApps.sh"
+sourceIfExists "$scriptDir/installApps.sh"
 # shellcheck source=ubuntu/configureGit.sh
-source "$scriptDir/configureGit.sh"
+sourceIfExists "$scriptDir/configureGit.sh"
 # shellcheck source=ubuntu/configureCursor.sh
-source "$scriptDir/configureCursor.sh"
+sourceIfExists "$scriptDir/configureCursor.sh"
 # shellcheck source=ubuntu/configureGithubSsh.sh
-source "$scriptDir/configureGithubSsh.sh"
+sourceIfExists "$scriptDir/configureGithubSsh.sh"
 # shellcheck source=ubuntu/cloneRepositories.sh
-source "$scriptDir/cloneRepositories.sh"
+sourceIfExists "$scriptDir/cloneRepositories.sh"
 
 logInfo "Starting complete environment setup..."
 

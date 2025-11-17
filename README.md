@@ -24,9 +24,27 @@ jrl_env/
 │   ├── repositories.json
 │   ├── gitConfig.json
 │   └── cursorSettings.json
+├── common/           # Shared Bash logic (DRY)
+│   ├── colours.sh
+│   ├── logging.sh
+│   ├── configureGit.sh
+│   ├── configureCursor.sh
+│   ├── configureGithubSsh.sh
+│   ├── cloneRepositories.sh
+│   ├── installApps.sh
+│   └── installFonts.sh
+├── helpers/          # Utility scripts and shared modules
+│   ├── logging.sh    # Shared Bash logging functions
+│   ├── logging.py    # Shared Python logging functions
+│   ├── utilities.sh  # Generic Bash utilities (e.g., sourceIfExists)
+│   ├── formatRepo.sh
+│   ├── tidyRepo.sh
+│   ├── tidy.sh
+│   ├── tidy.py
+│   └── convertToAllman.py
 ├── win11/            # PowerShell scripts for Windows
-├── macos/            # Bash scripts for macOS
-└── ubuntu/           # Bash scripts for Ubuntu
+├── macos/            # Bash scripts for macOS (thin wrappers)
+└── ubuntu/           # Bash scripts for Ubuntu (thin wrappers)
 ```
 
 ## Quick Start
@@ -122,6 +140,18 @@ During full setup you can skip this step with `--skip-ssh` (macOS/Ubuntu) or `-s
 
 Re-run the script any time you need to rotate keys or target a new GitHub account.
 
+## Architecture
+
+This repository follows DRY (Don't Repeat Yourself) and SOLID principles:
+
+- **Shared Logic**: Common Bash functionality is centralized in `common/` (e.g., Git configuration, app installation, font installation)
+- **Thin Wrappers**: Platform-specific scripts (`macos/`, `ubuntu/`) are thin wrappers that set platform-specific variables and source shared logic
+- **Shared Utilities**: Generic utilities are in `helpers/`:
+  - `helpers/utilities.sh`: Generic Bash utilities (e.g., `sourceIfExists()` for safe file sourcing)
+  - `helpers/logging.sh`: Consistent logging functions for Bash (`logInfo`, `logSuccess`, `logError`, `logWarning`, `logNote`, `logSection`)
+  - `helpers/logging.py`: Consistent logging functions for Python (`printInfo`, `printSuccess`, `printError`, `printWarning`, `safePrint`, `printSection`)
+- **Safe Sourcing**: All scripts use `sourceIfExists()` to safely source files, preventing failures when files are missing
+
 ## Style Guide
 
 This repository follows consistent coding style conventions:
@@ -132,6 +162,7 @@ This repository follows consistent coding style conventions:
 - **Boolean functions**: Use `is/was/{verb}` prefixes for clarity (e.g., `isGitInstalled`, `isRepositoryCloned`).
 - **Spelling**: Canadian English conventions (`-ise` for verbs, `-our` for nouns like `colour`, `behaviour`).
 - **JSON formatting**: 4-space indentation, CRLF line endings.
+- **Logging**: Use shared logging functions from `helpers/logging.sh` (Bash) or `helpers/logging.py` (Python) instead of raw `echo` statements.
 
 These conventions apply to all PowerShell (`.ps1`) and Bash (`.sh`) scripts in this repository. Note: PowerShell has some syntax quirks that may prevent Allman braces in certain cases (e.g., pipeline operations), but we use them wherever possible.
 

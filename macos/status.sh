@@ -3,66 +3,66 @@
 
 set -e
 
-# Colours for output
-red='\033[0;31m'
-green='\033[0;32m'
-yellow='\033[1;33m'
-cyan='\033[0;36m'
-nc='\033[0m' # No Colour
-
 scriptDir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 configsPath="$scriptDir/../configs"
 
-echo -e "${cyan}=== jrl_env Status Check ===${nc}"
+# shellcheck source=../helpers/utilities.sh
+sourceIfExists "$scriptDir/../helpers/utilities.sh"
+# shellcheck source=../common/colours.sh
+sourceIfExists "$scriptDir/../common/colours.sh"
+# shellcheck source=../helpers/logging.sh
+sourceIfExists "$scriptDir/../helpers/logging.sh"
+
+logSection "jrl_env Status Check"
 echo ""
 
 # Check Git
-echo -e "${yellow}Git:${nc}"
+logNote "Git:"
 if command -v git >/dev/null 2>&1; then
     gitVersion=$(git --version 2>/dev/null)
-    echo -e "  ${green}✓ Installed: $gitVersion${nc}"
+    logSuccess "  Installed: $gitVersion"
 
     gitName=$(git config --global user.name 2>/dev/null || echo "")
     gitEmail=$(git config --global user.email 2>/dev/null || echo "")
     if [ -n "$gitName" ] && [ -n "$gitEmail" ]; then
-        echo -e "  ${green}✓ Configured: $gitName <$gitEmail>${nc}"
+        logSuccess "  Configured: $gitName <$gitEmail>"
     else
-        echo -e "  ${yellow}⚠ Not configured${nc}"
+        logWarning "  Not configured"
     fi
 else
-    echo -e "  ${red}✗ Not installed${nc}"
+    logError "  Not installed"
 fi
 echo ""
 
 # Check Homebrew
-echo -e "${yellow}Homebrew:${nc}"
+logNote "Homebrew:"
 if command -v brew >/dev/null 2>&1; then
     brewVersion=$(brew --version 2>/dev/null | head -n1)
-    echo -e "  ${green}✓ Installed: $brewVersion${nc}"
+    logSuccess "  Installed: $brewVersion"
 else
-    echo -e "  ${red}✗ Not installed${nc}"
+    logError "  Not installed"
 fi
 echo ""
 
 # Check zsh
-echo -e "${yellow}zsh:${nc}"
+logNote "zsh:"
 if command -v zsh >/dev/null 2>&1; then
     zshVersion=$(zsh --version 2>/dev/null)
-    echo -e "  ${green}✓ Installed: $zshVersion${nc}"
+    logSuccess "  Installed: $zshVersion"
 
     if [ -d "$HOME/.oh-my-zsh" ]; then
-        echo -e "  ${green}✓ Oh My Zsh installed${nc}"
+        logSuccess "  Oh My Zsh installed"
     else
-        echo -e "  ${yellow}⚠ Oh My Zsh not installed${nc}"
+        logWarning "  Oh My Zsh not installed"
     fi
 else
-    echo -e "  ${red}✗ Not installed${nc}"
+    logError "  Not installed"
 fi
 echo ""
 
 # Check installed apps
 if [ -f "$configsPath/macos.json" ]; then
-    echo -e "${yellow}Installed Applications:${nc}"
+    logNote "Installed Applications:"
     if command -v jq >/dev/null 2>&1 && command -v brew >/dev/null 2>&1; then
         installed=0
         notInstalled=0
@@ -75,35 +75,35 @@ if [ -f "$configsPath/macos.json" ]; then
                     ((installed++))
                 else
                     ((notInstalled++))
-                    echo -e "  ${red}✗ $app${nc}"
+                    logError "  $app"
                 fi
             fi
         done <<< "$brewApps"
 
         if [ $installed -gt 0 ]; then
-            echo -e "  ${green}✓ $installed brew package(s) installed${nc}"
+            logSuccess "  $installed brew package(s) installed"
         fi
         if [ $notInstalled -gt 0 ]; then
-            echo -e "  ${yellow}⚠ $notInstalled package(s) not installed${nc}"
+            logWarning "  $notInstalled package(s) not installed"
         fi
     else
-        echo -e "  ${yellow}⚠ Could not check apps (jq or brew not available)${nc}"
+        logWarning "  Could not check apps (jq or brew not available)"
     fi
     echo ""
 fi
 
 # Check repositories
 if [ -f "$configsPath/repositories.json" ]; then
-    echo -e "${yellow}Repositories:${nc}"
+    logNote "Repositories:"
     if command -v jq >/dev/null 2>&1; then
         workPath=$(jq -r '.workPathUnix' "$configsPath/repositories.json" 2>/dev/null)
         if [ -n "$workPath" ] && [ "$workPath" != "null" ]; then
             workPath=$(echo "$workPath" | sed "s|\$HOME|$HOME|g" | sed "s|\$USER|$USER|g")
 
             if [ -d "$workPath" ]; then
-                echo -e "  ${green}✓ Work directory exists: $workPath${nc}"
+                logSuccess "  Work directory exists: $workPath"
                 ownerDirs=$(find "$workPath" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | wc -l | tr -d ' ')
-                echo -e "  ${green}✓ $ownerDirs owner directory/directories found${nc}"
+                logSuccess "  $ownerDirs owner directory/directories found"
 
                 totalRepos=0
                 for dir in "$workPath"/*; do
@@ -112,25 +112,25 @@ if [ -f "$configsPath/repositories.json" ]; then
                         totalRepos=$((totalRepos + repoCount))
                     fi
                 done
-                echo -e "  ${green}✓ $totalRepos repository/repositories cloned${nc}"
+                logSuccess "  $totalRepos repository/repositories cloned"
             else
-                echo -e "  ${yellow}⚠ Work directory does not exist: $workPath${nc}"
+                logWarning "  Work directory does not exist: $workPath"
             fi
         fi
     else
-        echo -e "  ${yellow}⚠ Could not check repositories (jq not available)${nc}"
+        logWarning "  Could not check repositories (jq not available)"
     fi
     echo ""
 fi
 
 # Check Cursor
-echo -e "${yellow}Cursor:${nc}"
+logNote "Cursor:"
 cursorSettingsPath="$HOME/Library/Application Support/Cursor/User/settings.json"
 if [ -f "$cursorSettingsPath" ]; then
-    echo -e "  ${green}✓ Settings file exists${nc}"
+    logSuccess "  Settings file exists"
 else
-    echo -e "  ${yellow}⚠ Settings file not found${nc}"
+    logWarning "  Settings file not found"
 fi
 echo ""
 
-echo -e "${cyan}=== Status Check Complete ===${nc}"
+logSection "Status Check Complete"

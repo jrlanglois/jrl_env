@@ -3,6 +3,13 @@
 
 # shellcheck disable=SC2154 # colour variables provided by callers
 
+# Source utilities first (must be direct source, not sourceIfExists)
+scriptDir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=../helpers/utilities.sh
+source "$scriptDir/../helpers/utilities.sh"
+# shellcheck source=../helpers/logging.sh
+sourceIfExists "$scriptDir/../helpers/logging.sh"
+
 # Function to check if Git is installed
 isGitInstalled()
 {
@@ -91,15 +98,15 @@ setGitConfig()
         successMessage="✓ $configKey set to '$configValue'"
     fi
 
-    echo -e "${yellow}$description${nc}"
+    logNote "$description"
     git config --global "$configKey" "$configValue"
-    echo -e "  ${green}$successMessage${nc}"
+    logSuccess "$successMessage"
 }
 
 # Function to configure Git user information
 configureGitUser()
 {
-    echo -e "${cyan}Configuring Git user information...${nc}"
+    logInfo "Configuring Git user information..."
 
     local currentName
     local currentEmail
@@ -107,12 +114,12 @@ configureGitUser()
     currentEmail=$(git config --global user.email 2>/dev/null || echo "")
 
     if [ -n "$currentName" ] && [ -n "$currentEmail" ]; then
-        echo -e "${yellow}Current Git user configuration:${nc}"
-        echo -e "  Name:  $currentName"
-        echo -e "  Email: $currentEmail"
+        logNote "Current Git user configuration:"
+        echo "  Name:  $currentName"
+        echo "  Email: $currentEmail"
         read -r -p "Keep existing configuration? (Y/N): " keepExisting
         if [[ "$keepExisting" =~ ^[Yy]$ ]]; then
-            echo -e "${green}✓ Keeping existing configuration${nc}"
+            logSuccess "Keeping existing configuration"
             return 0
         fi
     fi
@@ -134,7 +141,7 @@ configureGitUser()
     git config --global user.name "$userName"
     git config --global user.email "$userEmail"
 
-    echo -e "${green}✓ Git user information configured successfully${nc}"
+    logSuccess "Git user information configured successfully"
     return 0
 }
 
@@ -144,7 +151,7 @@ configureGitDefaults()
     local configPath="${gitConfigPath:-}"
     local defaultsJson
 
-    echo -e "${cyan}Configuring Git default settings...${nc}"
+    logInfo "Configuring Git default settings..."
 
     defaultsJson=$(readJsonSection "$configPath" "defaults")
 
@@ -177,7 +184,7 @@ configureGitDefaults()
     else
         pullBehaviour="merge (default)"
     fi
-    echo -e "  ${green}✓ Pull behaviour set to $pullBehaviour${nc}"
+    logSuccess "Pull behaviour set to $pullBehaviour"
 
     setGitConfig "push.default" "$pushDefault" "Configuring push behaviour..." "✓ Push default set to '$pushDefault'"
 
@@ -187,16 +194,16 @@ configureGitDefaults()
 
     setGitConfig "merge.ff" "$mergeFf" "Configuring merge strategy..." ""
     if [ "$mergeFf" = "false" ]; then
-        echo -e "  ${green}✓ Merge fast-forward disabled (creates merge commits)${nc}"
+        logSuccess "Merge fast-forward disabled (creates merge commits)"
     else
-        echo -e "  ${green}✓ Merge fast-forward enabled${nc}"
+        logSuccess "Merge fast-forward enabled"
     fi
 
     if [ -n "$fetchParallel" ] && [ "$fetchParallel" != "null" ]; then
         setGitConfig "fetch.parallel" "$fetchParallel" "Configuring fetch parallel jobs..." "✓ Fetch parallel jobs set to $fetchParallel"
     fi
 
-    echo -e "${green}Git default settings configured successfully!${nc}"
+    logSuccess "Git default settings configured successfully!"
     return 0
 }
 
@@ -207,11 +214,11 @@ addGitAlias()
     local aliasCommand=$2
 
     if git config --global --get "alias.$aliasName" >/dev/null 2>&1; then
-        echo -e "  ${yellow}⚠ Alias '$aliasName' already exists, skipping...${nc}"
+        logWarning "Alias '$aliasName' already exists, skipping..."
         return 1
     else
         git config --global "alias.$aliasName" "$aliasCommand"
-        echo -e "  ${green}✓ Added alias: $aliasName${nc}"
+        logSuccess "Added alias: $aliasName"
         return 0
     fi
 }
@@ -222,7 +229,7 @@ configureGitAliases()
     local configPath="${gitConfigPath:-}"
     local aliasesJson
 
-    echo -e "${cyan}Configuring Git aliases...${nc}"
+    logInfo "Configuring Git aliases..."
 
     aliasesJson=$(readJsonSection "$configPath" "aliases")
 
@@ -298,33 +305,33 @@ PY
         fi
     fi
 
-    echo -e "${green}Git aliases configured successfully!${nc}"
+    logSuccess "Git aliases configured successfully!"
     return 0
 }
 
 # Function to configure Git LFS
 configureGitLfs()
 {
-    echo -e "${cyan}Configuring Git LFS...${nc}"
+    logInfo "Configuring Git LFS..."
 
     if ! command -v git-lfs >/dev/null 2>&1; then
-        echo -e "${yellow}⚠ git-lfs is not installed. Skipping LFS configuration.${nc}"
+        logWarning "git-lfs is not installed. Skipping LFS configuration."
         return 0
     fi
 
     if git lfs version >/dev/null 2>&1; then
-        echo -e "${yellow}Initializing Git LFS...${nc}"
+        logNote "Initializing Git LFS..."
         if git lfs install >/dev/null 2>&1; then
-            echo -e "  ${green}✓ Git LFS initialized successfully${nc}"
+            logSuccess "Git LFS initialized successfully"
         else
-            echo -e "  ${yellow}⚠ Git LFS may already be initialized${nc}"
+            logWarning "Git LFS may already be initialized"
         fi
     else
-        echo -e "${yellow}⚠ Git LFS command not available${nc}"
+        logWarning "Git LFS command not available"
         return 0
     fi
 
-    echo -e "${green}Git LFS configured successfully!${nc}"
+    logSuccess "Git LFS configured successfully!"
     return 0
 }
 
@@ -333,12 +340,12 @@ configureGit()
 {
     local installHint="${gitInstallHint:-${yellow}Please install Git via your package manager.${nc}}"
 
-    echo -e "${cyan}=== Git Configuration ===${nc}"
+    logSection "Git Configuration"
     echo ""
 
     if ! isGitInstalled; then
-        echo -e "${red}✗ Git is not installed.${nc}"
-        echo -e "${yellow}Please install Git first.${nc}"
+        logError "Git is not installed."
+        logNote "Please install Git first."
         echo -e "  $installHint"
         return 1
     fi
@@ -365,11 +372,11 @@ configureGit()
     fi
     echo ""
 
-    echo -e "${cyan}=== Configuration Complete ===${nc}"
+    logSection "Configuration Complete"
     if [ "$success" = true ]; then
-        echo -e "${green}Git has been configured successfully!${nc}"
+        logSuccess "Git has been configured successfully!"
     else
-        echo -e "${yellow}Some settings may not have been configured. Please review the output above.${nc}"
+        logNote "Some settings may not have been configured. Please review the output above."
     fi
 
     return 0

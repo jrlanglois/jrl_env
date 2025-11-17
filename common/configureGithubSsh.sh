@@ -3,36 +3,27 @@
 
 # shellcheck disable=SC2154 # colour variables provided by callers
 
-requireCommand()
-{
-    local cmd=$1
-    local installHint=$2
-
-    if command -v "$cmd" >/dev/null 2>&1; then
-        return 0
-    fi
-
-    echo -e "${red}✗ Required command '$cmd' not found.${nc}"
-    if [ -n "$installHint" ]; then
-        echo -e "  ${yellow}$installHint${nc}"
-    fi
-    return 1
-}
+# Source utilities and logging functions (utilities must be direct source)
+scriptDir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=../helpers/utilities.sh
+source "$scriptDir/../helpers/utilities.sh"
+# shellcheck source=../helpers/logging.sh
+sourceIfExists "$scriptDir/../helpers/logging.sh"
 
 configureGithubSsh()
 {
     local configPath="${gitConfigPath:?gitConfigPath must be set}"
-    local jqHint="${jqInstallHint:-${yellow}Please install jq to parse gitConfig.json.${nc}}"
+    local jqHint="${jqInstallHint:-Please install jq to parse gitConfig.json.}"
 
     requireCommand jq "$jqHint" || return 1
     requireCommand ssh-keygen "" || return 1
 
     local email username githubUrl keyDir keyName keyPath
-    email=$(jq -r '.user.email // empty' "$configPath" 2>/dev/null)
-    username=$(jq -r '.user.usernameGitHub // empty' "$configPath" 2>/dev/null)
+    email=$(getJsonValue "$configPath" ".user.email" "")
+    username=$(getJsonValue "$configPath" ".user.usernameGitHub" "")
     githubUrl="https://github.com/settings/ssh/new"
 
-    echo -e "${cyan}=== GitHub SSH Configuration ===${nc}"
+    logSection "GitHub SSH Configuration"
     echo ""
 
     if [ -z "$email" ] || [ "$email" = "null" ]; then
@@ -50,7 +41,7 @@ configureGithubSsh()
     fi
 
     if [ -z "$email" ]; then
-        echo -e "${red}✗ Email is required to generate SSH key.${nc}"
+        logError "Email is required to generate SSH key."
         return 1
     fi
 
@@ -65,14 +56,14 @@ configureGithubSsh()
     if [ -f "$keyPath" ]; then
         read -r -p "Key file exists. Overwrite? (y/N): " overwrite
         if [[ ! "$overwrite" =~ ^[Yy]$ ]]; then
-            echo -e "${yellow}Skipping key generation.${nc}"
+            logNote "Skipping key generation."
             return 0
         fi
     fi
 
-    echo -e "${yellow}Generating SSH key...${nc}"
+    logNote "Generating SSH key..."
     if ! ssh-keygen -t ed25519 -C "$email" -f "$keyPath" -N "" </dev/null; then
-        echo -e "${red}✗ Failed to generate SSH key.${nc}"
+        logError "Failed to generate SSH key."
         return 1
     fi
 
@@ -82,31 +73,31 @@ configureGithubSsh()
 
     if command -v ssh-add >/dev/null 2>&1; then
         if ssh-add "$keyPath" >/dev/null 2>&1; then
-            echo -e "${green}✓ Added key to ssh-agent${nc}"
+            logSuccess "Added key to ssh-agent"
         elif command -v ssh-add --apple-use-keychain >/dev/null 2>&1; then
-            ssh-add --apple-use-keychain "$keyPath" >/dev/null 2>&1 && echo -e "${green}✓ Added key to keychain${nc}"
+            ssh-add --apple-use-keychain "$keyPath" >/dev/null 2>&1 && logSuccess "Added key to keychain"
         else
-            echo -e "${yellow}⚠ Unable to add key to agent automatically.${nc}"
+            logWarning "Unable to add key to agent automatically."
         fi
     fi
 
     echo ""
-    echo -e "${yellow}Public key:${nc}"
+    logNote "Public key:"
     echo ""
     cat "${keyPath}.pub"
     echo ""
 
     if command -v pbcopy >/dev/null 2>&1; then
         pbcopy < "${keyPath}.pub"
-        echo -e "${green}✓ Copied public key to clipboard${nc}"
+        logSuccess "Copied public key to clipboard"
     elif command -v xclip >/dev/null 2>&1; then
         xclip -selection clipboard < "${keyPath}.pub"
-        echo -e "${green}✓ Copied public key to clipboard${nc}"
+        logSuccess "Copied public key to clipboard"
     elif command -v clip >/dev/null 2>&1; then
         clip < "${keyPath}.pub"
-        echo -e "${green}✓ Copied public key to clipboard${nc}"
+        logSuccess "Copied public key to clipboard"
     else
-        echo -e "${yellow}⚠ Copy the above key manually.${nc}"
+        logWarning "Copy the above key manually."
     fi
 
     read -r -p "Open GitHub SSH keys page now? (Y/n): " openPage
@@ -116,13 +107,13 @@ configureGithubSsh()
         elif command -v xdg-open >/dev/null 2>&1; then
             xdg-open "$githubUrl" >/dev/null 2>&1 || true
         else
-            echo -e "${yellow}Open ${githubUrl} in your browser to add the key.${nc}"
+            logNote "Open ${githubUrl} in your browser to add the key."
         fi
     else
-        echo -e "${yellow}Visit ${githubUrl} to add the key when ready.${nc}"
+        logNote "Visit ${githubUrl} to add the key when ready."
     fi
 
     echo ""
-    echo -e "${green}✓ GitHub SSH configuration complete${nc}"
+    logSuccess "GitHub SSH configuration complete"
     return 0
 }

@@ -3,6 +3,13 @@
 
 # shellcheck disable=SC2154 # colour variables provided by callers
 
+# Source utilities and logging functions (utilities must be direct source)
+scriptDir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=../helpers/utilities.sh
+source "$scriptDir/../helpers/utilities.sh"
+# shellcheck source=../helpers/logging.sh
+sourceIfExists "$scriptDir/../helpers/logging.sh"
+
 isGitInstalled()
 {
     if command -v git >/dev/null 2>&1; then
@@ -60,7 +67,7 @@ cloneRepository()
     repoName=$(getRepositoryName "$repoUrl")
 
     if [ -z "$owner" ] || [ -z "$repoName" ]; then
-        echo -e "  ${red}✗ Failed to extract owner or repository name from URL${nc}"
+        logError "  Failed to extract owner or repository name from URL"
         return 1
     fi
 
@@ -70,21 +77,21 @@ cloneRepository()
     local repoPath="${ownerPath}/${repoName}"
 
     if isRepositoryCloned "$repoUrl" "$workPath"; then
-        echo -e "  ${yellow}⚠ Repository already exists: $owner/$repoName${nc}"
-        echo -e "    Skipping clone. Use 'git pull' to update if needed."
+        logWarning "  Repository already exists: $owner/$repoName"
+        echo "    Skipping clone. Use 'git pull' to update if needed."
         return 0
     fi
 
-    echo -e "  ${yellow}Cloning $owner/$repoName...${nc}"
+    logNote "  Cloning $owner/$repoName..."
 
     if git clone --recursive "$repoUrl" "$repoPath" 2>/dev/null; then
-        echo -e "    ${green}✓ Cloned successfully${nc}"
+        logSuccess "    Cloned successfully"
         if [ -f "${repoPath}/.gitmodules" ]; then
-            echo -e "    ${green}✓ Submodules initialised${nc}"
+            logSuccess "    Submodules initialised"
         fi
         return 0
     else
-        echo -e "    ${red}✗ Clone failed${nc}"
+        logError "    Clone failed"
         return 1
     fi
 }
@@ -94,53 +101,52 @@ cloneRepositories()
     local configPath=${1:-$repoConfigPath}
     local jqHint="${jqInstallHint:-${yellow}Please install jq via your package manager.${nc}}"
 
-    echo -e "${cyan}=== Repository Cloning ===${nc}"
+    logSection "Repository Cloning"
     echo ""
 
     if ! isGitInstalled; then
-        echo -e "${red}✗ Git is not installed.${nc}"
-        echo -e "${yellow}Please install Git first.${nc}"
+        logError "Git is not installed."
+        logNote "Please install Git first."
         return 1
     fi
 
     if [ ! -f "$configPath" ]; then
-        echo -e "${red}✗ Configuration file not found: $configPath${nc}"
+        logError "Configuration file not found: $configPath"
         return 1
     fi
 
-    if ! command -v jq >/dev/null 2>&1; then
-        echo -e "${red}✗ jq is required to parse JSON. Please install it first.${nc}"
-        echo -e "  $jqHint"
+    local jqHint="${jqInstallHint:-Please install jq via your package manager.}"
+    if ! requireJq "$jqHint"; then
         return 1
     fi
 
     local workPath
     local repositories
-    workPath=$(jq -r '.workPathUnix' "$configPath")
-    repositories=$(jq -r '.repositories[]?' "$configPath")
+    workPath=$(getJsonValue "$configPath" ".workPathUnix" "")
+    repositories=$(getJsonArray "$configPath" ".repositories[]?")
 
     workPath=$(echo "$workPath" | sed "s|\$HOME|$HOME|g" | sed "s|\$USER|$USER|g")
 
     if [ -z "$workPath" ] || [ "$workPath" = "null" ]; then
-        echo -e "${red}✗ JSON file must contain a 'workPathUnix' property.${nc}"
+        logError "JSON file must contain a 'workPathUnix' property."
         return 1
     fi
 
     if [ -z "$repositories" ]; then
-        echo -e "${yellow}No repositories specified in configuration file.${nc}"
+        logNote "No repositories specified in configuration file."
         return 0
     fi
 
     local repoCount
     repoCount=$(echo "$repositories" | grep -c . || echo "0")
-    echo -e "${cyan}Work directory: $workPath${nc}"
-    echo -e "${cyan}Found $repoCount repository/repositories in configuration file.${nc}"
+    logInfo "Work directory: $workPath"
+    logInfo "Found $repoCount repository/repositories in configuration file."
     echo ""
 
     if [ ! -d "$workPath" ]; then
-        echo -e "${yellow}Creating work directory: $workPath${nc}"
+        logNote "Creating work directory: $workPath"
         mkdir -p "$workPath"
-        echo -e "${green}✓ Work directory created${nc}"
+        logSuccess "Work directory created"
         echo ""
     fi
 
@@ -153,7 +159,7 @@ cloneRepositories()
             continue
         fi
 
-        echo -e "${yellow}Processing: $repoUrl${nc}"
+        logNote "Processing: $repoUrl"
 
         if cloneRepository "$repoUrl" "$workPath"; then
             ((clonedCount++))
@@ -166,17 +172,17 @@ cloneRepositories()
         echo ""
     done <<< "$repositories"
 
-    echo -e "${cyan}Summary:${nc}"
-    echo -e "  ${green}Cloned: $clonedCount repository/repositories${nc}"
+    logInfo "Summary:"
+    logSuccess "  Cloned: $clonedCount repository/repositories"
     if [ $skippedCount -gt 0 ]; then
-        echo -e "  ${yellow}Skipped: $skippedCount repository/repositories (already exist)${nc}"
+        logNote "  Skipped: $skippedCount repository/repositories (already exist)"
     fi
     if [ $failedCount -gt 0 ]; then
-        echo -e "  ${red}Failed: $failedCount repository/repositories${nc}"
+        logError "  Failed: $failedCount repository/repositories"
     fi
 
     echo ""
-    echo -e "${green}Repository cloning complete!${nc}"
+    logSuccess "Repository cloning complete!"
 
     return 0
 }

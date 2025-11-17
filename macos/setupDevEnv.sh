@@ -14,11 +14,8 @@ nc='\033[0m' # No Colour
 scriptDir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 osConfigPath="${scriptDir}/../configs/macos.json"
 
-# Function to check if a command exists
-commandExists()
-{
-    command -v "$1" >/dev/null 2>&1
-}
+# shellcheck source=../helpers/utilities.sh
+source "$scriptDir/../helpers/utilities.sh"
 
 # Function to check if zsh is installed
 isZshInstalled()

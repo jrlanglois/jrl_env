@@ -17,39 +17,11 @@ import platform
 import time
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from threading import Lock
 
-# ANSI colour codes
-class Colours:
-    RED = '\033[0;31m'
-    GREEN = '\033[0;32m'
-    YELLOW = '\033[1;33m'
-    CYAN = '\033[0;36m'
-    NC = '\033[0m'  # No Colour
-
-# Thread-safe print
-printLock = Lock()
-
-def safePrint(*args, **kwargs):
-    """Thread-safe print function"""
-    with printLock:
-        print(*args, **kwargs)
-
-def printInfo(message):
-    """Print an info message in cyan"""
-    safePrint(f"{Colours.CYAN}{message}{Colours.NC}")
-
-def printWarning(message):
-    """Print a warning message in yellow"""
-    safePrint(f"{Colours.YELLOW}{message}{Colours.NC}")
-
-def printError(message):
-    """Print an error message in red"""
-    safePrint(f"{Colours.RED}{message}{Colours.NC}")
-
-def printSuccess(message):
-    """Print a success message in green"""
-    safePrint(f"{Colours.GREEN}{message}{Colours.NC}")
+# Import shared logging utilities
+scriptDir = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, scriptDir)
+from logging import Colours, safePrint, printInfo, printWarning, printError, printSuccess, printLock
 
 def downloadFile(url, outputPath, timeout=5):
     """Download a file from URL to output path"""

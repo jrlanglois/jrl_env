@@ -18,6 +18,11 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable, List
 
+# Import shared logging utilities
+scriptDir = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, scriptDir)
+from logging import Colours, colourise
+
 
 DEFAULT_EXTENSIONS = [".ps1", ".sh", ".json", ".md"]
 CRLF_EXTENSIONS = {".ps1", ".json", ".md"}
@@ -147,18 +152,7 @@ def tidyContent(text: str, preferredNewline: str | None = None) -> tuple[str, Ti
     return rebuiltWithNewlines, stats
 
 
-class Colour:
-    GREEN = "\033[0;32m"
-    YELLOW = "\033[1;33m"
-    CYAN = "\033[0;36m"
-    RED = "\033[0;31m"
-    RESET = "\033[0m"
-
-
-def colourise(text: str, code: str, enable: bool) -> str:
-    if not enable:
-        return text
-    return f"{code}{text}{Colour.RESET}"
+# Colour class and colourise function now imported from logging module
 
 
 def gatherFiles(root: Path, extensionsLower: set[str]) -> Iterable[Path]:
@@ -223,7 +217,7 @@ def main() -> int:
         return 1
 
     if not targets:
-        print(colourise("No files found to process.", Colour.YELLOW, enableColour))
+        print(colourise("No files found to process.", Colours.YELLOW, enableColour))
         return 0
 
     fileCount = 0
@@ -244,12 +238,12 @@ def main() -> int:
                 or stats.whitespaceLineCount
                 or stats.removedTrailingBlanks
             ):
-                print(colourise(f"Would tidy: {filePath}", Colour.CYAN, enableColour))
+                print(colourise(f"Would tidy: {filePath}", Colours.CYAN, enableColour))
                 if stats.tabCount:
                     print(
                         colourise(
                             f"  Would convert {stats.tabCount} tab(s) to spaces",
-                            Colour.YELLOW,
+                            Colours.YELLOW,
                             enableColour,
                         )
                     )
@@ -257,7 +251,7 @@ def main() -> int:
                     print(
                         colourise(
                             f"  Would trim trailing whitespace from {stats.whitespaceLineCount} line(s)",
-                            Colour.YELLOW,
+                            Colours.YELLOW,
                             enableColour,
                         )
                     )
@@ -265,21 +259,21 @@ def main() -> int:
                     print(
                         colourise(
                             "  Would remove trailing blank lines",
-                            Colour.YELLOW,
+                            Colours.YELLOW,
                             enableColour,
                         )
                     )
             else:
-                print(colourise(f"File is already tidy: {filePath}", Colour.GREEN, enableColour))
+                print(colourise(f"File is already tidy: {filePath}", Colours.GREEN, enableColour))
         else:
             if stats.modified:
                 modifiedCount += 1
-                print(colourise(f"Tidied: {filePath}", Colour.GREEN, enableColour))
+                print(colourise(f"Tidied: {filePath}", Colours.GREEN, enableColour))
                 if stats.tabCount:
                     print(
                         colourise(
                             f"  Converted {stats.tabCount} tab(s) to spaces",
-                            Colour.GREEN,
+                            Colours.GREEN,
                             enableColour,
                         )
                     )
@@ -287,7 +281,7 @@ def main() -> int:
                     print(
                         colourise(
                             f"  Trimmed trailing whitespace from {stats.whitespaceLineCount} line(s)",
-                            Colour.GREEN,
+                            Colours.GREEN,
                             enableColour,
                         )
                     )
@@ -295,12 +289,12 @@ def main() -> int:
                     print(
                         colourise(
                             "  Removed trailing blank lines",
-                            Colour.GREEN,
+                            Colours.GREEN,
                             enableColour,
                         )
                     )
             else:
-                print(colourise(f"File is already tidy: {filePath}", Colour.GREEN, enableColour))
+                print(colourise(f"File is already tidy: {filePath}", Colours.GREEN, enableColour))
 
         totalTabCount += stats.tabCount
         totalWhitespaceCount += stats.whitespaceLineCount
@@ -311,7 +305,7 @@ def main() -> int:
         print(
             colourise(
                 f"DRY RUN: Would process {fileCount} file(s)",
-                Colour.YELLOW,
+                Colours.YELLOW,
                 enableColour,
             )
         )
@@ -319,7 +313,7 @@ def main() -> int:
             print(
                 colourise(
                     f"  Would convert {totalTabCount} tab(s) to spaces",
-                    Colour.YELLOW,
+                    Colours.YELLOW,
                     enableColour,
                 )
             )
@@ -327,7 +321,7 @@ def main() -> int:
             print(
                 colourise(
                     f"  Would trim trailing whitespace from {totalWhitespaceCount} line(s)",
-                    Colour.YELLOW,
+                    Colours.YELLOW,
                     enableColour,
                 )
             )
@@ -335,7 +329,7 @@ def main() -> int:
         print(
             colourise(
                 f"Processed {fileCount} file(s)",
-                Colour.CYAN,
+                Colours.CYAN,
                 enableColour,
             )
         )
@@ -343,7 +337,7 @@ def main() -> int:
             print(
                 colourise(
                     f"Modified {modifiedCount} file(s)",
-                    Colour.GREEN,
+                    Colours.GREEN,
                     enableColour,
                 )
             )
@@ -351,7 +345,7 @@ def main() -> int:
                 print(
                     colourise(
                         f"  Converted {totalTabCount} tab(s) to spaces",
-                        Colour.GREEN,
+                        Colours.GREEN,
                         enableColour,
                     )
                 )
@@ -359,12 +353,12 @@ def main() -> int:
                 print(
                     colourise(
                         f"  Trimmed trailing whitespace from {totalWhitespaceCount} line(s)",
-                        Colour.GREEN,
+                        Colours.GREEN,
                         enableColour,
                     )
                 )
         else:
-            print(colourise("No files needed tidying. All files are clean!", Colour.GREEN, enableColour))
+            print(colourise("No files needed tidying. All files are clean!", Colours.GREEN, enableColour))
 
     return 0
 
