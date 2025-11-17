@@ -29,10 +29,12 @@ isRepositoryCloned()
 {
     local repoUrl=$1
     local workPath=$2
+    local owner
+    local repoName
 
     # Extract username and repository name from URL
-    local owner=$(getRepositoryOwner "$repoUrl")
-    local repoName=$(getRepositoryName "$repoUrl")
+    owner=$(getRepositoryOwner "$repoUrl")
+    repoName=$(getRepositoryName "$repoUrl")
 
     if [ -z "$owner" ] || [ -z "$repoName" ]; then
         return 1
@@ -50,9 +52,10 @@ isRepositoryCloned()
 getRepositoryOwner()
 {
     local repoUrl=$1
+    local owner
     # Extract username/organization from URL (handles both HTTPS and SSH)
     # Try HTTPS pattern first (github.com/username/), then SSH pattern (:username/)
-    local owner=$(echo "$repoUrl" | sed -E 's|.*github\.com/([^/]+)/.*|\1|')
+    owner=$(echo "$repoUrl" | sed -E 's|.*github\.com/([^/]+)/.*|\1|')
     if [ "$owner" = "$repoUrl" ]; then
         # HTTPS pattern didn't match, try SSH pattern
         owner=$(echo "$repoUrl" | sed -E 's|.*:([^/]+)/.*|\1|')
@@ -72,9 +75,11 @@ cloneRepository()
 {
     local repoUrl=$1
     local workPath=$2
+    local owner
+    local repoName
 
-    local owner=$(getRepositoryOwner "$repoUrl")
-    local repoName=$(getRepositoryName "$repoUrl")
+    owner=$(getRepositoryOwner "$repoUrl")
+    repoName=$(getRepositoryName "$repoUrl")
 
     if [ -z "$owner" ] || [ -z "$repoName" ]; then
         echo -e "  ${red}✗ Failed to extract owner or repository name from URL${nc}"
@@ -116,6 +121,9 @@ cloneRepository()
 cloneRepositories()
 {
     local configPath=${1:-$configPath}
+    local workPath
+    local repositories
+    local repoCount
 
     echo -e "${cyan}=== Repository Cloning ===${nc}"
     echo ""
@@ -141,8 +149,8 @@ cloneRepositories()
     fi
 
     # Parse JSON
-    local workPath=$(jq -r '.workPathUnix' "$configPath")
-    local repositories=$(jq -r '.repositories[]?' "$configPath")
+    workPath=$(jq -r '.workPathUnix' "$configPath")
+    repositories=$(jq -r '.repositories[]?' "$configPath")
 
     # Expand $HOME and $USER if present in path
     workPath=$(echo "$workPath" | sed "s|\$HOME|$HOME|g" | sed "s|\$USER|$USER|g")
@@ -157,7 +165,7 @@ cloneRepositories()
         return 0
     fi
 
-    local repoCount=$(echo "$repositories" | grep -c . || echo "0")
+    repoCount=$(echo "$repositories" | grep -c . || echo "0")
     echo -e "${cyan}Work directory: $workPath${nc}"
     echo -e "${cyan}Found $repoCount repository/repositories in configuration file.${nc}"
     echo ""

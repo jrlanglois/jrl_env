@@ -54,6 +54,11 @@ isBrewCaskInstalled()
 installOrUpdateApps()
 {
     local configPath=${1:-$configPath}
+    local brewApps=""
+    local brewCaskApps=""
+    local brewCount
+    local caskCount
+    local totalCount
 
     echo -e "${cyan}=== macOS Application Installation ===${nc}"
     echo ""
@@ -90,9 +95,9 @@ installOrUpdateApps()
         return 0
     fi
 
-    local brewCount=$(echo "$brewApps" | grep -c . || echo "0")
-    local caskCount=$(echo "$brewCaskApps" | grep -c . || echo "0")
-    local totalCount=$((brewCount + caskCount))
+    brewCount=$(echo "$brewApps" | grep -c . || echo "0")
+    caskCount=$(echo "$brewCaskApps" | grep -c . || echo "0")
+    totalCount=$((brewCount + caskCount))
 
     echo -e "${cyan}Found $totalCount application(s) in configuration file ($brewCount brew, $caskCount cask).${nc}"
     echo ""

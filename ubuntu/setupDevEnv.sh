@@ -86,6 +86,8 @@ installOhMyZsh()
 setZshAsDefault()
 {
     echo -e "${cyan}Setting zsh as default shell...${nc}"
+    local ZSH_PATH
+    local CURRENT_SHELL
 
     if ! isZshInstalled; then
         echo -e "${red}✗ zsh is not installed. Please install it first.${nc}"
@@ -93,7 +95,7 @@ setZshAsDefault()
     fi
 
     ZSH_PATH=$(which zsh)
-    CURRENT_SHELL=$(echo $SHELL)
+    CURRENT_SHELL="$SHELL"
 
     if [ "$CURRENT_SHELL" = "$ZSH_PATH" ]; then
         echo -e "${green}✓ zsh is already the default shell${nc}"

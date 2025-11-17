@@ -108,9 +108,11 @@ installBrew()
     if /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"; then
         # Add Homebrew to PATH for Apple Silicon Macs
         if [[ $(uname -m) == "arm64" ]]; then
+            # shellcheck disable=SC2016
             echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> ~/.zprofile
             eval "$(/opt/homebrew/bin/brew shellenv)"
         else
+            # shellcheck disable=SC2016
             echo 'eval "$(/usr/local/bin/brew shellenv)"' >> ~/.zprofile
             eval "$(/usr/local/bin/brew shellenv)"
         fi
@@ -133,6 +135,8 @@ installBrew()
 setZshAsDefault()
 {
     echo -e "${cyan}Setting zsh as default shell...${nc}"
+    local ZSH_PATH
+    local CURRENT_SHELL
 
     if ! isZshInstalled; then
         echo -e "${red}✗ zsh is not installed. Please install it first.${nc}"
@@ -140,7 +144,7 @@ setZshAsDefault()
     fi
 
     ZSH_PATH=$(which zsh)
-    CURRENT_SHELL=$(echo $SHELL)
+    CURRENT_SHELL="$SHELL"
 
     if [ "$CURRENT_SHELL" = "$ZSH_PATH" ]; then
         echo -e "${green}✓ zsh is already the default shell${nc}"

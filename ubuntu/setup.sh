@@ -6,9 +6,7 @@ set -e
 
 # Colours for output
 red='\033[0;31m'
-green='\033[0;32m'
 yellow='\033[1;33m'
-cyan='\033[0;36m'
 nc='\033[0m' # No Colour
 
 # Parse arguments
@@ -37,16 +35,32 @@ while [[ $# -gt 0 ]]; do
 done
 
 # Determine what to run
-runFonts=false && [ "$skipFonts" = false ] && [ "$appsOnly" = false ] && runFonts=true
-runApps=false && ([ "$skipApps" = false ] || [ "$appsOnly" = true ]) && runApps=true
-runGit=false && [ "$skipGit" = false ] && [ "$appsOnly" = false ] && runGit=true
-runCursor=false && [ "$skipCursor" = false ] && [ "$appsOnly" = false ] && runCursor=true
-runRepos=false && [ "$skipRepos" = false ] && [ "$appsOnly" = false ] && runRepos=true
+runFonts=false
+if [ "$skipFonts" = false ] && [ "$appsOnly" = false ]; then
+    runFonts=true
+fi
+runApps=false
+if [ "$skipApps" = false ] || [ "$appsOnly" = true ]; then
+    runApps=true
+fi
+runGit=false
+if [ "$skipGit" = false ] && [ "$appsOnly" = false ]; then
+    runGit=true
+fi
+runCursor=false
+if [ "$skipCursor" = false ] && [ "$appsOnly" = false ]; then
+    runCursor=true
+fi
+runRepos=false
+if [ "$skipRepos" = false ] && [ "$appsOnly" = false ]; then
+    runRepos=true
+fi
 
 # Get script directory
 scriptDir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Load logging functions
+# shellcheck source=ubuntu/logging.sh
 source "$scriptDir/logging.sh"
 
 # Initialize logging
@@ -68,6 +82,9 @@ fi
 # Backup function
 backupConfigs()
 {
+    local backupDir
+    local cursorSettings
+
     if [ "$noBackup" = true ] || [ "$dryRun" = true ]; then
         logInfo "Backup skipped (noBackup or dryRun flag set)"
         return 0
@@ -99,7 +116,8 @@ backupConfigs()
 checkDependencies()
 {
     logInfo "Checking dependencies..."
-    missing=()
+    local missing=()
+    local response
 
     if ! command -v git >/dev/null 2>&1; then
         missing+=("Git")
@@ -117,7 +135,7 @@ checkDependencies()
 
     if [ ${#missing[@]} -gt 0 ]; then
         logWarn "Missing dependencies: ${missing[*]}"
-        read -p "Some features may not work. Continue anyway? (Y/N): " response
+        read -r -p "Some features may not work. Continue anyway? (Y/N): " response
         if [[ ! "$response" =~ ^[Yy]$ ]]; then
             logError "Setup cancelled by user due to missing dependencies"
             exit 1
@@ -134,11 +152,17 @@ if [ "$dryRun" = false ]; then
 fi
 
 # Source all required scripts
+# shellcheck source=ubuntu/setupDevEnv.sh
 source "$scriptDir/setupDevEnv.sh"
+# shellcheck source=ubuntu/installFonts.sh
 source "$scriptDir/installFonts.sh"
+# shellcheck source=ubuntu/installApps.sh
 source "$scriptDir/installApps.sh"
+# shellcheck source=ubuntu/configureGit.sh
 source "$scriptDir/configureGit.sh"
+# shellcheck source=ubuntu/configureCursor.sh
 source "$scriptDir/configureCursor.sh"
+# shellcheck source=ubuntu/cloneRepositories.sh
 source "$scriptDir/cloneRepositories.sh"
 
 logInfo "Starting complete environment setup..."

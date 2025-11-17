@@ -9,7 +9,14 @@ logDirectory=""
 # Initialize logging
 initLogging()
 {
-    local logDir="${1:-/tmp/jrl_env_logs}"
+    local logDirDefault="${LOG_DIR:-/tmp/jrl_env_logs}"
+    local logDir="$logDirDefault"
+    local timestamp
+    local initMessage
+
+    if [ $# -gt 0 ] && [ -n "$1" ]; then
+        logDir="$1"
+    fi
 
     # Create log directory if it doesn't exist
     mkdir -p "$logDir"
@@ -17,11 +24,11 @@ initLogging()
     logDirectory="$logDir"
 
     # Create log file with timestamp
-    local timestamp=$(date +%Y%m%d_%H%M%S)
+    timestamp=$(date +%Y%m%d_%H%M%S)
     logFilePath="$logDirectory/setup_$timestamp.log"
 
     # Write initial log entry
-    local initMessage="=== jrl_env Setup Log - Started at $(date '+%Y-%m-%d %H:%M:%S') ==="
+    initMessage="=== jrl_env Setup Log - Started at $(date '+%Y-%m-%d %H:%M:%S') ==="
     echo "$initMessage" >> "$logFilePath"
 
     echo "$logFilePath"
@@ -39,14 +46,16 @@ writeLog()
     local level="$1"
     shift
     local message="$*"
+    local timestamp
+    local logEntry
 
     if [ -z "$logFilePath" ]; then
         # Initialize logging if not already done
         initLogging >/dev/null
     fi
 
-    local timestamp=$(date '+%Y-%m-%d %H:%M:%S')
-    local logEntry="[$timestamp] [$level] $message"
+    timestamp=$(date '+%Y-%m-%d %H:%M:%S')
+    logEntry="[$timestamp] [$level] $message"
 
     # Write to log file
     echo "$logEntry" >> "$logFilePath"

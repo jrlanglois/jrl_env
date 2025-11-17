@@ -45,6 +45,11 @@ isSnapInstalled()
 installOrUpdateApps()
 {
     local configPath=${1:-$configPath}
+    local aptPackages=""
+    local snapPackages=""
+    local aptCount
+    local snapCount
+    local totalCount
 
     echo -e "${cyan}=== Ubuntu Application Installation ===${nc}"
     echo ""
@@ -63,17 +68,17 @@ installOrUpdateApps()
     fi
 
     # Parse JSON
-    local aptPackages=$(jq -r '.apt[]?' "$configPath" 2>/dev/null || echo "")
-    local snapPackages=$(jq -r '.snap[]?' "$configPath" 2>/dev/null || echo "")
+    aptPackages=$(jq -r '.apt[]?' "$configPath" 2>/dev/null || echo "")
+    snapPackages=$(jq -r '.snap[]?' "$configPath" 2>/dev/null || echo "")
 
     if [ -z "$aptPackages" ] && [ -z "$snapPackages" ]; then
         echo -e "${yellow}No applications specified in configuration file.${nc}"
         return 0
     fi
 
-    local aptCount=$(echo "$aptPackages" | grep -c . || echo "0")
-    local snapCount=$(echo "$snapPackages" | grep -c . || echo "0")
-    local totalCount=$((aptCount + snapCount))
+    aptCount=$(echo "$aptPackages" | grep -c . || echo "0")
+    snapCount=$(echo "$snapPackages" | grep -c . || echo "0")
+    totalCount=$((aptCount + snapCount))
 
     echo -e "${cyan}Found $totalCount application(s) in configuration file ($aptCount apt, $snapCount snap).${nc}"
     echo ""

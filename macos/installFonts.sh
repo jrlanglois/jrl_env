@@ -15,6 +15,7 @@ nc='\033[0m' # No Colour
 scriptDir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 configPath="${scriptDir}/../configs/fonts.json"
 fontsDir="$HOME/Library/Fonts"
+FONTS_DIR="$fontsDir"
 
 # Function to check if a command exists
 commandExists()
@@ -38,10 +39,14 @@ downloadGoogleFont()
     local fontName=$1
     local variant=${2:-"Regular"}
     local outputPath=${3:-$TMPDIR}
+    local normalisedName
+    local normalisedVariant
+    local fileName
+    local filePath
 
     # Normalise font name for URL (lowercase, spaces to hyphens)
-    local normalisedName=$(echo "$fontName" | tr '[:upper:]' '[:lower:]' | tr ' ' '-')
-    local normalisedVariant=$(echo "$variant" | tr -d ' ')
+    normalisedName=$(echo "$fontName" | tr '[:upper:]' '[:lower:]' | tr ' ' '-')
+    normalisedVariant=$(echo "$variant" | tr -d ' ')
 
     # Try different URL patterns
     local urlPatterns=(
@@ -51,8 +56,8 @@ downloadGoogleFont()
         "https://github.com/google/fonts/raw/main/apache/${normalisedName}/${normalisedVariant}.ttf"
     )
 
-    local fileName="${normalisedName}-${normalisedVariant}.ttf"
-    local filePath="${outputPath}/${fileName}"
+    fileName="${normalisedName}-${normalisedVariant}.ttf"
+    filePath="${outputPath}/${fileName}"
 
     echo -e "  ${yellow}Downloading $fontName $variant...${nc}"
 
@@ -72,14 +77,16 @@ downloadGoogleFont()
 installFont()
 {
     local fontPath=$1
+    local fontName
+    local destinationPath
 
     if [ ! -f "$fontPath" ]; then
         echo -e "    ${red}✗ Font file not found: $fontPath${nc}"
         return 1
     fi
 
-    local fontName=$(basename "$fontPath")
-    local destinationPath="${FONTS_DIR}/${fontName}"
+    fontName=$(basename "$fontPath")
+    destinationPath="${FONTS_DIR}/${fontName}"
 
     # Check if already installed
     if [ -f "$destinationPath" ]; then
@@ -105,6 +112,12 @@ installGoogleFonts()
 {
     local configPath=${1:-$configPath}
     local variants=("${@:2}")
+    local fontNames
+    local fontCount
+    local tempDir
+    local installedCount=0
+    local skippedCount=0
+    local failedCount=0
 
     if [ ${#variants[@]} -eq 0 ]; then
         variants=("Regular" "Bold" "Italic" "BoldItalic")
@@ -127,22 +140,19 @@ installGoogleFonts()
     fi
 
     # Parse JSON
-    local fontNames=$(jq -r '.googleFonts[]?' "$configPath" 2>/dev/null)
+    fontNames=$(jq -r '.googleFonts[]?' "$configPath" 2>/dev/null)
 
     if [ -z "$fontNames" ]; then
         echo -e "${yellow}No fonts specified in configuration file.${nc}"
         return 0
     fi
 
-    local fontCount=$(echo "$fontNames" | grep -c . || echo "0")
+    fontCount=$(echo "$fontNames" | grep -c . || echo "0")
     echo -e "${cyan}Found $fontCount font(s) in configuration file.${nc}"
     echo ""
 
     # Create temporary directory
-    local tempDir=$(mktemp -d -t GoogleFonts.XXXXXX)
-    local installedCount=0
-    local skippedCount=0
-    local failedCount=0
+    tempDir=$(mktemp -d -t GoogleFonts.XXXXXX)
 
     # Process each font
     while IFS= read -r fontName; do
@@ -156,7 +166,8 @@ installGoogleFonts()
 
         # Try to download and install each variant
         for variant in "${variants[@]}"; do
-            local fontPath=$(downloadGoogleFont "$fontName" "$variant" "$tempDir")
+            local fontPath
+            fontPath=$(downloadGoogleFont "$fontName" "$variant" "$tempDir")
 
             if [ -n "$fontPath" ] && [ -f "$fontPath" ]; then
                 if installFont "$fontPath"; then

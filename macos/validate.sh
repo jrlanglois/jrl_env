@@ -52,17 +52,21 @@ validateAppsJson()
 {
     local file_path=$1
     local platform=$2
+    local brew_count
+    local cask_count
+    local apt_count
+    local snap_count
 
     if [ "$platform" = "macos" ]; then
-        local brew_count=$(jq '.brew | length' "$file_path" 2>/dev/null || echo "0")
-        local cask_count=$(jq '.brewCask | length' "$file_path" 2>/dev/null || echo "0")
+        brew_count=$(jq '.brew | length' "$file_path" 2>/dev/null || echo "0")
+        cask_count=$(jq '.brewCask | length' "$file_path" 2>/dev/null || echo "0")
 
         if [ "$brew_count" = "0" ] && [ "$cask_count" = "0" ]; then
             warnings+=("$platform apps: No apps specified")
         fi
     elif [ "$platform" = "ubuntu" ]; then
-        local apt_count=$(jq '.apt | length' "$file_path" 2>/dev/null || echo "0")
-        local snap_count=$(jq '.snap | length' "$file_path" 2>/dev/null || echo "0")
+        apt_count=$(jq '.apt | length' "$file_path" 2>/dev/null || echo "0")
+        snap_count=$(jq '.snap | length' "$file_path" 2>/dev/null || echo "0")
 
         if [ "$apt_count" = "0" ] && [ "$snap_count" = "0" ]; then
             warnings+=("$platform apps: No apps specified")
@@ -74,9 +78,12 @@ validateAppsJson()
 validateRepositoriesJson()
 {
     local file_path=$1
+    local work_path_win
+    local work_path_unix
+    local repo_count
 
-    local work_path_win=$(jq -r '.workPathWindows' "$file_path" 2>/dev/null)
-    local work_path_unix=$(jq -r '.workPathUnix' "$file_path" 2>/dev/null)
+    work_path_win=$(jq -r '.workPathWindows' "$file_path" 2>/dev/null)
+    work_path_unix=$(jq -r '.workPathUnix' "$file_path" 2>/dev/null)
 
     if [ -z "$work_path_win" ] || [ "$work_path_win" = "null" ]; then
         if [ -z "$work_path_unix" ] || [ "$work_path_unix" = "null" ]; then
@@ -84,7 +91,7 @@ validateRepositoriesJson()
         fi
     fi
 
-    local repo_count=$(jq '.repositories | length' "$file_path" 2>/dev/null || echo "0")
+    repo_count=$(jq '.repositories | length' "$file_path" 2>/dev/null || echo "0")
     if [ "$repo_count" = "0" ]; then
         warnings+=("repositories: No repositories specified")
     fi
@@ -94,13 +101,16 @@ validateRepositoriesJson()
 validateGitConfigJson()
 {
     local file_path=$1
+    local has_user
+    local user_name
+    local user_email
 
-    local has_user=$(jq 'has("user")' "$file_path" 2>/dev/null)
+    has_user=$(jq 'has("user")' "$file_path" 2>/dev/null)
     if [ "$has_user" != "true" ]; then
         warnings+=("gitConfig: No user section specified")
     else
-        local user_name=$(jq -r '.user.name' "$file_path" 2>/dev/null)
-        local user_email=$(jq -r '.user.email' "$file_path" 2>/dev/null)
+        user_name=$(jq -r '.user.name' "$file_path" 2>/dev/null)
+        user_email=$(jq -r '.user.email' "$file_path" 2>/dev/null)
 
         if [ -z "$user_name" ] || [ "$user_name" = "null" ]; then
             warnings+=("gitConfig: Missing user.name")
@@ -126,7 +136,7 @@ fi
 
 # Other configs
 if validateJsonFile "$configsPath/fonts.json" "fonts.json"; then
-    local font_count=$(jq '.googleFonts | length' "$configsPath/fonts.json" 2>/dev/null || echo "0")
+    font_count=$(jq '.googleFonts | length' "$configsPath/fonts.json" 2>/dev/null || echo "0")
     if [ "$font_count" = "0" ]; then
         warnings+=("fonts: No fonts specified")
     fi
