@@ -44,13 +44,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Ensure helper scripts are executable
-        if: runner.os != 'Windows'
-        run: chmod +x helpers/*.sh helpers/*.py
-
       - name: Run formatting pipeline
         shell: bash
-        run: ./helpers/formatRepo.sh
+        run: bash ./helpers/formatRepo.sh
 
       - name: Fail if formatting changes files
         shell: bash
