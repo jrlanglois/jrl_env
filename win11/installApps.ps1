@@ -109,11 +109,11 @@ function installOrUpdateApps
     try
     {
         $jsonContent = Get-Content $configPath -Raw | ConvertFrom-Json
-        
+
         # Handle both object format (with winget/windowsStore) and array format (legacy)
         $wingetApps = @()
         $storeApps = @()
-        
+
         if ($jsonContent.PSObject.Properties.Name -contains "winget")
         {
             # New format with separate arrays
@@ -150,7 +150,7 @@ function installOrUpdateApps
     {
         Write-Host "=== Processing winget apps ===" -ForegroundColor Cyan
         Write-Host ""
-        
+
         foreach ($appId in $wingetApps)
         {
             Write-Host "Processing: $appId" -ForegroundColor Yellow
@@ -210,12 +210,12 @@ function installOrUpdateApps
     {
         Write-Host "=== Processing Windows Store apps ===" -ForegroundColor Cyan
         Write-Host ""
-        
+
         foreach ($appId in $storeApps)
         {
             Write-Host "Processing: $appId" -ForegroundColor Yellow
             Write-Host "  Installing from Windows Store..." -ForegroundColor Cyan
-            
+
             try
             {
                 winget install --id $appId --source msstore --accept-package-agreements --accept-source-agreements --silent 2>&1 | Out-Null

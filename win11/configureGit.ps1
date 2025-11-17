@@ -123,7 +123,7 @@ function configureGitDefaults {
 
     try {
         $defaults = @{}
-        
+
         # Try to read from config file
         if (Test-Path $configPath) {
             try {
@@ -253,7 +253,7 @@ function configureGitAliases {
 
     try {
         $aliases = @{}
-        
+
         # Try to read from config file
         if (Test-Path $configPath) {
             try {
@@ -291,7 +291,7 @@ function configureGitAliases {
         Write-Host "Setting up aliases..." -ForegroundColor Yellow
         foreach ($aliasName in $aliases.Keys) {
             $aliasCommand = $aliases[$aliasName]
-            
+
             # Check if alias already exists
             $existingAlias = git config --global --get "alias.$aliasName" 2>$null
             if ($existingAlias) {
@@ -418,4 +418,3 @@ function configureGit {
 
     return $success
 }
-

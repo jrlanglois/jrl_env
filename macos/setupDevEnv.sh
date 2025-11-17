@@ -43,13 +43,13 @@ isBrewInstalled() {
 # Function to install zsh
 installZsh() {
     echo -e "${cyan}Installing zsh...${nc}"
-    
+
     if isZshInstalled; then
         echo -e "${green}✓ zsh is already installed${nc}"
         zsh --version
         return 0
     fi
-    
+
     if isBrewInstalled; then
         echo -e "${yellow}Installing zsh via Homebrew...${nc}"
         brew install zsh
@@ -58,7 +58,7 @@ installZsh() {
         echo -e "${yellow}  xcode-select --install${nc}"
         return 1
     fi
-    
+
     if isZshInstalled; then
         echo -e "${green}✓ zsh installed successfully${nc}"
         return 0
@@ -71,12 +71,12 @@ installZsh() {
 # Function to install Oh My Zsh
 installOhMyZsh() {
     echo -e "${cyan}Installing Oh My Zsh...${nc}"
-    
+
     if isOhMyZshInstalled; then
         echo -e "${green}✓ Oh My Zsh is already installed${nc}"
         return 0
     fi
-    
+
     echo -e "${yellow}Installing Oh My Zsh...${nc}"
     if sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended; then
         echo -e "${green}✓ Oh My Zsh installed successfully${nc}"
@@ -90,13 +90,13 @@ installOhMyZsh() {
 # Function to install Homebrew
 installBrew() {
     echo -e "${cyan}Installing Homebrew...${nc}"
-    
+
     if isBrewInstalled; then
         echo -e "${green}✓ Homebrew is already installed${nc}"
         brew --version
         return 0
     fi
-    
+
     echo -e "${yellow}Installing Homebrew...${nc}"
     if /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"; then
         # Add Homebrew to PATH for Apple Silicon Macs
@@ -107,7 +107,7 @@ installBrew() {
             echo 'eval "$(/usr/local/bin/brew shellenv)"' >> ~/.zprofile
             eval "$(/usr/local/bin/brew shellenv)"
         fi
-        
+
         if isBrewInstalled; then
             echo -e "${green}✓ Homebrew installed successfully${nc}"
             return 0
@@ -125,23 +125,23 @@ installBrew() {
 # Function to set zsh as default shell
 setZshAsDefault() {
     echo -e "${cyan}Setting zsh as default shell...${nc}"
-    
+
     if ! isZshInstalled; then
         echo -e "${red}✗ zsh is not installed. Please install it first.${nc}"
         return 1
     fi
-    
+
     ZSH_PATH=$(which zsh)
     CURRENT_SHELL=$(echo $SHELL)
-    
+
     if [ "$CURRENT_SHELL" = "$ZSH_PATH" ]; then
         echo -e "${green}✓ zsh is already the default shell${nc}"
         return 0
     fi
-    
+
     echo -e "${yellow}Changing default shell to zsh...${nc}"
     echo -e "${yellow}You may be prompted for your password.${nc}"
-    
+
     if sudo chsh -s "$ZSH_PATH" "$USER"; then
         echo -e "${green}✓ Default shell changed to zsh${nc}"
         echo -e "${yellow}Note: This change will take effect after you log out and log back in.${nc}"
@@ -156,33 +156,33 @@ setZshAsDefault() {
 setupDevEnv() {
     echo -e "${cyan}=== macOS Development Environment Setup ===${nc}"
     echo ""
-    
+
     local success=true
-    
+
     # Install Homebrew first (needed for zsh if not pre-installed)
     if ! installBrew; then
         success=false
     fi
     echo ""
-    
+
     # Install zsh
     if ! installZsh; then
         success=false
     fi
     echo ""
-    
+
     # Install Oh My Zsh
     if ! installOhMyZsh; then
         success=false
     fi
     echo ""
-    
+
     # Set zsh as default
     if ! setZshAsDefault; then
         success=false
     fi
     echo ""
-    
+
     echo -e "${cyan}=== Setup Complete ===${nc}"
     if [ "$success" = true ]; then
         echo -e "${green}Development environment setup completed successfully!${nc}"
@@ -190,7 +190,7 @@ setupDevEnv() {
     else
         echo -e "${yellow}Some steps may not have completed successfully. Please review the output above.${nc}"
     fi
-    
+
     return 0
 }
 

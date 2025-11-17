@@ -71,18 +71,18 @@ backupConfigs() {
         logInfo "Backup skipped (noBackup or dryRun flag set)"
         return 0
     fi
-    
+
     backupDir="$TMPDIR/jrl_env_backup_$(date +%Y%m%d_%H%M%S)"
     mkdir -p "$backupDir"
-    
+
     logInfo "Creating backup..."
-    
+
     # Backup Git config
     if [ -f "$HOME/.gitconfig" ]; then
         cp "$HOME/.gitconfig" "$backupDir/gitconfig" 2>/dev/null || true
         logSuccess "Backed up Git config"
     fi
-    
+
     # Backup Cursor settings
     cursorSettings="$HOME/Library/Application Support/Cursor/User/settings.json"
     if [ -f "$cursorSettings" ]; then
@@ -90,7 +90,7 @@ backupConfigs() {
         cp "$cursorSettings" "$backupDir/Cursor/settings.json" 2>/dev/null || true
         logSuccess "Backed up Cursor settings"
     fi
-    
+
     logSuccess "Backup created: $backupDir"
 }
 
@@ -98,21 +98,21 @@ backupConfigs() {
 checkDependencies() {
     logInfo "Checking dependencies..."
     missing=()
-    
+
     if ! command -v git >/dev/null 2>&1; then
         missing+=("Git")
         logWarn "Git is not installed"
     else
         logSuccess "Git is installed"
     fi
-    
+
     if ! command -v brew >/dev/null 2>&1; then
         missing+=("Homebrew")
         logWarn "Homebrew is not installed"
     else
         logSuccess "Homebrew is installed"
     fi
-    
+
     if [ ${#missing[@]} -gt 0 ]; then
         logWarn "Missing dependencies: ${missing[*]}"
         read -p "Some features may not work. Continue anyway? (Y/N): " response
@@ -216,7 +216,7 @@ if [ "$runRepos" = true ]; then
         logInfo "Would clone repositories from repositories.json"
     else
         logInfo "=== Step 6: Cloning repositories ==="
-        
+
         # Check if repositories have already been cloned
         configPath="$scriptDir/../configs/repositories.json"
         if [ -f "$configPath" ]; then
@@ -224,7 +224,7 @@ if [ "$runRepos" = true ]; then
             if [ -n "$workPath" ] && [ "$workPath" != "null" ]; then
                 # Expand $HOME if present in path
                 workPath=$(echo "$workPath" | sed "s|\$HOME|$HOME|g" | sed "s|\$USER|$USER|g")
-                
+
                 # Check if work directory exists and has any owner subdirectories
                 if [ -d "$workPath" ]; then
                     ownerDirs=$(find "$workPath" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | wc -l)
@@ -258,4 +258,3 @@ logSuccess "=== Setup Complete ==="
 logInfo "All setup tasks have been executed."
 logInfo "Log file saved to: $logFile"
 echo -e "${yellow}Please review any warnings above and restart your terminal if needed.${nc}"
-

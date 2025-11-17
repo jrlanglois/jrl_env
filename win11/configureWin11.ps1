@@ -566,14 +566,14 @@ function enableWSL2 {
         Write-Host "WSL2 support enabled successfully!" -ForegroundColor Green
         Write-Host "IMPORTANT: A system restart is required for WSL2 features to be fully enabled." -ForegroundColor Yellow
         Write-Host "After restart, you can install a Linux distribution with: wsl --install -d <DistributionName>" -ForegroundColor Yellow
-        
+
         $restart = Read-Host "Would you like to restart now? (Y/N)"
         if ($restart -match '^[Yy]') {
             Write-Host "Restarting computer in 10 seconds..." -ForegroundColor Yellow
             Start-Sleep -Seconds 10
             Restart-Computer -Force
         }
-        
+
         return $true
     }
     catch {
@@ -771,4 +771,3 @@ function configureWin11 {
 
     return $success
 }
-

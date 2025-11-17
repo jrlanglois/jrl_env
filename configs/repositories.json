@@ -1,7 +1,7 @@
 {
     "workPathWindows": "D:\\work",
     "workPathUnix": "$HOME/work",
-    "repositories": 
+    "repositories":
     [
         "git@github.com:jrlanglois/jrl_env.git",
         "git@github.com:jrlanglois/TheDarkFable.git",

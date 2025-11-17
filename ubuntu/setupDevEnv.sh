@@ -35,13 +35,13 @@ isOhMyZshInstalled() {
 # Function to install zsh
 installZsh() {
     echo -e "${cyan}Installing zsh...${nc}"
-    
+
     if isZshInstalled; then
         echo -e "${green}✓ zsh is already installed${nc}"
         zsh --version
         return 0
     fi
-    
+
     echo -e "${yellow}Installing zsh via apt...${nc}"
     sudo apt-get update
     if sudo apt-get install -y zsh; then
@@ -61,12 +61,12 @@ installZsh() {
 # Function to install Oh My Zsh
 installOhMyZsh() {
     echo -e "${cyan}Installing Oh My Zsh...${nc}"
-    
+
     if isOhMyZshInstalled; then
         echo -e "${green}✓ Oh My Zsh is already installed${nc}"
         return 0
     fi
-    
+
     echo -e "${yellow}Installing Oh My Zsh...${nc}"
     if sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended; then
         echo -e "${green}✓ Oh My Zsh installed successfully${nc}"
@@ -80,23 +80,23 @@ installOhMyZsh() {
 # Function to set zsh as default shell
 setZshAsDefault() {
     echo -e "${cyan}Setting zsh as default shell...${nc}"
-    
+
     if ! isZshInstalled; then
         echo -e "${red}✗ zsh is not installed. Please install it first.${nc}"
         return 1
     fi
-    
+
     ZSH_PATH=$(which zsh)
     CURRENT_SHELL=$(echo $SHELL)
-    
+
     if [ "$CURRENT_SHELL" = "$ZSH_PATH" ]; then
         echo -e "${green}✓ zsh is already the default shell${nc}"
         return 0
     fi
-    
+
     echo -e "${yellow}Changing default shell to zsh...${nc}"
     echo -e "${yellow}You may be prompted for your password.${nc}"
-    
+
     if sudo chsh -s "$ZSH_PATH" "$USER"; then
         echo -e "${green}✓ Default shell changed to zsh${nc}"
         echo -e "${yellow}Note: This change will take effect after you log out and log back in.${nc}"
@@ -111,32 +111,32 @@ setZshAsDefault() {
 setupDevEnv() {
     echo -e "${cyan}=== Ubuntu Development Environment Setup ===${nc}"
     echo ""
-    
+
     local success=true
-    
+
     # Update package list
     echo -e "${cyan}Updating package list...${nc}"
     sudo apt-get update
     echo ""
-    
+
     # Install zsh
     if ! installZsh; then
         success=false
     fi
     echo ""
-    
+
     # Install Oh My Zsh
     if ! installOhMyZsh; then
         success=false
     fi
     echo ""
-    
+
     # Set zsh as default
     if ! setZshAsDefault; then
         success=false
     fi
     echo ""
-    
+
     echo -e "${cyan}=== Setup Complete ===${nc}"
     if [ "$success" = true ]; then
         echo -e "${green}Development environment setup completed successfully!${nc}"
@@ -144,7 +144,7 @@ setupDevEnv() {
     else
         echo -e "${yellow}Some steps may not have completed successfully. Please review the output above.${nc}"
     fi
-    
+
     return 0
 }
 

@@ -10,25 +10,25 @@ function isRepositoryCloned
     param(
         [Parameter(Mandatory=$true)]
         [string]$repoUrl,
-        
+
         [Parameter(Mandatory=$true)]
         [string]$workPath
     )
-    
+
     try
     {
         # Extract username and repository name from URL
         $owner = getRepositoryOwner -repoUrl $repoUrl
         $repoName = getRepositoryName -repoUrl $repoUrl
-        
+
         if ([string]::IsNullOrWhiteSpace($owner) -or [string]::IsNullOrWhiteSpace($repoName))
         {
             return $false
         }
-        
+
         $ownerPath = Join-Path $workPath $owner
         $repoPath = Join-Path $ownerPath $repoName
-        
+
         if (Test-Path $repoPath)
         {
             # Check if it's actually a Git repository
@@ -43,7 +43,7 @@ function isRepositoryCloned
     {
         # If we can't determine, assume not cloned
     }
-    
+
     return $false
 }
 
@@ -54,7 +54,7 @@ function getRepositoryOwner
         [Parameter(Mandatory=$true)]
         [string]$repoUrl
     )
-    
+
     try
     {
         # Extract username/organization from URL (handles both HTTPS and SSH)
@@ -78,7 +78,7 @@ function getRepositoryName
         [Parameter(Mandatory=$true)]
         [string]$repoUrl
     )
-    
+
     try
     {
         # Extract repository name from URL (handles both HTTPS and SSH)
@@ -97,31 +97,31 @@ function cloneRepository
     param(
         [Parameter(Mandatory=$true)]
         [string]$repoUrl,
-        
+
         [Parameter(Mandatory=$true)]
         [string]$workPath
     )
-    
+
     try
     {
         $owner = getRepositoryOwner -repoUrl $repoUrl
         $repoName = getRepositoryName -repoUrl $repoUrl
-        
+
         if ([string]::IsNullOrWhiteSpace($owner) -or [string]::IsNullOrWhiteSpace($repoName))
         {
             Write-Host "  ✗ Failed to extract owner or repository name from URL" -ForegroundColor Red
             return $false
         }
-        
+
         # Create owner directory if it doesn't exist
         $ownerPath = Join-Path $workPath $owner
         if (-not (Test-Path $ownerPath))
         {
             New-Item -ItemType Directory -Path $ownerPath -Force | Out-Null
         }
-        
+
         $repoPath = Join-Path $ownerPath $repoName
-        
+
         # Check if already cloned
         if (isRepositoryCloned -repoUrl $repoUrl -workPath $workPath)
         {
@@ -129,23 +129,23 @@ function cloneRepository
             Write-Host "    Skipping clone. Use 'git pull' to update if needed." -ForegroundColor Gray
             return $true
         }
-        
+
         Write-Host "  Cloning $owner/$repoName..." -ForegroundColor Yellow
-        
+
         # Clone with recursive flag to include submodules
         $cloneOutput = git clone --recursive $repoUrl $repoPath 2>&1
-        
+
         if ($LASTEXITCODE -eq 0)
         {
             Write-Host "    ✓ Cloned successfully" -ForegroundColor Green
-            
+
             # Check if submodules were initialised
             $submodulePath = Join-Path $repoPath ".gitmodules"
             if (Test-Path $submodulePath)
             {
                 Write-Host "    ✓ Submodules initialised" -ForegroundColor Green
             }
-            
+
             return $true
         }
         else
@@ -172,10 +172,10 @@ function cloneRepositories
         [Parameter(Mandatory=$false)]
         [string]$configPath = (Join-Path (Join-Path $PSScriptRoot "..\configs") "repositories.json")
     )
-    
+
     Write-Host "=== Repository Cloning ===" -ForegroundColor Cyan
     Write-Host ""
-    
+
     # Check if Git is installed
     if (-not (isGitInstalled))
     {
@@ -183,51 +183,51 @@ function cloneRepositories
         Write-Host "You can install Git using: winget install Git.Git" -ForegroundColor Yellow
         return $false
     }
-    
+
     # Check if config file exists
     if (-not (Test-Path $configPath))
     {
         Write-Error "Configuration file not found: $configPath"
         return $false
     }
-    
+
     # Parse JSON configuration
     try
     {
         $jsonContent = Get-Content $configPath -Raw | ConvertFrom-Json
-        
+
         if (-not $jsonContent.PSObject.Properties.Name -contains "repositories")
         {
             Write-Error "JSON file must contain a 'repositories' array."
             return $false
         }
-        
+
         if (-not $jsonContent.PSObject.Properties.Name -contains "workPathWindows")
         {
             Write-Error "JSON file must contain a 'workPathWindows' property."
             return $false
         }
-        
+
         $workPath = $jsonContent.workPathWindows
         $repositories = $jsonContent.repositories
-        
+
         if ($repositories.Count -eq 0)
         {
             Write-Host "No repositories specified in configuration file." -ForegroundColor Yellow
             return $true
         }
-        
+
         Write-Host "Work directory: $workPath" -ForegroundColor Cyan
         Write-Host "Found $($repositories.Count) repository/repositories in configuration file." -ForegroundColor Cyan
         Write-Host ""
-        
+
     }
     catch
     {
         Write-Error "Failed to parse JSON file: $_"
         return $false
     }
-    
+
     # Create work directory if it doesn't exist
     if (-not (Test-Path $workPath))
     {
@@ -244,16 +244,16 @@ function cloneRepositories
             return $false
         }
     }
-    
+
     $clonedCount = 0
     $skippedCount = 0
     $failedCount = 0
-    
+
     # Process each repository
     foreach ($repoUrl in $repositories)
     {
         Write-Host "Processing: $repoUrl" -ForegroundColor Yellow
-        
+
         if (cloneRepository -repoUrl $repoUrl -workPath $workPath)
         {
             $clonedCount++
@@ -266,10 +266,10 @@ function cloneRepositories
         {
             $failedCount++
         }
-        
+
         Write-Host ""
     }
-    
+
     Write-Host "Summary:" -ForegroundColor Cyan
     Write-Host "  Cloned: $clonedCount repository/repositories" -ForegroundColor Green
     if ($skippedCount -gt 0)
@@ -280,9 +280,9 @@ function cloneRepositories
     {
         Write-Host "  Failed: $failedCount repository/repositories" -ForegroundColor Red
     }
-    
+
     Write-Host ""
     Write-Host "Repository cloning complete!" -ForegroundColor Green
-    
+
     return ($failedCount -eq 0)
 }

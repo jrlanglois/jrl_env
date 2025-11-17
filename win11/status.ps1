@@ -18,7 +18,7 @@ if (isGitInstalled)
 {
     $gitVersion = git --version 2>$null
     Write-Host "  ✓ Installed: $gitVersion" -ForegroundColor Green
-    
+
     $gitName = git config --global user.name 2>$null
     $gitEmail = git config --global user.email 2>$null
     if ($gitName -and $gitEmail)
@@ -58,7 +58,7 @@ if (Test-Path (Join-Path $configsPath "win11Apps.json"))
         $apps = Get-Content (Join-Path $configsPath "win11Apps.json") -Raw | ConvertFrom-Json
         $installed = 0
         $notInstalled = 0
-        
+
         if ($apps.winget)
         {
             foreach ($app in $apps.winget)
@@ -74,7 +74,7 @@ if (Test-Path (Join-Path $configsPath "win11Apps.json"))
                 }
             }
         }
-        
+
         if ($installed -gt 0)
         {
             Write-Host "  ✓ $installed winget app(s) installed" -ForegroundColor Green
@@ -99,13 +99,13 @@ if (Test-Path (Join-Path $configsPath "repositories.json"))
     {
         $repos = Get-Content (Join-Path $configsPath "repositories.json") -Raw | ConvertFrom-Json
         $workPath = $repos.workPathWindows
-        
+
         if (Test-Path $workPath)
         {
             $ownerDirs = Get-ChildItem -Path $workPath -Directory -ErrorAction SilentlyContinue
             Write-Host "  ✓ Work directory exists: $workPath" -ForegroundColor Green
             Write-Host "  ✓ $($ownerDirs.Count) owner directory/directories found" -ForegroundColor Green
-            
+
             $totalRepos = 0
             foreach ($dir in $ownerDirs)
             {

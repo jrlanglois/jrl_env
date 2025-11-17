@@ -11,23 +11,23 @@ function initLogging
         [Parameter(Mandatory=$false)]
         [string]$logDirectory = (Join-Path $env:TEMP "jrl_env_logs")
     )
-    
+
     # Create log directory if it doesn't exist
     if (-not (Test-Path $logDirectory))
     {
         New-Item -ItemType Directory -Path $logDirectory -Force | Out-Null
     }
-    
+
     $script:logDirectory = $logDirectory
-    
+
     # Create log file with timestamp
     $timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
     $script:logFilePath = Join-Path $logDirectory "setup_$timestamp.log"
-    
+
     # Write initial log entry
     $initMessage = "=== jrl_env Setup Log - Started at $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') ==="
     Add-Content -Path $script:logFilePath -Value $initMessage
-    
+
     return $script:logFilePath
 }
 
@@ -44,23 +44,23 @@ function writeLog
         [Parameter(Mandatory=$true)]
         [ValidateSet("INFO", "SUCCESS", "WARN", "ERROR", "DEBUG")]
         [string]$level,
-        
+
         [Parameter(Mandatory=$true)]
         [string]$message
     )
-    
+
     if (-not $script:logFilePath)
     {
         # Initialize logging if not already done
         initLogging | Out-Null
     }
-    
+
     $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
     $logEntry = "[$timestamp] [$level] $message"
-    
+
     # Write to log file
     Add-Content -Path $script:logFilePath -Value $logEntry
-    
+
     # Also write to console with appropriate colour
     $color = switch ($level)
     {
@@ -70,7 +70,7 @@ function writeLog
         "ERROR"   { "Red" }
         "DEBUG"   { "Gray" }
     }
-    
+
     Write-Host $logEntry -ForegroundColor $color
 }
 

@@ -19,18 +19,18 @@ function validateJsonFile
         [string]$filePath,
         [string]$description
     )
-    
+
     if (-not (Test-Path $filePath))
     {
         $script:errors += "${description}: File not found: $filePath"
         return $false
     }
-    
+
     try
     {
         $content = Get-Content $filePath -Raw
         $json = $content | ConvertFrom-Json
-        
+
         Write-Host "✓ $description" -ForegroundColor Green
         return $true
     }
@@ -45,11 +45,11 @@ function validateJsonFile
 function validateAppsJson
 {
     param([string]$filePath, [string]$platform)
-    
+
     try
     {
         $content = Get-Content $filePath -Raw | ConvertFrom-Json
-        
+
         if ($platform -eq "win11")
         {
             if (-not $content.winget -and -not $content.windowsStore)
@@ -90,16 +90,16 @@ function validateAppsJson
 function validateRepositoriesJson
 {
     param([string]$filePath)
-    
+
     try
     {
         $content = Get-Content $filePath -Raw | ConvertFrom-Json
-        
+
         if (-not $content.workPathWindows -and -not $content.workPathUnix)
         {
             $script:errors += "repositories: Missing workPathWindows or workPathUnix"
         }
-        
+
         if (-not $content.repositories)
         {
             $script:warnings += "repositories: No repositories specified"
@@ -108,7 +108,7 @@ function validateRepositoriesJson
         {
             $script:warnings += "repositories: repositories array is empty"
         }
-        
+
         # Validate repository URLs
         foreach ($repo in $content.repositories)
         {
@@ -128,11 +128,11 @@ function validateRepositoriesJson
 function validateGitConfigJson
 {
     param([string]$filePath)
-    
+
     try
     {
         $content = Get-Content $filePath -Raw | ConvertFrom-Json
-        
+
         if (-not $content.user)
         {
             $script:warnings += "gitConfig: No user section specified"
@@ -148,12 +148,12 @@ function validateGitConfigJson
                 $script:warnings += "gitConfig: Missing user.email"
             }
         }
-        
+
         if (-not $content.defaults)
         {
             $script:warnings += "gitConfig: No defaults section specified"
         }
-        
+
         if (-not $content.aliases)
         {
             $script:warnings += "gitConfig: No aliases section specified"
@@ -234,7 +234,7 @@ else
         }
         Write-Host ""
     }
-    
+
     if ($errors.Count -gt 0)
     {
         Write-Host "Errors:" -ForegroundColor Red

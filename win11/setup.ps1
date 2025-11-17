@@ -52,16 +52,16 @@ if ($LASTEXITCODE -ne 0)
 function backupConfigs
 {
     if ($noBackup -or $dryRun)
-    { 
+    {
         logInfo "Backup skipped (noBackup or dryRun flag set)"
-        return 
+        return
     }
-    
+
     $backupDir = Join-Path $env:TEMP "jrl_env_backup_$(Get-Date -Format 'yyyyMMdd_HHmmss')"
     New-Item -ItemType Directory -Path $backupDir -Force | Out-Null
-    
+
     logInfo "Creating backup..."
-    
+
     # Backup Git config
     $gitConfigPath = "$env:USERPROFILE\.gitconfig"
     if (Test-Path $gitConfigPath)
@@ -69,7 +69,7 @@ function backupConfigs
         Copy-Item $gitConfigPath "$backupDir\gitconfig" -ErrorAction SilentlyContinue
         logSuccess "Backed up Git config"
     }
-    
+
     # Backup Cursor settings
     $cursorSettingsPath = "$env:APPDATA\Cursor\User\settings.json"
     if (Test-Path $cursorSettingsPath)
@@ -79,7 +79,7 @@ function backupConfigs
         Copy-Item $cursorSettingsPath "$cursorBackupDir\settings.json" -ErrorAction SilentlyContinue
         logSuccess "Backed up Cursor settings"
     }
-    
+
     logSuccess "Backup created: $backupDir"
 }
 
@@ -88,7 +88,7 @@ function testDependencies
 {
     logInfo "Checking dependencies..."
     $missing = @()
-    
+
     if (-not (isGitInstalled))
     {
         $missing += "Git"
@@ -98,7 +98,7 @@ function testDependencies
     {
         logSuccess "Git is installed"
     }
-    
+
     if (-not (isWingetInstalled))
     {
         $missing += "winget (Windows Package Manager)"
@@ -108,7 +108,7 @@ function testDependencies
     {
         logSuccess "winget is installed"
     }
-    
+
     if ($missing.Count -gt 0)
     {
         logWarn "Missing dependencies: $($missing -join ', ')"
@@ -289,7 +289,7 @@ if ($runRepos)
     else
     {
         logInfo "=== Step 7: Cloning repositories ==="
-        
+
         # Check if repositories have already been cloned
         $configPath = Join-Path (Join-Path $scriptRoot "..\configs") "repositories.json"
         if (Test-Path $configPath)
@@ -298,7 +298,7 @@ if ($runRepos)
             {
                 $jsonContent = Get-Content $configPath -Raw | ConvertFrom-Json
                 $workPath = $jsonContent.workPathWindows
-                
+
                 # Check if work directory exists and has any owner subdirectories
                 if (Test-Path $workPath)
                 {
@@ -348,4 +348,3 @@ logSuccess "=== Setup Complete ==="
 logInfo "All setup tasks have been executed."
 logInfo "Log file saved to: $logFile"
 Write-Host "Please review any warnings above and restart your computer if prompted." -ForegroundColor Yellow
-

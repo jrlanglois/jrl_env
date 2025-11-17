@@ -31,12 +31,12 @@ fi
 validateJsonFile() {
     local file_path=$1
     local description=$2
-    
+
     if [ ! -f "$file_path" ]; then
         errors+=("$description: File not found: $file_path")
         return 1
     fi
-    
+
     if jq empty "$file_path" 2>/dev/null; then
         echo -e "${green}✓ $description${nc}"
         return 0
@@ -50,18 +50,18 @@ validateJsonFile() {
 validateAppsJson() {
     local file_path=$1
     local platform=$2
-    
+
     if [ "$platform" = "macos" ]; then
         local brew_count=$(jq '.brew | length' "$file_path" 2>/dev/null || echo "0")
         local cask_count=$(jq '.brewCask | length' "$file_path" 2>/dev/null || echo "0")
-        
+
         if [ "$brew_count" = "0" ] && [ "$cask_count" = "0" ]; then
             warnings+=("$platform apps: No apps specified")
         fi
     elif [ "$platform" = "ubuntu" ]; then
         local apt_count=$(jq '.apt | length' "$file_path" 2>/dev/null || echo "0")
         local snap_count=$(jq '.snap | length' "$file_path" 2>/dev/null || echo "0")
-        
+
         if [ "$apt_count" = "0" ] && [ "$snap_count" = "0" ]; then
             warnings+=("$platform apps: No apps specified")
         fi
@@ -71,16 +71,16 @@ validateAppsJson() {
 # Function to validate repositories JSON
 validateRepositoriesJson() {
     local file_path=$1
-    
+
     local work_path_win=$(jq -r '.workPathWindows' "$file_path" 2>/dev/null)
     local work_path_unix=$(jq -r '.workPathUnix' "$file_path" 2>/dev/null)
-    
+
     if [ -z "$work_path_win" ] || [ "$work_path_win" = "null" ]; then
         if [ -z "$work_path_unix" ] || [ "$work_path_unix" = "null" ]; then
             errors+=("repositories: Missing workPathWindows or workPathUnix")
         fi
     fi
-    
+
     local repo_count=$(jq '.repositories | length' "$file_path" 2>/dev/null || echo "0")
     if [ "$repo_count" = "0" ]; then
         warnings+=("repositories: No repositories specified")
@@ -90,14 +90,14 @@ validateRepositoriesJson() {
 # Function to validate Git config JSON
 validateGitConfigJson() {
     local file_path=$1
-    
+
     local has_user=$(jq 'has("user")' "$file_path" 2>/dev/null)
     if [ "$has_user" != "true" ]; then
         warnings+=("gitConfig: No user section specified")
     else
         local user_name=$(jq -r '.user.name' "$file_path" 2>/dev/null)
         local user_email=$(jq -r '.user.email' "$file_path" 2>/dev/null)
-        
+
         if [ -z "$user_name" ] || [ "$user_name" = "null" ]; then
             warnings+=("gitConfig: Missing user.name")
         fi
@@ -154,7 +154,7 @@ else
         done
         echo ""
     fi
-    
+
     if [ ${#errors[@]} -gt 0 ]; then
         echo -e "${red}Errors:${nc}"
         for error in "${errors[@]}"; do
@@ -168,4 +168,3 @@ else
         exit 0
     fi
 fi
-

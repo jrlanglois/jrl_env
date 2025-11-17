@@ -38,4 +38,3 @@ echo ""
 
 # Run the setup script
 bash "$macosDir/setup.sh"
-

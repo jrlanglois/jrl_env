@@ -221,10 +221,10 @@ function updateWinget
         if ($LASTEXITCODE -eq 0)
         {
             Write-Host "winget update completed successfully." -ForegroundColor Green
-            
+
             # Refresh environment variables
             $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path", "User")
-            
+
             return $true
         }
         else

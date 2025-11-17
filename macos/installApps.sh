@@ -49,23 +49,23 @@ isBrewCaskInstalled() {
 # Function to install or update apps
 installOrUpdateApps() {
     local configPath=${1:-$configPath}
-    
+
     echo -e "${cyan}=== macOS Application Installation ===${nc}"
     echo ""
-    
+
     # Check if Homebrew is installed
     if ! isBrewInstalled; then
         echo -e "${red}✗ Homebrew is not installed.${nc}"
         echo -e "${yellow}Please install Homebrew first using setupDevEnv.sh${nc}"
         return 1
     fi
-    
+
     # Check if config file exists
     if [ ! -f "$configPath" ]; then
         echo -e "${red}✗ Configuration file not found: $configPath${nc}"
         return 1
     fi
-    
+
     # Parse JSON (using jq if available, otherwise basic parsing)
     if commandExists jq; then
         brewApps=$(jq -r '.brew[]?' "$configPath" 2>/dev/null || echo "")
@@ -79,35 +79,35 @@ installOrUpdateApps() {
         brewApps=$(jq -r '.brew[]?' "$configPath" 2>/dev/null || echo "")
         brewCaskApps=$(jq -r '.brewCask[]?' "$configPath" 2>/dev/null || echo "")
     fi
-    
+
     if [ -z "$brewApps" ] && [ -z "$brewCaskApps" ]; then
         echo -e "${yellow}No applications specified in configuration file.${nc}"
         return 0
     fi
-    
+
     local brewCount=$(echo "$brewApps" | grep -c . || echo "0")
     local caskCount=$(echo "$brewCaskApps" | grep -c . || echo "0")
     local totalCount=$((brewCount + caskCount))
-    
+
     echo -e "${cyan}Found $totalCount application(s) in configuration file ($brewCount brew, $caskCount cask).${nc}"
     echo ""
-    
+
     local installedCount=0
     local updatedCount=0
     local failedCount=0
-    
+
     # Process brew packages
     if [ -n "$brewApps" ]; then
         echo -e "${cyan}=== Processing Homebrew packages ===${nc}"
         echo ""
-        
+
         while IFS= read -r package; do
             if [ -z "$package" ]; then
                 continue
             fi
-            
+
             echo -e "${yellow}Processing: $package${nc}"
-            
+
             if isBrewPackageInstalled "$package"; then
                 echo -e "  ${cyan}Package is installed. Updating...${nc}"
                 if brew upgrade "$package" &>/dev/null; then
@@ -130,19 +130,19 @@ installOrUpdateApps() {
             echo ""
         done <<< "$brewApps"
     fi
-    
+
     # Process brew casks
     if [ -n "$brewCaskApps" ]; then
         echo -e "${cyan}=== Processing Homebrew Casks ===${nc}"
         echo ""
-        
+
         while IFS= read -r cask; do
             if [ -z "$cask" ]; then
                 continue
             fi
-            
+
             echo -e "${yellow}Processing: $cask${nc}"
-            
+
             if isBrewCaskInstalled "$cask"; then
                 echo -e "  ${cyan}Application is installed. Updating...${nc}"
                 if brew upgrade --cask "$cask" &>/dev/null; then
@@ -165,14 +165,14 @@ installOrUpdateApps() {
             echo ""
         done <<< "$brewCaskApps"
     fi
-    
+
     echo -e "${cyan}Summary:${nc}"
     echo -e "  ${green}Installed: $installedCount${nc}"
     echo -e "  ${green}Updated: $updatedCount${nc}"
     if [ $failedCount -gt 0 ]; then
         echo -e "  ${red}Failed: $failedCount${nc}"
     fi
-    
+
     return 0
 }
 

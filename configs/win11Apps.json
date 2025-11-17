@@ -1,5 +1,5 @@
 {
-    "winget": 
+    "winget":
     [
         "7zip.7zip",
         "Anysphere.Cursor",
@@ -34,7 +34,7 @@
         "Valve.SteamLink",
         "VideoLAN.VLC"
     ],
-    "windowsStore": 
+    "windowsStore":
     [
         "4DF9E0F8.Netflix",
         "9MV0B5HZVK9Z",

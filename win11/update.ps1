@@ -40,4 +40,3 @@ Write-Host ""
 
 # Run the setup script
 & "$win11Dir\setup.ps1"
-

@@ -21,7 +21,7 @@ echo -e "${yellow}Git:${nc}"
 if command -v git >/dev/null 2>&1; then
     gitVersion=$(git --version 2>/dev/null)
     echo -e "  ${green}✓ Installed: $gitVersion${nc}"
-    
+
     gitName=$(git config --global user.name 2>/dev/null || echo "")
     gitEmail=$(git config --global user.email 2>/dev/null || echo "")
     if [ -n "$gitName" ] && [ -n "$gitEmail" ]; then
@@ -39,7 +39,7 @@ echo -e "${yellow}zsh:${nc}"
 if command -v zsh >/dev/null 2>&1; then
     zshVersion=$(zsh --version 2>/dev/null)
     echo -e "  ${green}✓ Installed: $zshVersion${nc}"
-    
+
     if [ -d "$HOME/.oh-my-zsh" ]; then
         echo -e "  ${green}✓ Oh My Zsh installed${nc}"
     else
@@ -56,7 +56,7 @@ if [ -f "$configsPath/ubuntuApps.json" ]; then
     if command -v jq >/dev/null 2>&1; then
         installed=0
         notInstalled=0
-        
+
         # Check apt packages
         aptApps=$(jq -r '.apt[]?' "$configsPath/ubuntuApps.json" 2>/dev/null || echo "")
         while IFS= read -r app; do
@@ -69,7 +69,7 @@ if [ -f "$configsPath/ubuntuApps.json" ]; then
                 fi
             fi
         done <<< "$aptApps"
-        
+
         if [ $installed -gt 0 ]; then
             echo -e "  ${green}✓ $installed apt package(s) installed${nc}"
         fi
@@ -89,12 +89,12 @@ if [ -f "$configsPath/repositories.json" ]; then
         workPath=$(jq -r '.workPathUnix' "$configsPath/repositories.json" 2>/dev/null)
         if [ -n "$workPath" ] && [ "$workPath" != "null" ]; then
             workPath=$(echo "$workPath" | sed "s|\$HOME|$HOME|g" | sed "s|\$USER|$USER|g")
-            
+
             if [ -d "$workPath" ]; then
                 echo -e "  ${green}✓ Work directory exists: $workPath${nc}"
                 ownerDirs=$(find "$workPath" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | wc -l | tr -d ' ')
                 echo -e "  ${green}✓ $ownerDirs owner directory/directories found${nc}"
-                
+
                 totalRepos=0
                 for dir in "$workPath"/*; do
                     if [ -d "$dir" ]; then
@@ -124,4 +124,3 @@ fi
 echo ""
 
 echo -e "${cyan}=== Status Check Complete ===${nc}"
-
