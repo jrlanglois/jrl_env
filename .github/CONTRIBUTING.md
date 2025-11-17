@@ -13,5 +13,6 @@ This repository is primarily for personal use, but contributions are welcome.
 
 - Follow the existing code style and structure
 - Update documentation if adding new features
-- Test scripts on the target platform before submitting
+- Before opening a PR, run `./helpers/formatRepo.sh` to apply Allman braces, camelCase helpers, and CRLF enforcement for text files
+- Test scripts on the target platform before submitting (macOS, Ubuntu, Windows where applicable)
 - Keep changes focused and minimal
