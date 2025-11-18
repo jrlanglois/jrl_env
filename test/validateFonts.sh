@@ -86,7 +86,7 @@ validateFonts()
             fi
 
             local fontUrlName
-            fontUrlName=$(echo "$font" | sed 's/ /+/g')
+            fontUrlName="${font// /+}"
             local cssUrl="https://fonts.googleapis.com/css2?family=${fontUrlName}:wght@400"
 
             if curl -s --max-time 5 -o /dev/null -w "%{http_code}" "$cssUrl" 2>/dev/null | grep -q "200"; then
