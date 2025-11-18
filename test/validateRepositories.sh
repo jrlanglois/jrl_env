@@ -47,6 +47,7 @@ validateRepositories()
         # Validate Unix path syntax
         if [ -n "$workPathUnix" ] && [ "$workPathUnix" != "null" ]; then
             # Check for valid path characters (basic validation)
+            # shellcheck disable=SC2016 # We want to match literal $HOME/$USER, not expand variables
             if echo "$workPathUnix" | grep -qE '^[~/]|^\$HOME|^\$USER'; then
                 logSuccess "  workPathUnix: $workPathUnix"
             else
@@ -58,6 +59,7 @@ validateRepositories()
         # Validate Windows path syntax
         if [ -n "$workPathWindows" ] && [ "$workPathWindows" != "null" ]; then
             # Check for valid Windows path (drive letter or UNC)
+            # shellcheck disable=SC2016 # We want to match literal $USERPROFILE/$HOME, not expand variables
             if echo "$workPathWindows" | grep -qE '^[A-Za-z]:|^\\\\|^\$USERPROFILE|^\$HOME'; then
                 logSuccess "  workPathWindows: $workPathWindows"
             else
@@ -113,7 +115,7 @@ validateRepositories()
             if echo "$checkUrl" | grep -qE '^https://github\.com/'; then
                 # Check GitHub repository via API (no auth needed for public repos)
                 local ownerRepo
-                ownerRepo=$(echo "$checkUrl" | sed 's|https://github\.com/||')
+                ownerRepo="${checkUrl#https://github.com/}"
                 local httpCode
                 local apiResponse
                 apiResponse=$(curl -s --max-time 10 -w "\n%{http_code}" "https://api.github.com/repos/$ownerRepo" 2>/dev/null)

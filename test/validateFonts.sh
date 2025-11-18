@@ -61,7 +61,7 @@ validateFonts()
 
             # Normalize font name (replace spaces with + for URL)
             local fontUrlName
-            fontUrlName=$(echo "$font" | sed 's/ /+/g')
+            fontUrlName="${font// /+}"
 
             # Check if font exists in the fetched list
             if grep -qi "^${font}$" "$tempFontList" 2>/dev/null; then
