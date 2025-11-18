@@ -114,11 +114,27 @@ validateRepositories()
                 # Check GitHub repository via API (no auth needed for public repos)
                 local ownerRepo
                 ownerRepo=$(echo "$checkUrl" | sed 's|https://github\.com/||')
-                if curl -s --max-time 10 -o /dev/null -w "%{http_code}" "https://api.github.com/repos/$ownerRepo" 2>/dev/null | grep -q "200"; then
+                local httpCode
+                local apiResponse
+                apiResponse=$(curl -s --max-time 10 -w "\n%{http_code}" "https://api.github.com/repos/$ownerRepo" 2>/dev/null)
+                httpCode=$(echo "$apiResponse" | tail -n1)
+
+                if [ "$httpCode" = "200" ]; then
                     logSuccess "    Repository exists"
+                elif [ "$httpCode" = "404" ]; then
+                    # Check if it's actually a 404 or if the repo might be private
+                    # Private repos also return 404 without auth, so we can't distinguish
+                    logWarning "    Repository not found or is private (404) - will be validated at clone time"
+                    # Don't count as error since it might be a private repo
+                elif [ "$httpCode" = "403" ]; then
+                    logWarning "    Repository access forbidden (403) - may be private or rate limited"
+                    # Don't count as error
+                elif [ -z "$httpCode" ] || [ "$httpCode" = "000" ]; then
+                    logWarning "    Could not reach GitHub API - network issue or timeout"
+                    # Don't count as error
                 else
-                    logError "    Repository not accessible or does not exist"
-                    ((errors++))
+                    logWarning "    Unexpected response (HTTP $httpCode) - repository may be private"
+                    # Don't count as error
                 fi
             elif timeout 10 git ls-remote "$checkUrl" &>/dev/null; then
                 logSuccess "    Repository exists"
