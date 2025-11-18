@@ -115,6 +115,11 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
         logError "Usage: $0 <path-to-fonts.json>"
         exit 1
     fi
+    startTime=$SECONDS
     validateFonts "$1"
-    exit $?
+    exitCode=$?
+    elapsed=$((SECONDS - startTime))
+    echo ""
+    logNote "Validation completed in ${elapsed}s"
+    exit $exitCode
 fi

@@ -7,6 +7,7 @@ Validates aliases, defaults, name (UTF-8 and web-compatible), email, and GitHub 
 import json
 import re
 import sys
+import time
 import urllib.request
 import urllib.error
 from email.utils import parseaddr
@@ -243,5 +244,10 @@ if __name__ == '__main__':
         sys.exit(1)
     
     config_path = sys.argv[1]
-    sys.exit(validate_git_config(config_path))
+    start_time = time.perf_counter()
+    exit_code = validate_git_config(config_path)
+    elapsed = time.perf_counter() - start_time
+    print()
+    print(f"Validation completed in {elapsed:.2f}s")
+    sys.exit(exit_code)
 

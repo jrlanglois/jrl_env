@@ -50,7 +50,7 @@ jrl_env/
 ├── test/             # Validation scripts for configuration files
 │   ├── validateMacosPackages.sh
 │   ├── validateUbuntuPackages.sh
-│   ├── validateWindowsPackages.sh
+│   ├── validateWindowsPackages.ps1
 │   ├── validateFonts.sh
 │   ├── validateRepositories.sh
 │   └── validateGitConfig.py
@@ -115,11 +115,11 @@ The update script will pull the latest changes and re-run the setup.
 
 ## Configuration
 
-Edit JSON files in `configs/` to customize:
+Edit JSON files in `configs/` to customise:
 
 - **Apps**: Application packages to install via winget/brew/apt
 - **Fonts**: Google Fonts to download and install
-- **Repositories**: Git repositories to clone (organized by owner)
+- **Repositories**: Git repositories to clone (organised by owner)
 - **Git**: User info, defaults, aliases, and GitHub username/email for SSH
 - **Cursor**: Editor settings and preferences
 - **Shell**: Per-OS shell preferences (e.g., `ohMyZshTheme`)
@@ -143,7 +143,7 @@ Run validation locally:
 # Validate all configs
 bash test/validateMacosPackages.sh configs/macos.json
 bash test/validateUbuntuPackages.sh configs/ubuntu.json
-bash test/validateWindowsPackages.sh configs/win11.json
+pwsh test/validateWindowsPackages.ps1 -configPath configs/win11.json
 bash test/validateFonts.sh configs/fonts.json
 bash test/validateRepositories.sh configs/repositories.json
 python3 test/validateGitConfig.py configs/gitConfig.json
@@ -179,7 +179,7 @@ Re-run the script any time you need to rotate keys or target a new GitHub accoun
 
 This repository follows DRY (Don't Repeat Yourself) and SOLID principles:
 
-- **Shared Logic**: Common Bash functionality is centralized in `common/` (e.g., Git configuration, app installation, font installation)
+- **Shared Logic**: Common Bash functionality is centralised in `common/` (e.g., Git configuration, app installation, font installation)
 - **Thin Wrappers**: Platform-specific scripts (`macos/`, `ubuntu/`) are thin wrappers that set platform-specific variables and source shared logic
 - **Shared Utilities**: Generic utilities are in `helpers/`:
   - `helpers/utilities.sh`: Generic Bash utilities (e.g., `sourceIfExists()` for safe file sourcing)

@@ -150,15 +150,16 @@ jobs:
           fi
 
       - name: Validate Windows packages
-        shell: bash
+        shell: pwsh
         continue-on-error: true
         run: |
-          if command -v winget >/dev/null 2>&1; then
-            chmod +x test/validateWindowsPackages.sh
-            bash test/validateWindowsPackages.sh configs/win11.json
-          else
-            echo "winget not available, skipping package validation"
-          fi
+          try {
+            $null = Get-Command winget -ErrorAction Stop
+            powershell -File test/validateWindowsPackages.ps1 -configPath configs/win11.json
+          } catch {
+            Write-Host "winget not available, skipping package validation"
+            exit 0
+          }
 
   validate-fonts:
     name: Validate Fonts Config

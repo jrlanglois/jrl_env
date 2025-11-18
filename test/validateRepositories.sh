@@ -167,6 +167,11 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
         logError "Usage: $0 <path-to-repositories.json>"
         exit 1
     fi
+    startTime=$SECONDS
     validateRepositories "$1"
-    exit $?
+    exitCode=$?
+    elapsed=$((SECONDS - startTime))
+    echo ""
+    logNote "Validation completed in ${elapsed}s"
+    exit $exitCode
 fi
