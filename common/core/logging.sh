@@ -1,7 +1,10 @@
 #!/bin/bash
 # Shared logging functions for Bash scripts across platforms
+# shellcheck disable=SC2154 # Colour variables come from sourced colours.sh
 
-source "${BASH_SOURCE}/utilities.sh"
+# shellcheck source=utilities.sh
+# shellcheck disable=SC1091 # Path is resolved at runtime
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/utilities.sh"
 
 # Global variables
 logFilePath=""
@@ -83,35 +86,41 @@ writeLog()
 logInfo()
 {
     local message="$1"
+    # shellcheck disable=SC2154 # cyan and nc come from colours.sh
     echo -e "${cyan}${message}${nc}"
 }
 
 logSuccess()
 {
     local message="$1"
+    # shellcheck disable=SC2154 # green and nc come from colours.sh
     echo -e "${green}✓ ${message}${nc}"
 }
 
 logError()
 {
     local message="$1"
+    # shellcheck disable=SC2154 # red and nc come from colours.sh
     echo -e "${red}✗ ${message}${nc}"
 }
 
 logWarning()
 {
     local message="$1"
+    # shellcheck disable=SC2154 # yellow and nc come from colours.sh
     echo -e "${yellow}⚠ ${message}${nc}"
 }
 
 logNote()
 {
     local message="$1"
+    # shellcheck disable=SC2154 # yellow and nc come from colours.sh
     echo -e "${yellow}${message}${nc}"
 }
 
 logSection()
 {
     local message="$1"
+    # shellcheck disable=SC2154 # cyan and nc come from colours.sh
     echo -e "${cyan}=== ${message} ===${nc}"
 }

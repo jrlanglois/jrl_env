@@ -1,6 +1,8 @@
 #!/bin/bash
 # Shared Cursor configuration logic
 
+# shellcheck source=../core/logging.sh
+# shellcheck disable=SC1091 # Path is resolved at runtime
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/../core/logging.sh"
 
 configureCursor()

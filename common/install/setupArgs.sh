@@ -1,6 +1,8 @@
 #!/bin/bash
 # Shared argument parsing logic for setup scripts
 
+# shellcheck source=../core/logging.sh
+# shellcheck disable=SC1091 # Path is resolved at runtime
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/../core/logging.sh"
 
 # Parse setup script arguments
@@ -26,7 +28,9 @@ parseSetupArgs()
             --skip-repos) skipRepos=true ;;
             --skip-ssh) skipSsh=true ;;
             --apps-only) appsOnly=true ;;
+            # shellcheck disable=SC2034 # Used by scripts that source this file
             --dry-run) dryRun=true ;;
+            # shellcheck disable=SC2034 # Used by scripts that source this file
             --no-backup) noBackup=true ;;
             *)
                 if commandExists logError; then

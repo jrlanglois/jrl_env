@@ -6,6 +6,7 @@ set -e
 
 # Source all core tools (singular entry point)
 # shellcheck source=../common/core/tools.sh
+# shellcheck disable=SC1091 # Path is resolved at runtime
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/../common/core/tools.sh"
 
 # Get repository root (parent of ubuntu directory)
