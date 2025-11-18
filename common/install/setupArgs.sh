@@ -19,6 +19,7 @@ parseSetupArgs()
     dryRun=false
     noBackup=false
 
+    # shellcheck disable=SC2034 # Variables are used by scripts that source this file
     while [[ $# -gt 0 ]]; do
         case $1 in
             --skip-fonts) skipFonts=true ;;
@@ -28,9 +29,7 @@ parseSetupArgs()
             --skip-repos) skipRepos=true ;;
             --skip-ssh) skipSsh=true ;;
             --apps-only) appsOnly=true ;;
-            # shellcheck disable=SC2034 # Used by scripts that source this file
             --dry-run) dryRun=true ;;
-            # shellcheck disable=SC2034 # Used by scripts that source this file
             --no-backup) noBackup=true ;;
             *)
                 if commandExists logError; then

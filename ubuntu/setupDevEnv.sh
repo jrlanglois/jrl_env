@@ -82,7 +82,7 @@ configureOhMyZshTheme()
     local zshrc="$HOME/.zshrc"
 
     if [ ! -f "$zshrc" ]; then
-        logWarning "~/.zshrc not found. Skipping theme update."
+        logWarning "$HOME/.zshrc not found. Skipping theme update."
         return 0
     fi
 
