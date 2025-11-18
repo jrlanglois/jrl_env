@@ -2,13 +2,13 @@ name: Validate Configuration Files
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ main ]
     paths:
       - 'configs/**'
       - 'test/**'
       - '.github/workflows/validateConfigs.yml'
   pull_request:
-    branches: [ main, develop ]
+    branches: [ main ]
     paths:
       - 'configs/**'
       - 'test/**'

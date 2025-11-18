@@ -1,8 +1,11 @@
 # jrl_env
 
 [![CI](https://github.com/jrlanglois/jrl_env/actions/workflows/ci.yml/badge.svg)](https://github.com/jrlanglois/jrl_env/actions/workflows/ci.yml)
+[![Validate Configs](https://github.com/jrlanglois/jrl_env/actions/workflows/validateConfigs.yml/badge.svg)](https://github.com/jrlanglois/jrl_env/actions/workflows/validateConfigs.yml)
 
-Cross-platform development environment setup and configuration. Helper tooling enforces Allman braces, camelCase helpers, and CRLF for `.ps1/.json/.md` while keeping `.sh` LF.
+Cross-platform development environment setup and configuration.
+
+Helper tooling enforces Allman braces, camelCase helpers, and CRLF for `.ps1/.json/.md` while keeping `.sh` LF.
 
 ## Overview
 
@@ -11,6 +14,8 @@ Automated setup scripts for Windows 11, macOS, and Ubuntu. Manages application i
 ### Purpose
 
 This repository is designed for configuring my own development machines. The scripts and configurations are tailored to my personal preferences and workflow.
+
+Obviously this is a public repository to make things easier for myself. You can use it, but do so at your own risk! See the license for details.
 
 ## Structure
 
@@ -42,6 +47,13 @@ jrl_env/
 │   ├── tidy.sh
 │   ├── tidy.py
 │   └── convertToAllman.py
+├── test/             # Validation scripts for configuration files
+│   ├── validateMacosPackages.sh
+│   ├── validateUbuntuPackages.sh
+│   ├── validateWindowsPackages.sh
+│   ├── validateFonts.sh
+│   ├── validateRepositories.sh
+│   └── validateGitConfig.py
 ├── win11/            # PowerShell scripts for Windows
 ├── macos/            # Bash scripts for macOS (thin wrappers)
 └── ubuntu/           # Bash scripts for Ubuntu (thin wrappers)
@@ -114,6 +126,29 @@ Edit JSON files in `configs/` to customize:
 - **Cruft**: Packages to uninstall (e.g., Ubuntu `apt` wildcard patterns)
 - **Commands**: Optional `preInstall`/`postInstall` command objects (name, shell, command, runOnce)
 
+### Validation
+
+Configuration files are automatically validated via CI on every push and pull request. The validation checks:
+
+- **JSON Syntax**: Valid JSON structure
+- **Package Existence**: Verifies packages exist in their respective package managers (brew/brewCask for macOS, apt/snap for Ubuntu, winget for Windows)
+- **Font Availability**: Validates Google Fonts exist via the Google Fonts API
+- **Repository Accessibility**: Checks if Git repositories are accessible (handles SSH URLs for GitHub)
+- **Git Configuration**: Validates Git aliases, defaults, user name (UTF-8 and web-compatible), email format, and GitHub username existence
+- **Work Paths**: Validates repository work path syntax for Unix and Windows
+
+Run validation locally:
+
+```bash
+# Validate all configs
+bash test/validateMacosPackages.sh configs/macos.json
+bash test/validateUbuntuPackages.sh configs/ubuntu.json
+bash test/validateWindowsPackages.sh configs/win11.json
+bash test/validateFonts.sh configs/fonts.json
+bash test/validateRepositories.sh configs/repositories.json
+python3 test/validateGitConfig.py configs/gitConfig.json
+```
+
 ## Using This Repository
 
 To adapt this setup for your own machines:
@@ -168,9 +203,19 @@ These conventions apply to all PowerShell (`.ps1`) and Bash (`.sh`) scripts in t
 
 ## Requirements
 
-- **Windows**: PowerShell 5.1+, winget (Windows Package Manager)
-- **macOS**: Homebrew, zsh
-- **Ubuntu**: apt, snap, zsh, jq
+- **Windows**: [PowerShell 5.1+](https://learn.microsoft.com/en-us/powershell/scripting/install/installing-powershell-on-windows), [winget](https://learn.microsoft.com/en-us/windows/package-manager/winget/) (Windows Package Manager)
+- **macOS**: [Homebrew](https://brew.sh/), [zsh](https://www.zsh.org/)
+- **Ubuntu**: [apt](https://help.ubuntu.com/lts/serverguide/apt.html), [snap](https://snapcraft.io/docs), [zsh](https://www.zsh.org/), [jq](https://jqlang.github.io/jq/)
+
+## CI/CD
+
+This repository uses GitHub Actions for continuous integration:
+
+- **CI Workflow** (`ci.yml`): Lints shell scripts with ShellCheck and validates Python syntax
+- **Validate Configs Workflow** (`validateConfigs.yml`): Validates all JSON configuration files, checks package existence, font availability, repository accessibility, and Git configuration
+
+Both workflows run automatically on pushes and pull requests to the `main` branch.
 
 ## License
+
 ISC License. See LICENSE.md for details.
