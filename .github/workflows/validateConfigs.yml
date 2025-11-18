@@ -63,24 +63,90 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install Git Bash and jq
+      - name: Install jq
         shell: powershell
+        id: install-jq
         run: |
-          # Install jq via winget (if available) or download directly
+          # Try to install jq via winget, fallback to chocolatey or download
+          $jqInstalled = $false
+          $jqPath = ""
+          
+          # Try winget first (skip msstore source to avoid agreement issues)
           if (Get-Command winget -ErrorAction SilentlyContinue) {
-            winget install --id stedolan.jq -e --accept-source-agreements --accept-package-agreements --silent
+            Write-Host "Attempting to install jq via winget..."
+            try {
+              # Try installing from winget repository (not msstore)
+              $result = winget install --id stedolan.jq --source winget --accept-source-agreements --accept-package-agreements --silent 2>&1
+              if ($LASTEXITCODE -eq 0) {
+                $jqInstalled = $true
+                Write-Host "jq installed via winget"
+                # Find where winget installed it
+                $jqPath = (Get-Command jq -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source)
+              } else {
+                Write-Host "winget installation failed, trying alternatives..."
+                Write-Host $result
+              }
+            } catch {
+              Write-Host "winget installation failed, trying alternatives..."
+            }
+          }
+          
+          # Try chocolatey as fallback
+          if (-not $jqInstalled -and (Get-Command choco -ErrorAction SilentlyContinue)) {
+            Write-Host "Attempting to install jq via chocolatey..."
+            try {
+              choco install jq -y
+              if ($LASTEXITCODE -eq 0) {
+                $jqInstalled = $true
+                Write-Host "jq installed via chocolatey"
+                $jqPath = (Get-Command jq -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source)
+              }
+            } catch {
+              Write-Host "chocolatey installation failed"
+            }
+          }
+          
+          # If still not installed, download directly
+          if (-not $jqInstalled) {
+            Write-Host "Downloading jq directly..."
+            $jqUrl = "https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-win64.exe"
+            $jqDir = "$env:ProgramFiles\jq"
+            $jqPath = "$jqDir\jq.exe"
+            New-Item -ItemType Directory -Force -Path $jqDir | Out-Null
+            Invoke-WebRequest -Uri $jqUrl -OutFile $jqPath
+            Write-Host "jq downloaded to $jqPath"
+            # Set output for subsequent steps
+            echo "jq_dir=$jqDir" >> $env:GITHUB_OUTPUT
           } else {
-            Write-Host "winget not available, skipping package validation"
+            # Extract directory from path
+            $jqDir = Split-Path -Parent $jqPath
+            echo "jq_dir=$jqDir" >> $env:GITHUB_OUTPUT
+          }
+          
+          # Verify jq is available
+          if (Get-Command jq -ErrorAction SilentlyContinue) {
+            Write-Host "jq is available: $(Get-Command jq | Select-Object -ExpandProperty Source)"
+          } else {
+            Write-Host "Warning: jq may not be in PATH for subsequent steps"
           }
 
       - name: Validate JSON syntax
         shell: bash
+        env:
+          PATH: ${{ steps.install-jq.outputs.jq_dir }}:${{ env.PATH }}
         run: |
+          # Add jq directory to PATH (convert Windows path to Git Bash format)
+          if [ -n "${{ steps.install-jq.outputs.jq_dir }}" ]; then
+            JQ_DIR=$(echo "${{ steps.install-jq.outputs.jq_dir }}" | sed 's|C:|/c|' | sed 's|\\|/|g')
+            export PATH="$JQ_DIR:$PATH"
+          fi
+          
           # Basic JSON validation for Windows config
           if command -v jq >/dev/null 2>&1; then
             jq empty configs/win11.json
           else
             echo "jq not available, skipping JSON validation"
+            exit 0
           fi
 
       - name: Validate Windows packages
