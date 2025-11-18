@@ -48,9 +48,9 @@ validateRepositories()
         if [ -n "$workPathUnix" ] && [ "$workPathUnix" != "null" ]; then
             # Check for valid path characters (basic validation)
             if echo "$workPathUnix" | grep -qE '^[~/]|^\$HOME|^\$USER'; then
-                logSuccess "  ✓ workPathUnix: $workPathUnix"
+                logSuccess "  workPathUnix: $workPathUnix"
             else
-                logError "  ✗ workPathUnix: $workPathUnix (should start with ~, /, \$HOME, or \$USER)"
+                logError "  workPathUnix: $workPathUnix (should start with ~, /, \$HOME, or \$USER)"
                 ((errors++))
             fi
         fi
@@ -59,9 +59,9 @@ validateRepositories()
         if [ -n "$workPathWindows" ] && [ "$workPathWindows" != "null" ]; then
             # Check for valid Windows path (drive letter or UNC)
             if echo "$workPathWindows" | grep -qE '^[A-Za-z]:|^\\\\|^\$USERPROFILE|^\$HOME'; then
-                logSuccess "  ✓ workPathWindows: $workPathWindows"
+                logSuccess "  workPathWindows: $workPathWindows"
             else
-                logError "  ✗ workPathWindows: $workPathWindows (should start with drive letter, \\\\, \$USERPROFILE, or \$HOME)"
+                logError "  workPathWindows: $workPathWindows (should start with drive letter, \\\\, \$USERPROFILE, or \$HOME)"
                 ((errors++))
             fi
         fi
@@ -92,19 +92,42 @@ validateRepositories()
         fi
 
         ((repoCount++))
-        logNote "  Checking: $repoUrl"
+        echo "  Checking: $repoUrl"
 
         # Validate URL format
         if echo "$repoUrl" | grep -qE '^(https?|git)://|^git@'; then
+            # Convert SSH URL to HTTPS for validation (if it's a GitHub URL)
+            local checkUrl="$repoUrl"
+            if echo "$repoUrl" | grep -qE '^git@github\.com:'; then
+                # Convert git@github.com:owner/repo.git to https://github.com/owner/repo.git
+                checkUrl=$(echo "$repoUrl" | sed 's|git@github\.com:|https://github.com/|' | sed 's|\.git$||')
+            elif echo "$repoUrl" | grep -qE '^git@'; then
+                # For other SSH URLs, we can't easily validate without SSH keys
+                # Just validate the format and skip existence check
+                logWarning "    SSH URL detected - cannot validate without SSH keys (format is valid)"
+                continue
+            fi
+
             # Try to check if repository exists (with timeout)
-            if timeout 10 git ls-remote "$repoUrl" &>/dev/null; then
-                logSuccess "    ✓ Repository exists"
+            # Use curl to check if the HTTPS URL is accessible
+            if echo "$checkUrl" | grep -qE '^https://github\.com/'; then
+                # Check GitHub repository via API (no auth needed for public repos)
+                local ownerRepo
+                ownerRepo=$(echo "$checkUrl" | sed 's|https://github\.com/||')
+                if curl -s --max-time 10 -o /dev/null -w "%{http_code}" "https://api.github.com/repos/$ownerRepo" 2>/dev/null | grep -q "200"; then
+                    logSuccess "    Repository exists"
+                else
+                    logError "    Repository not accessible or does not exist"
+                    ((errors++))
+                fi
+            elif timeout 10 git ls-remote "$checkUrl" &>/dev/null; then
+                logSuccess "    Repository exists"
             else
-                logError "    ✗ Repository not accessible or does not exist"
+                logError "    Repository not accessible or does not exist"
                 ((errors++))
             fi
         else
-            logError "    ✗ Invalid repository URL format"
+            logError "    Invalid repository URL format"
             ((errors++))
         fi
     done <<< "$repositories"

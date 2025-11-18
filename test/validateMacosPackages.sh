@@ -40,9 +40,9 @@ validateMacosPackages()
 
             # Check if package exists in brew
             if brew info "$package" &>/dev/null; then
-                logSuccess "  ✓ $package"
+                logSuccess "  $package"
             else
-                logError "  ✗ $package (not found in brew)"
+                logError "  $package (not found in brew)"
                 ((errors++))
             fi
         done <<< "$brewPackages"
@@ -62,9 +62,9 @@ validateMacosPackages()
 
             # Check if cask exists in brew
             if brew info --cask "$package" &>/dev/null; then
-                logSuccess "  ✓ $package"
+                logSuccess "  $package"
             else
-                logError "  ✗ $package (not found in brew cask)"
+                logError "  $package (not found in brew cask)"
                 ((errors++))
             fi
         done <<< "$caskPackages"

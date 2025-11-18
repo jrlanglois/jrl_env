@@ -35,9 +35,9 @@ validateUbuntuPackages()
 
                 # Check if package exists in apt
                 if apt-cache show "$package" &>/dev/null; then
-                    logSuccess "  ✓ $package"
+                    logSuccess "  $package"
                 else
-                    logError "  ✗ $package (not found in apt)"
+                    logError "  $package (not found in apt)"
                     ((errors++))
                 fi
             done <<< "$aptPackages"
@@ -61,9 +61,9 @@ validateUbuntuPackages()
 
                 # Check if package exists in snap
                 if snap info "$package" &>/dev/null; then
-                    logSuccess "  ✓ $package"
+                    logSuccess "  $package"
                 else
-                    logError "  ✗ $package (not found in snap)"
+                    logError "  $package (not found in snap)"
                     ((errors++))
                 fi
             done <<< "$snapPackages"

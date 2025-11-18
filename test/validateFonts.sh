@@ -65,14 +65,14 @@ validateFonts()
 
             # Check if font exists in the fetched list
             if grep -qi "^${font}$" "$tempFontList" 2>/dev/null; then
-                logSuccess "  ✓ $font"
+                logSuccess "  $font"
             else
                 # Try checking via CSS API directly
                 local cssUrl="https://fonts.googleapis.com/css2?family=${fontUrlName}:wght@400"
                 if curl -s --max-time 5 -o /dev/null -w "%{http_code}" "$cssUrl" 2>/dev/null | grep -q "200"; then
-                    logSuccess "  ✓ $font (verified via CSS API)"
+                    logSuccess "  $font (verified via CSS API)"
                 else
-                    logError "  ✗ $font (not found in Google Fonts)"
+                    logError "  $font (not found in Google Fonts)"
                     ((errors++))
                 fi
             fi
@@ -90,9 +90,9 @@ validateFonts()
             local cssUrl="https://fonts.googleapis.com/css2?family=${fontUrlName}:wght@400"
 
             if curl -s --max-time 5 -o /dev/null -w "%{http_code}" "$cssUrl" 2>/dev/null | grep -q "200"; then
-                logSuccess "  ✓ $font"
+                logSuccess "  $font"
             else
-                logError "  ✗ $font (not found in Google Fonts)"
+                logError "  $font (not found in Google Fonts)"
                 ((errors++))
             fi
         done <<< "$fonts"

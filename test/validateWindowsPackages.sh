@@ -42,9 +42,9 @@ validateWindowsPackages()
             # Check if package exists in winget
             # winget search returns 0 if found, non-zero if not found
             if winget search --id "$package" --exact &>/dev/null; then
-                logSuccess "  ✓ $package"
+                logSuccess "  $package"
             else
-                logError "  ✗ $package (not found in winget)"
+                logError "  $package (not found in winget)"
                 ((errors++))
             fi
         done <<< "$wingetPackages"
