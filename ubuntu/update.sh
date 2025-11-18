@@ -4,18 +4,14 @@
 
 set -e
 
+# Source all core tools (singular entry point)
+# shellcheck source=../common/core/tools.sh
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/../common/core/tools.sh"
+
 # Get repository root (parent of ubuntu directory)
 scriptDir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 repoRoot="$(cd "$scriptDir/.." && pwd)"
 ubuntuDir="$scriptDir"
-
-# shellcheck source=../helpers/utilities.sh
-# shellcheck disable=SC1091 # Path is resolved at runtime
-sourceIfExists "$ubuntuDir/../helpers/utilities.sh"
-# shellcheck source=../common/colours.sh
-sourceIfExists "$ubuntuDir/../common/colours.sh"
-# shellcheck source=../helpers/logging.sh
-sourceIfExists "$ubuntuDir/../helpers/logging.sh"
 
 logSection "jrl_env Update"
 echo ""

@@ -4,25 +4,21 @@
 
 set -e
 
-# Get script directory
-scriptDir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Source all core tools (singular entry point)
+# shellcheck source=../common/core/tools.sh
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/../common/core/tools.sh"
 
-# shellcheck source=../helpers/utilities.sh
-# shellcheck disable=SC1091 # Path is resolved at runtime
-source "$scriptDir/../helpers/utilities.sh"
-# shellcheck source=../common/colours.sh
-sourceIfExists "$scriptDir/../common/colours.sh"
 # shellcheck disable=SC2034 # Used by sourced common script
-fontsConfigPath="${scriptDir}/../configs/fonts.json"
+fontsConfigPath="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/../configs/fonts.json"
 # shellcheck disable=SC2034 # Used by sourced common script
 fontInstallDirPath="$HOME/Library/Fonts"
-# shellcheck disable=SC2034,SC2154 # Used by sourced common script; colours from colours.sh
-jqInstallHint="${yellow}  brew install jq${nc}"
+# shellcheck disable=SC2034 # Used by sourced common script
+jqInstallHint="  brew install jq"
 # shellcheck disable=SC2034 # Used by sourced common script
 fontCacheCmd=""
 
-# shellcheck source=../common/installFonts.sh
-sourceIfExists "$scriptDir/../common/installFonts.sh"
+# shellcheck source=../common/install/installFonts.sh
+sourceIfExists "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/../common/install/installFonts.sh"
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     installGoogleFonts "$@"

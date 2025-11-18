@@ -3,16 +3,11 @@
 
 set -e
 
-scriptDir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-configsPath="$scriptDir/../configs"
+# Source all core tools (singular entry point)
+# shellcheck source=../common/core/tools.sh
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/../common/core/tools.sh"
 
-# shellcheck source=../helpers/utilities.sh
-# shellcheck disable=SC1091 # Path is resolved at runtime
-sourceIfExists "$scriptDir/../helpers/utilities.sh"
-# shellcheck source=../common/colours.sh
-sourceIfExists "$scriptDir/../common/colours.sh"
-# shellcheck source=../helpers/logging.sh
-sourceIfExists "$scriptDir/../helpers/logging.sh"
+configsPath="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/../configs"
 
 logSection "jrl_env Status Check"
 echo ""

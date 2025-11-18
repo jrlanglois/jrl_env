@@ -4,23 +4,19 @@
 
 set -e
 
-# Get script directory
-scriptDir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Source all core tools (singular entry point)
+# shellcheck source=../common/core/tools.sh
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/../common/core/tools.sh"
 
-# shellcheck source=../helpers/utilities.sh
-# shellcheck disable=SC1091 # Path is resolved at runtime
-source "$scriptDir/../helpers/utilities.sh"
-# shellcheck source=../common/colours.sh
-sourceIfExists "$scriptDir/../common/colours.sh"
 # shellcheck disable=SC2034 # Used by sourced common script
-cursorConfigPath="${scriptDir}/../configs/cursorSettings.json"
+cursorConfigPath="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/../configs/cursorSettings.json"
 # shellcheck disable=SC2034 # Used by sourced common script
 cursorSettingsPath="$HOME/Library/Application Support/Cursor/User/settings.json"
-# shellcheck disable=SC2034,SC2154 # Used by sourced common script; colours from colours.sh
-jqInstallHint="${yellow}  brew install jq${nc}"
+# shellcheck disable=SC2034 # Used by sourced common script
+jqInstallHint="  brew install jq"
 
-# shellcheck source=../common/configureCursor.sh
-sourceIfExists "$scriptDir/../common/configureCursor.sh"
+# shellcheck source=../common/configure/configureCursor.sh
+sourceIfExists "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/../common/configure/configureCursor.sh"
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     configureCursor "$@"

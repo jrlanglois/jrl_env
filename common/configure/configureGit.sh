@@ -1,15 +1,7 @@
 #!/bin/bash
 # Shared Git configuration logic for macOS and Ubuntu
 
-# shellcheck disable=SC2154 # colour variables provided by callers
-
-# Source utilities first (must be direct source, not sourceIfExists)
-scriptDir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-# shellcheck source=../helpers/utilities.sh
-# shellcheck disable=SC1091 # Path is resolved at runtime
-source "$scriptDir/../helpers/utilities.sh"
-# shellcheck source=../helpers/logging.sh
-sourceIfExists "$scriptDir/../helpers/logging.sh"
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/../core/logging.sh"
 
 # Function to check if Git is installed
 isGitInstalled()
@@ -339,7 +331,7 @@ configureGitLfs()
 # Main configuration function
 configureGit()
 {
-    local installHint="${gitInstallHint:-${yellow}Please install Git via your package manager.${nc}}"
+    local installHint="${gitInstallHint:-Please install Git via your package manager.}"
 
     logSection "Git Configuration"
     echo ""

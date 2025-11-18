@@ -1,23 +1,14 @@
 #!/bin/bash
 # Shared Cursor configuration logic
 
-# shellcheck disable=SC2154 # colour variables provided by callers
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/../core/logging.sh"
 
 configureCursor()
 {
     local configPath=${1:-$cursorConfigPath}
-    local jqHint="${jqInstallHint:-${yellow}Please install jq via your package manager.${nc}}"
+    local jqHint="${jqInstallHint:-Please install jq via your package manager.}"
     local cursorSettingsPath="${cursorSettingsPath:?cursorSettingsPath must be set}"
     local cursorUserDir
-    local scriptDir
-
-    # Source utilities and logging functions (utilities must be direct source)
-    scriptDir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-    # shellcheck source=../helpers/utilities.sh
-    # shellcheck disable=SC1091 # Path is resolved at runtime
-    source "$scriptDir/../helpers/utilities.sh"
-    # shellcheck source=../helpers/logging.sh
-    sourceIfExists "$scriptDir/../helpers/logging.sh"
 
     logSection "Cursor Configuration"
     echo ""

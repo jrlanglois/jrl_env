@@ -1,15 +1,7 @@
 #!/bin/bash
 # Shared GitHub SSH configuration logic for macOS and Ubuntu
 
-# shellcheck disable=SC2154 # colour variables provided by callers
-
-# Source utilities and logging functions (utilities must be direct source)
-scriptDir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-# shellcheck source=../helpers/utilities.sh
-# shellcheck disable=SC1091 # Path is resolved at runtime
-source "$scriptDir/../helpers/utilities.sh"
-# shellcheck source=../helpers/logging.sh
-sourceIfExists "$scriptDir/../helpers/logging.sh"
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/../core/logging.sh"
 
 configureGithubSsh()
 {

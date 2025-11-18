@@ -4,19 +4,11 @@
 
 set -e  # Exit on error
 
-# Colours for output
-red='\033[0;31m'
-green='\033[0;32m'
-yellow='\033[1;33m'
-cyan='\033[0;36m'
-nc='\033[0m' # No Colour
+# Source all core tools (singular entry point)
+# shellcheck source=../common/core/tools.sh
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/../common/core/tools.sh"
 
-scriptDir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-osConfigPath="${scriptDir}/../configs/macos.json"
-
-# shellcheck source=../helpers/utilities.sh
-# shellcheck disable=SC1091 # Path is resolved at runtime
-source "$scriptDir/../helpers/utilities.sh"
+osConfigPath="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/../configs/macos.json"
 
 # Function to check if zsh is installed
 isZshInstalled()
@@ -48,28 +40,28 @@ isBrewInstalled()
 # Function to install zsh
 installZsh()
 {
-    echo -e "${cyan}Installing zsh...${nc}"
+    logInfo "Installing zsh..."
 
     if isZshInstalled; then
-        echo -e "${green}✓ zsh is already installed${nc}"
+        logSuccess "zsh is already installed"
         zsh --version
         return 0
     fi
 
     if isBrewInstalled; then
-        echo -e "${yellow}Installing zsh via Homebrew...${nc}"
+        logNote "Installing zsh via Homebrew..."
         brew install zsh
     else
-        echo -e "${yellow}zsh should be pre-installed on macOS. If not, please install Xcode Command Line Tools:${nc}"
-        echo -e "${yellow}  xcode-select --install${nc}"
+        logNote "zsh should be pre-installed on macOS. If not, please install Xcode Command Line Tools:"
+        logNote "  xcode-select --install"
         return 1
     fi
 
     if isZshInstalled; then
-        echo -e "${green}✓ zsh installed successfully${nc}"
+        logSuccess "zsh installed successfully"
         return 0
     else
-        echo -e "${red}✗ Failed to install zsh${nc}"
+        logError "Failed to install zsh"
         return 1
     fi
 }
@@ -77,19 +69,19 @@ installZsh()
 # Function to install Oh My Zsh
 installOhMyZsh()
 {
-    echo -e "${cyan}Installing Oh My Zsh...${nc}"
+    logInfo "Installing Oh My Zsh..."
 
     if isOhMyZshInstalled; then
-        echo -e "${green}✓ Oh My Zsh is already installed${nc}"
+        logSuccess "Oh My Zsh is already installed"
         return 0
     fi
 
-    echo -e "${yellow}Installing Oh My Zsh...${nc}"
+    logNote "Installing Oh My Zsh..."
     if sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended; then
-        echo -e "${green}✓ Oh My Zsh installed successfully${nc}"
+        logSuccess "Oh My Zsh installed successfully"
         return 0
     else
-        echo -e "${red}✗ Failed to install Oh My Zsh${nc}"
+        logError "Failed to install Oh My Zsh"
         return 1
     fi
 }
@@ -100,7 +92,7 @@ configureOhMyZshTheme()
     local zshrc="$HOME/.zshrc"
 
     if [ ! -f "$zshrc" ]; then
-        echo -e "${yellow}⚠ ~/.zshrc not found. Skipping theme update.${nc}"
+        logWarning "~/.zshrc not found. Skipping theme update."
         return 0
     fi
 
@@ -110,7 +102,7 @@ configureOhMyZshTheme()
         printf '\nZSH_THEME="%s"\n' "$theme" >> "$zshrc"
     fi
 
-    echo -e "${green}✓ Set Oh My Zsh theme to $theme${nc}"
+    logSuccess "Set Oh My Zsh theme to $theme"
     return 0
 }
 
@@ -150,15 +142,15 @@ PY
 # Function to install Homebrew
 installBrew()
 {
-    echo -e "${cyan}Installing Homebrew...${nc}"
+    logInfo "Installing Homebrew..."
 
     if isBrewInstalled; then
-        echo -e "${green}✓ Homebrew is already installed${nc}"
+        logSuccess "Homebrew is already installed"
         brew --version
         return 0
     fi
 
-    echo -e "${yellow}Installing Homebrew...${nc}"
+    logNote "Installing Homebrew..."
     if /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"; then
         # Add Homebrew to PATH for Apple Silicon Macs
         if [[ $(uname -m) == "arm64" ]]; then
@@ -172,15 +164,15 @@ installBrew()
         fi
 
         if isBrewInstalled; then
-            echo -e "${green}✓ Homebrew installed successfully${nc}"
+            logSuccess "Homebrew installed successfully"
             return 0
         else
-            echo -e "${yellow}⚠ Homebrew installation completed, but may not be available in this session.${nc}"
-            echo -e "${yellow}Please restart your terminal or run: eval \"\$(brew shellenv)\"${nc}"
+            logWarning "Homebrew installation completed, but may not be available in this session."
+            logNote "Please restart your terminal or run: eval \"\$(brew shellenv)\""
             return 1
         fi
     else
-        echo -e "${red}✗ Failed to install Homebrew${nc}"
+        logError "Failed to install Homebrew"
         return 1
     fi
 }
@@ -188,12 +180,12 @@ installBrew()
 # Function to set zsh as default shell
 setZshAsDefault()
 {
-    echo -e "${cyan}Setting zsh as default shell...${nc}"
+    logInfo "Setting zsh as default shell..."
     local zshPath
     local currentShell
 
     if ! isZshInstalled; then
-        echo -e "${red}✗ zsh is not installed. Please install it first.${nc}"
+        logError "zsh is not installed. Please install it first."
         return 1
     fi
 
@@ -201,19 +193,19 @@ setZshAsDefault()
     currentShell="$SHELL"
 
     if [ "$currentShell" = "$zshPath" ]; then
-        echo -e "${green}✓ zsh is already the default shell${nc}"
+        logSuccess "zsh is already the default shell"
         return 0
     fi
 
-    echo -e "${yellow}Changing default shell to zsh...${nc}"
-    echo -e "${yellow}You may be prompted for your password.${nc}"
+    logNote "Changing default shell to zsh..."
+    logNote "You may be prompted for your password."
 
     if sudo chsh -s "$zshPath" "$USER"; then
-        echo -e "${green}✓ Default shell changed to zsh${nc}"
-        echo -e "${yellow}Note: This change will take effect after you log out and log back in.${nc}"
+        logSuccess "Default shell changed to zsh"
+        logNote "Note: This change will take effect after you log out and log back in."
         return 0
     else
-        echo -e "${red}✗ Failed to change default shell${nc}"
+        logError "Failed to change default shell"
         return 1
     fi
 }
@@ -221,7 +213,7 @@ setZshAsDefault()
 # Main setup function
 setupDevEnv()
 {
-    echo -e "${cyan}=== macOS Development Environment Setup ===${nc}"
+    logSection "macOS Development Environment Setup"
     echo ""
 
     local success=true
@@ -255,73 +247,12 @@ setupDevEnv()
     fi
     echo ""
 
-    echo -e "${cyan}=== Setup Complete ===${nc}"
+    logSection "Setup Complete"
     if [ "$success" = true ]; then
-        echo -e "${green}Development environment setup completed successfully!${nc}"
-        echo -e "${yellow}Note: You may need to restart your terminal for all changes to take effect.${nc}"
+        logSuccess "Development environment setup completed successfully!"
+        logNote "Note: You may need to restart your terminal for all changes to take effect."
     else
-        echo -e "${yellow}Some steps may not have completed successfully. Please review the output above.${nc}"
-    fi
-
-    return 0
-}
-
-# Run setup if script is executed directly
-if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    setupDevEnv
-fi
-
-        echo -e "${yellow}Note: This change will take effect after you log out and log back in.${nc}"
-        return 0
-    else
-        echo -e "${red}✗ Failed to change default shell${nc}"
-        return 1
-    fi
-}
-
-# Main setup function
-setupDevEnv()
-{
-    echo -e "${cyan}=== macOS Development Environment Setup ===${nc}"
-    echo ""
-
-    local success=true
-
-    # Install Homebrew first (needed for zsh if not pre-installed)
-    if ! installBrew; then
-        success=false
-    fi
-    echo ""
-
-    # Install zsh
-    if ! installZsh; then
-        success=false
-    fi
-    echo ""
-
-    # Install Oh My Zsh
-    if ! installOhMyZsh; then
-        success=false
-    fi
-    echo ""
-
-    if ! configureOhMyZshTheme "$(getOhMyZshTheme)"; then
-        success=false
-    fi
-    echo ""
-
-    # Set zsh as default
-    if ! setZshAsDefault; then
-        success=false
-    fi
-    echo ""
-
-    echo -e "${cyan}=== Setup Complete ===${nc}"
-    if [ "$success" = true ]; then
-        echo -e "${green}Development environment setup completed successfully!${nc}"
-        echo -e "${yellow}Note: You may need to restart your terminal for all changes to take effect.${nc}"
-    else
-        echo -e "${yellow}Some steps may not have completed successfully. Please review the output above.${nc}"
+        logNote "Some steps may not have completed successfully. Please review the output above."
     fi
 
     return 0

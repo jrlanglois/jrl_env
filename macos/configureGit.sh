@@ -4,21 +4,17 @@
 
 set -e
 
-# Get script directory
-scriptDir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Source all core tools (singular entry point)
+# shellcheck source=../common/core/tools.sh
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/../common/core/tools.sh"
 
-# shellcheck source=../helpers/utilities.sh
-# shellcheck disable=SC1091 # Path is resolved at runtime
-source "$scriptDir/../helpers/utilities.sh"
-# shellcheck source=../common/colours.sh
-sourceIfExists "$scriptDir/../common/colours.sh"
-# shellcheck disable=SC2034,SC2154 # Used by sourced common script; colours from colours.sh
-gitInstallHint="${yellow}  brew install git${nc}"
 # shellcheck disable=SC2034 # Used by sourced common script
-gitConfigPath="${scriptDir}/../configs/gitConfig.json"
+gitInstallHint="  brew install git"
+# shellcheck disable=SC2034 # Used by sourced common script
+gitConfigPath="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/../configs/gitConfig.json"
 
-# shellcheck source=../common/configureGit.sh
-sourceIfExists "$scriptDir/../common/configureGit.sh"
+# shellcheck source=../common/configure/configureGit.sh
+sourceIfExists "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/../common/configure/configureGit.sh"
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     configureGit "$@"

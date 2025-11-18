@@ -1,15 +1,7 @@
 #!/bin/bash
 # Shared repository cloning logic
 
-# shellcheck disable=SC2154 # colour variables provided by callers
-
-# Source utilities and logging functions (utilities must be direct source)
-scriptDir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-# shellcheck source=../helpers/utilities.sh
-# shellcheck disable=SC1091 # Path is resolved at runtime
-source "$scriptDir/../helpers/utilities.sh"
-# shellcheck source=../helpers/logging.sh
-sourceIfExists "$scriptDir/../helpers/logging.sh"
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/../core/logging.sh"
 
 isGitInstalled()
 {
@@ -100,7 +92,7 @@ cloneRepository()
 cloneRepositories()
 {
     local configPath=${1:-$repoConfigPath}
-    local jqHint="${jqInstallHint:-${yellow}Please install jq via your package manager.${nc}}"
+    local jqHint="${jqInstallHint:-Please install jq via your package manager.}"
 
     logSection "Repository Cloning"
     echo ""

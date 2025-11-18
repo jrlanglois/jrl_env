@@ -5,16 +5,11 @@
 
 set -e
 
-# Get script directory
-scriptDir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Source all core tools (singular entry point)
+# shellcheck source=../common/core/tools.sh
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/../common/core/tools.sh"
 
-# shellcheck source=../helpers/utilities.sh
-# shellcheck disable=SC1091 # Path is resolved at runtime
-source "$scriptDir/../helpers/utilities.sh"
-# shellcheck source=../common/colours.sh
-sourceIfExists "$scriptDir/../common/colours.sh"
-
-appsConfigPath="${scriptDir}/../configs/macos.json"
+appsConfigPath="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/../configs/macos.json"
 jqInstallHint="  brew install jq"
 
 installApps_checkPrimary()
@@ -50,8 +45,8 @@ installApps_updateSecondary()
 installApps_extractPrimary='.brew[]?'
 installApps_extractSecondary='.brewCask[]?'
 
-# shellcheck source=../common/installApps.sh
-sourceIfExists "$scriptDir/../common/installApps.sh"
+# shellcheck source=../common/install/installApps.sh
+sourceIfExists "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/../common/install/installApps.sh"
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     runConfigCommands "preInstall"

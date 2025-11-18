@@ -4,21 +4,17 @@
 
 set -e
 
-scriptDir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-
-# shellcheck source=../helpers/utilities.sh
-# shellcheck disable=SC1091 # Path is resolved at runtime
-source "$scriptDir/../helpers/utilities.sh"
-# shellcheck source=../common/colours.sh
-sourceIfExists "$scriptDir/../common/colours.sh"
+# Source all core tools (singular entry point)
+# shellcheck source=../common/core/tools.sh
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/../common/core/tools.sh"
 
 # shellcheck disable=SC2034 # Used by sourced common script
-gitConfigPath="$scriptDir/../configs/gitConfig.json"
-# shellcheck disable=SC2034,SC2154 # Used by sourced common script; colours from colours.sh
-jqInstallHint="${yellow}  brew install jq${nc}"
+gitConfigPath="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/../configs/gitConfig.json"
+# shellcheck disable=SC2034 # Used by sourced common script
+jqInstallHint="  brew install jq"
 
-# shellcheck source=../common/configureGithubSsh.sh
-sourceIfExists "$scriptDir/../common/configureGithubSsh.sh"
+# shellcheck source=../common/configure/configureGithubSsh.sh
+sourceIfExists "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/../common/configure/configureGithubSsh.sh"
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     configureGithubSsh "$@"

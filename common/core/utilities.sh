@@ -111,3 +111,6 @@ requireJq()
     local installHint="${1:-Please install jq via your package manager.}"
     requireCommand jq "$installHint"
 }
+
+# Add colours to the script
+sourceIfExists "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/colours.sh"

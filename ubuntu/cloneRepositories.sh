@@ -4,22 +4,17 @@
 
 set -e
 
-# Get script directory
-scriptDir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-
-# shellcheck source=../helpers/utilities.sh
-# shellcheck disable=SC1091 # Path is resolved at runtime
-source "$scriptDir/../helpers/utilities.sh"
-# shellcheck source=../common/colours.sh
-sourceIfExists "$scriptDir/../common/colours.sh"
+# Source all core tools (singular entry point)
+# shellcheck source=../common/core/tools.sh
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/../common/core/tools.sh"
 
 # shellcheck disable=SC2034 # Used by sourced common script
-repoConfigPath="${scriptDir}/../configs/repositories.json"
-# shellcheck disable=SC2034,SC2154 # Used by sourced common script; colours from colours.sh
-jqInstallHint="${yellow}  sudo apt-get install -y jq${nc}"
+repoConfigPath="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/../configs/repositories.json"
+# shellcheck disable=SC2034 # Used by sourced common script
+jqInstallHint="  sudo apt-get install -y jq"
 
-# shellcheck source=../common/cloneRepositories.sh
-sourceIfExists "$scriptDir/../common/cloneRepositories.sh"
+# shellcheck source=../common/configure/cloneRepositories.sh
+sourceIfExists "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/../common/configure/cloneRepositories.sh"
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     cloneRepositories "$@"

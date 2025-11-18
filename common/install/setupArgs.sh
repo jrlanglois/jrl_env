@@ -1,6 +1,7 @@
 #!/bin/bash
 # Shared argument parsing logic for setup scripts
-# shellcheck disable=SC2034 # Variables are used by scripts that source this file
+
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/../core/logging.sh"
 
 # Parse setup script arguments
 # Sets global variables: skipFonts, skipApps, skipGit, skipCursor, skipRepos, skipSsh, appsOnly, dryRun, noBackup

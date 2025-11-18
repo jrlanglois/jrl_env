@@ -1,29 +1,25 @@
 #!/bin/bash
 # Master setup script for Ubuntu
 # Runs all configuration and installation scripts in the correct order
+# shellcheck disable=SC2154 # Variables are set by sourced setupArgs.sh and colours.sh
 
 set -e
+
+# Source all core tools (singular entry point)
+# shellcheck source=../common/core/tools.sh
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/../common/core/tools.sh"
 
 # Get script directory
 scriptDir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# shellcheck source=../helpers/utilities.sh
-# shellcheck disable=SC1091 # Path is resolved at runtime
-source "$scriptDir/../helpers/utilities.sh"
-# shellcheck source=../common/colours.sh
-sourceIfExists "$scriptDir/../common/colours.sh"
-# shellcheck source=../common/setupArgs.sh
-sourceIfExists "$scriptDir/../common/setupArgs.sh"
+# shellcheck source=../common/install/setupArgs.sh
+sourceIfExists "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/../common/install/setupArgs.sh"
 
 # Parse arguments
 parseSetupArgs "$@"
 
 # Determine what to run
 determineRunFlags
-
-# Load logging functions
-# shellcheck source=../common/logging.sh
-sourceIfExists "$scriptDir/../common/logging.sh"
 
 # Initialize logging
 logFile=$(initLogging)
@@ -262,4 +258,4 @@ fi
 logSuccess "=== Setup Complete ==="
 logInfo "All setup tasks have been executed."
 logInfo "Log file saved to: $logFile"
-echo -e "${yellow}Please review any warnings above and restart your terminal if needed.${nc}"
+logNote "Please review any warnings above and restart your terminal if needed."

@@ -1,28 +1,26 @@
 #!/bin/bash
 # Script to validate JSON configuration files
 # Checks syntax, required fields, and basic validity
+# shellcheck disable=SC2154 # Colour variables come from sourced colours.sh
 
 set -e
 
-scriptDir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Source all core tools (singular entry point)
+# shellcheck source=../common/core/tools.sh
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/../common/core/tools.sh"
 
-# shellcheck source=../helpers/utilities.sh
-# shellcheck disable=SC1091 # Path is resolved at runtime
-source "$scriptDir/../helpers/utilities.sh"
-# shellcheck source=../common/colours.sh
-sourceIfExists "$scriptDir/../common/colours.sh"
-configsPath="$scriptDir/../configs"
+configsPath="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/../configs"
 
 errors=()
 warnings=()
 
-echo -e "${cyan}=== Validating Configuration Files ===${nc}"
+logSection "Validating Configuration Files"
 echo ""
 
 # Check if jq is available
 if ! command -v jq >/dev/null 2>&1; then
-    echo -e "${red}✗ jq is required for validation. Please install it first.${nc}"
-    echo -e "${yellow}  brew install jq${nc}"
+    logError "jq is required for validation. Please install it first."
+    logNote "  brew install jq"
     exit 1
 fi
 
@@ -38,7 +36,7 @@ validateJsonFile()
     fi
 
     if jq empty "$filePath" 2>/dev/null; then
-        echo -e "${green}✓ $description${nc}"
+        logSuccess "$description"
         return 0
     else
         errors+=("$description: Invalid JSON")
@@ -121,7 +119,7 @@ validateGitConfigJson()
 }
 
 # Validate all config files
-echo -e "${yellow}Validating JSON files...${nc}"
+logNote "Validating JSON files..."
 echo ""
 
 # Apps configs
@@ -150,34 +148,34 @@ if validateJsonFile "$configsPath/gitConfig.json" "gitConfig.json"; then
 fi
 
 if validateJsonFile "$configsPath/cursorSettings.json" "cursorSettings.json"; then
-    echo -e "  ${green}✓ cursorSettings.json structure valid${nc}"
+    logSuccess "cursorSettings.json structure valid"
 fi
 
 echo ""
 
 # Report results
 if [ ${#errors[@]} -eq 0 ] && [ ${#warnings[@]} -eq 0 ]; then
-    echo -e "${green}✓ All configuration files are valid!${nc}"
+    logSuccess "All configuration files are valid!"
     exit 0
 else
     if [ ${#warnings[@]} -gt 0 ]; then
-        echo -e "${yellow}Warnings:${nc}"
+        logWarning "Warnings:"
         for warning in "${warnings[@]}"; do
-            echo -e "  ⚠ $warning"
+            echo "  ⚠ $warning"
         done
         echo ""
     fi
 
     if [ ${#errors[@]} -gt 0 ]; then
-        echo -e "${red}Errors:${nc}"
+        logError "Errors:"
         for error in "${errors[@]}"; do
-            echo -e "  ✗ $error"
+            echo "  ✗ $error"
         done
         echo ""
-        echo -e "${red}✗ Validation failed. Please fix errors before running setup.${nc}"
+        logError "Validation failed. Please fix errors before running setup."
         exit 1
     else
-        echo -e "${green}✓ Validation passed with warnings.${nc}"
+        logSuccess "Validation passed with warnings."
         exit 0
     fi
 fi

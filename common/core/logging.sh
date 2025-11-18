@@ -1,6 +1,8 @@
 #!/bin/bash
 # Shared logging functions for Bash scripts across platforms
 
+source "${BASH_SOURCE}/utilities.sh"
+
 # Global variables
 logFilePath=""
 logDirectory=""
@@ -78,28 +80,38 @@ writeLog()
     esac
 }
 
-# Convenience functions
 logInfo()
 {
-    writeLog "INFO" "$@"
+    local message="$1"
+    echo -e "${cyan}${message}${nc}"
 }
 
 logSuccess()
 {
-    writeLog "SUCCESS" "$@"
-}
-
-logWarn()
-{
-    writeLog "WARN" "$@"
+    local message="$1"
+    echo -e "${green}✓ ${message}${nc}"
 }
 
 logError()
 {
-    writeLog "ERROR" "$@"
+    local message="$1"
+    echo -e "${red}✗ ${message}${nc}"
 }
 
-logDebug()
+logWarning()
 {
-    writeLog "DEBUG" "$@"
+    local message="$1"
+    echo -e "${yellow}⚠ ${message}${nc}"
+}
+
+logNote()
+{
+    local message="$1"
+    echo -e "${yellow}${message}${nc}"
+}
+
+logSection()
+{
+    local message="$1"
+    echo -e "${cyan}=== ${message} ===${nc}"
 }

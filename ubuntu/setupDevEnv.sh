@@ -4,19 +4,11 @@
 
 set -e
 
-# Colours for output
-red='\033[0;31m'
-green='\033[0;32m'
-yellow='\033[1;33m'
-cyan='\033[0;36m'
-nc='\033[0m' # No Colour
+# Source all core tools (singular entry point)
+# shellcheck source=../common/core/tools.sh
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/../common/core/tools.sh"
 
-scriptDir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-osConfigPath="${scriptDir}/../configs/ubuntu.json"
-
-# shellcheck source=../helpers/utilities.sh
-# shellcheck disable=SC1091 # Path is resolved at runtime
-source "$scriptDir/../helpers/utilities.sh"
+osConfigPath="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/../configs/ubuntu.json"
 
 # Function to check if zsh is installed
 isZshInstalled()
@@ -39,26 +31,26 @@ isOhMyZshInstalled()
 # Function to install zsh
 installZsh()
 {
-    echo -e "${cyan}Installing zsh...${nc}"
+    logInfo "Installing zsh..."
 
     if isZshInstalled; then
-        echo -e "${green}✓ zsh is already installed${nc}"
+        logSuccess "zsh is already installed"
         zsh --version
         return 0
     fi
 
-    echo -e "${yellow}Installing zsh via apt...${nc}"
+    logNote "Installing zsh via apt..."
     sudo apt-get update
     if sudo apt-get install -y zsh; then
         if isZshInstalled; then
-            echo -e "${green}✓ zsh installed successfully${nc}"
+            logSuccess "zsh installed successfully"
             return 0
         else
-            echo -e "${red}✗ Failed to install zsh${nc}"
+            logError "Failed to install zsh"
             return 1
         fi
     else
-        echo -e "${red}✗ Failed to install zsh${nc}"
+        logError "Failed to install zsh"
         return 1
     fi
 }
@@ -66,19 +58,19 @@ installZsh()
 # Function to install Oh My Zsh
 installOhMyZsh()
 {
-    echo -e "${cyan}Installing Oh My Zsh...${nc}"
+    logInfo "Installing Oh My Zsh..."
 
     if isOhMyZshInstalled; then
-        echo -e "${green}✓ Oh My Zsh is already installed${nc}"
+        logSuccess "Oh My Zsh is already installed"
         return 0
     fi
 
-    echo -e "${yellow}Installing Oh My Zsh...${nc}"
+    logNote "Installing Oh My Zsh..."
     if sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended; then
-        echo -e "${green}✓ Oh My Zsh installed successfully${nc}"
+        logSuccess "Oh My Zsh installed successfully"
         return 0
     else
-        echo -e "${red}✗ Failed to install Oh My Zsh${nc}"
+        logError "Failed to install Oh My Zsh"
         return 1
     fi
 }
@@ -89,7 +81,7 @@ configureOhMyZshTheme()
     local zshrc="$HOME/.zshrc"
 
     if [ ! -f "$zshrc" ]; then
-        echo -e "${yellow}⚠ ~/.zshrc not found. Skipping theme update.${nc}"
+        logWarning "~/.zshrc not found. Skipping theme update."
         return 0
     fi
 
@@ -99,7 +91,7 @@ configureOhMyZshTheme()
         printf '\nZSH_THEME="%s"\n' "$theme" >> "$zshrc"
     fi
 
-    echo -e "${green}✓ Set Oh My Zsh theme to $theme${nc}"
+    logSuccess "Set Oh My Zsh theme to $theme"
     return 0
 }
 
@@ -139,33 +131,33 @@ PY
 # Function to ensure essential tools are installed
 ensureEssentialTools()
 {
-    echo -e "${cyan}Ensuring essential tools are installed...${nc}"
+    logInfo "Ensuring essential tools are installed..."
 
     local needsUpdate=false
 
     if ! commandExists curl; then
-        echo -e "${yellow}Installing curl...${nc}"
+        logNote "Installing curl..."
         sudo apt-get install -y curl
         needsUpdate=true
     fi
 
     if ! commandExists wget; then
-        echo -e "${yellow}Installing wget...${nc}"
+        logNote "Installing wget..."
         sudo apt-get install -y wget
         needsUpdate=true
     fi
 
     if [ "$needsUpdate" = false ]; then
-        echo -e "${green}✓ Essential tools already installed${nc}"
+        logSuccess "Essential tools already installed"
     fi
 }
 
 # Function to set zsh as default shell
 setZshAsDefault()
 {
-    echo -e "${cyan}Setting zsh as default shell...${nc}"
+    logInfo "Setting zsh as default shell..."
     if ! isZshInstalled; then
-        echo -e "${red}✗ zsh is not installed. Please install it first.${nc}"
+        logError "zsh is not installed. Please install it first."
         return 1
     fi
 
@@ -176,19 +168,19 @@ setZshAsDefault()
     currentShell="$SHELL"
 
     if [ "$currentShell" = "$zshPath" ]; then
-        echo -e "${green}✓ zsh is already the default shell${nc}"
+        logSuccess "zsh is already the default shell"
         return 0
     fi
 
-    echo -e "${yellow}Changing default shell to zsh...${nc}"
-    echo -e "${yellow}You may be prompted for your password.${nc}"
+    logNote "Changing default shell to zsh..."
+    logNote "You may be prompted for your password."
 
     if sudo chsh -s "$zshPath" "$USER"; then
-        echo -e "${green}✓ Default shell changed to zsh${nc}"
-        echo -e "${yellow}Note: This change will take effect after you log out and log back in.${nc}"
+        logSuccess "Default shell changed to zsh"
+        logNote "Note: This change will take effect after you log out and log back in."
         return 0
     else
-        echo -e "${red}✗ Failed to change default shell${nc}"
+        logError "Failed to change default shell"
         return 1
     fi
 }
@@ -196,13 +188,13 @@ setZshAsDefault()
 # Main setup function
 setupDevEnv()
 {
-    echo -e "${cyan}=== Ubuntu Development Environment Setup ===${nc}"
+    logSection "Ubuntu Development Environment Setup"
     echo ""
 
     local success=true
 
     # Update package list
-    echo -e "${cyan}Updating package list...${nc}"
+    logInfo "Updating package list..."
     sudo apt-get update
     echo ""
 
@@ -235,12 +227,12 @@ setupDevEnv()
     fi
     echo ""
 
-    echo -e "${cyan}=== Setup Complete ===${nc}"
+    logSection "Setup Complete"
     if [ "$success" = true ]; then
-        echo -e "${green}Development environment setup completed successfully!${nc}"
-        echo -e "${yellow}Note: You may need to restart your terminal for all changes to take effect.${nc}"
+        logSuccess "Development environment setup completed successfully!"
+        logNote "Note: You may need to restart your terminal for all changes to take effect."
     else
-        echo -e "${yellow}Some steps may not have completed successfully. Please review the output above.${nc}"
+        logNote "Some steps may not have completed successfully. Please review the output above."
     fi
 
     return 0
