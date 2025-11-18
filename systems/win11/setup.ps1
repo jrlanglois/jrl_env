@@ -394,7 +394,7 @@ if ($runRepos)
                     if ($ownerDirs.Count -gt 0)
                     {
                         logWarn "Repositories directory already exists with content. Skipping repository cloning."
-                        logInfo "To clone repositories manually, run: .\win11\cloneRepositories.ps1"
+                        logInfo "To clone repositories manually, run: .\systems\win11\cloneRepositories.ps1"
                     }
                     else
                     {

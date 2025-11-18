@@ -28,7 +28,7 @@ jobs:
 
       - name: Validate JSON syntax
         run: |
-          bash macos/validate.sh
+          bash systems/macos/validate.sh
 
       - name: Validate macOS packages
         run: |
@@ -49,7 +49,7 @@ jobs:
 
       - name: Validate JSON syntax
         run: |
-          bash ubuntu/validate.sh
+          bash systems/ubuntu/validate.sh
 
       - name: Validate Ubuntu packages
         run: |

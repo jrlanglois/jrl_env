@@ -54,9 +54,10 @@ jrl_env/
 │   ├── validateFonts.sh
 │   ├── validateRepositories.sh
 │   └── validateGitConfig.py
-├── win11/            # PowerShell scripts for Windows
-├── macos/            # Bash scripts for macOS (thin wrappers)
-└── ubuntu/           # Bash scripts for Ubuntu (thin wrappers)
+└── systems/          # Platform-specific scripts
+    ├── win11/        # PowerShell scripts for Windows
+    ├── macos/        # Bash scripts for macOS (thin wrappers)
+    └── ubuntu/       # Bash scripts for Ubuntu (thin wrappers)
 ```
 
 ## Quick Start
@@ -70,7 +71,7 @@ Clone the repository and run the setup script for your platform:
 ```powershell
 git clone https://github.com/jrlanglois/jrl_env.git
 cd jrl_env
-.\win11\setup.ps1
+.\systems\win11\setup.ps1
 ```
 
 **macOS:**
@@ -78,7 +79,7 @@ cd jrl_env
 ```bash
 git clone https://github.com/jrlanglois/jrl_env.git
 cd jrl_env
-./macos/setup.sh
+./systems/macos/setup.sh
 ```
 
 **Ubuntu:**
@@ -86,7 +87,7 @@ cd jrl_env
 ```bash
 git clone https://github.com/jrlanglois/jrl_env.git
 cd jrl_env
-./ubuntu/setup.sh
+./systems/ubuntu/setup.sh
 ```
 
 The setup script will run all configuration and installation tasks automatically.
@@ -99,16 +100,16 @@ After making changes and pushing to the repository, update other machines:
 
 ```powershell
 cd jrl_env
-.\win11\update.ps1
+.\systems\win11\update.ps1
 ```
 
 **macOS / Ubuntu:**
 
 ```bash
 cd jrl_env
-./macos/update.sh
+./systems/macos/update.sh
 # or
-./ubuntu/update.sh
+./systems/ubuntu/update.sh
 ```
 
 The update script will pull the latest changes and re-run the setup.
@@ -163,8 +164,8 @@ The scripts are designed to be modular and configurable. Update the JSON files i
 
 Each platform now includes an interactive helper to generate and register GitHub SSH keys using the data from `configs/gitConfig.json`:
 
-- macOS / Ubuntu: `./macos/configureGithubSsh.sh` and `./ubuntu/configureGithubSsh.sh`
-- Windows 11: `.\win11\configureGithubSsh.ps1`
+- macOS / Ubuntu: `./systems/macos/configureGithubSsh.sh` and `./systems/ubuntu/configureGithubSsh.sh`
+- Windows 11: `.\systems\win11\configureGithubSsh.ps1`
 
 During full setup you can skip this step with `--skip-ssh` (macOS/Ubuntu) or `-skipSsh` (Windows). The helpers:
 
@@ -180,7 +181,7 @@ Re-run the script any time you need to rotate keys or target a new GitHub accoun
 This repository follows DRY (Don't Repeat Yourself) and SOLID principles:
 
 - **Shared Logic**: Common Bash functionality is centralised in `common/` (e.g., Git configuration, app installation, font installation)
-- **Thin Wrappers**: Platform-specific scripts (`macos/`, `ubuntu/`) are thin wrappers that set platform-specific variables and source shared logic
+- **Thin Wrappers**: Platform-specific scripts (`systems/macos/`, `systems/ubuntu/`) are thin wrappers that set platform-specific variables and source shared logic
 - **Shared Utilities**: Generic utilities are in `helpers/`:
   - `helpers/utilities.sh`: Generic Bash utilities (e.g., `sourceIfExists()` for safe file sourcing)
   - `helpers/logging.sh`: Consistent logging functions for Bash (`logInfo`, `logSuccess`, `logError`, `logWarning`, `logNote`, `logSection`)

@@ -233,7 +233,7 @@ if [ "$runRepos" = true ]; then
                     ownerDirs=$(find "$workPath" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | wc -l)
                     if [ "$ownerDirs" -gt 0 ]; then
                         logWarn "Repositories directory already exists with content. Skipping repository cloning."
-                        logInfo "To clone repositories manually, run: ./macos/cloneRepositories.sh"
+                        logInfo "To clone repositories manually, run: ./systems/macos/cloneRepositories.sh"
                     else
                         if ! cloneRepositories; then
                             logWarn "Repository cloning had some issues, continuing..."
