@@ -1,0 +1,180 @@
+name: Validate Configuration Files
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'configs/**'
+      - 'test/**'
+      - '.github/workflows/validateConfigs.yml'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'configs/**'
+      - 'test/**'
+      - '.github/workflows/validateConfigs.yml'
+  workflow_dispatch:
+
+jobs:
+  validate-macos-config:
+    name: Validate macOS Config
+    runs-on: macos-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install jq
+        run: brew install jq
+
+      - name: Validate JSON syntax
+        run: |
+          bash macos/validate.sh
+
+      - name: Validate macOS packages
+        run: |
+          chmod +x test/validateMacosPackages.sh
+          bash test/validateMacosPackages.sh configs/macos.json
+
+  validate-ubuntu-config:
+    name: Validate Ubuntu Config
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq
+
+      - name: Validate JSON syntax
+        run: |
+          bash ubuntu/validate.sh
+
+      - name: Validate Ubuntu packages
+        run: |
+          chmod +x test/validateUbuntuPackages.sh
+          bash test/validateUbuntuPackages.sh configs/ubuntu.json
+
+  validate-windows-config:
+    name: Validate Windows Config
+    runs-on: windows-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Git Bash and jq
+        shell: powershell
+        run: |
+          # Install jq via winget (if available) or download directly
+          if (Get-Command winget -ErrorAction SilentlyContinue) {
+            winget install --id stedolan.jq -e --accept-source-agreements --accept-package-agreements --silent
+          } else {
+            Write-Host "winget not available, skipping package validation"
+          }
+
+      - name: Validate JSON syntax
+        shell: bash
+        run: |
+          # Basic JSON validation for Windows config
+          if command -v jq >/dev/null 2>&1; then
+            jq empty configs/win11.json
+          else
+            echo "jq not available, skipping JSON validation"
+          fi
+
+      - name: Validate Windows packages
+        shell: bash
+        continue-on-error: true
+        run: |
+          if command -v winget >/dev/null 2>&1; then
+            chmod +x test/validateWindowsPackages.sh
+            bash test/validateWindowsPackages.sh configs/win11.json
+          else
+            echo "winget not available, skipping package validation"
+          fi
+
+  validate-fonts:
+    name: Validate Fonts Config
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq curl
+
+      - name: Validate JSON syntax
+        run: |
+          jq empty configs/fonts.json
+
+      - name: Validate Google Fonts
+        run: |
+          chmod +x test/validateFonts.sh
+          bash test/validateFonts.sh configs/fonts.json
+
+  validate-repositories:
+    name: Validate Repositories Config
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq git
+
+      - name: Validate JSON syntax and structure
+        run: |
+          jq empty configs/repositories.json
+          # Check required fields
+          if ! jq -e '.workPathUnix or .workPathWindows' configs/repositories.json > /dev/null; then
+            echo "Error: repositories.json must contain workPathUnix or workPathWindows"
+            exit 1
+          fi
+
+      - name: Validate repositories
+        run: |
+          chmod +x test/validateRepositories.sh
+          bash test/validateRepositories.sh configs/repositories.json
+
+  validate-git-config:
+    name: Validate Git Config
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq python3 python3-pip
+
+      - name: Validate JSON syntax
+        run: |
+          jq empty configs/gitConfig.json
+
+      - name: Validate Git config (aliases, name, email, GitHub username)
+        run: |
+          chmod +x test/validateGitConfig.py
+          python3 test/validateGitConfig.py configs/gitConfig.json
+
+  validate-cursor-config:
+    name: Validate Cursor Config
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq
+
+      - name: Validate JSON syntax
+        run: |
+          jq empty configs/cursorSettings.json
+
