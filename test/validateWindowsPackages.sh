@@ -40,8 +40,21 @@ validateWindowsPackages()
             fi
 
             # Check if package exists in winget
-            # winget show is more reliable for checking package existence
+            # Try multiple methods for better reliability across different environments
+            local found=false
+
+            # Method 1: winget show (most reliable, but may fail in CI if sources aren't updated)
             if winget show --id "$package" &>/dev/null 2>&1; then
+                found=true
+            # Method 2: winget search with exact ID match (fallback - works even if sources need update)
+            elif winget search --id "$package" --exact 2>/dev/null | grep -qE "[[:space:]]${package}[[:space:]]"; then
+                found=true
+            # Method 3: winget search without exact flag (last resort - may match similar packages)
+            elif winget search "$package" 2>/dev/null | head -5 | grep -qE "[[:space:]]${package}[[:space:]]"; then
+                found=true
+            fi
+
+            if [ "$found" = true ]; then
                 logSuccess "  $package"
             else
                 logError "  $package (not found in winget)"

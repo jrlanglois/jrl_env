@@ -39,12 +39,20 @@ validateMacosPackages()
             fi
 
             # Check if package exists in brew
-            if brew info "$package" &>/dev/null; then
+            # Suppress brew's informational messages (like "already installed", "already up-to-date")
+            # brew info returns 0 if package exists, non-zero if not
+            if brew info "$package" 2>&1 | grep -vE "(is already installed|already up-to-date|To reinstall)" | grep -qE "(^$package:|^==>|^From:)"; then
                 logSuccess "  $package"
             else
-                logError "  $package (not found in brew)"
-                ((errors++))
+                # Double-check with exit code (brew info returns non-zero if package doesn't exist)
+                if brew info "$package" &>/dev/null 2>&1; then
+                    logSuccess "  $package"
+                else
+                    logError "  $package (not found in brew)"
+                    ((errors++))
+                fi
             fi
+
         done <<< "$brewPackages"
         echo ""
     fi
@@ -61,11 +69,18 @@ validateMacosPackages()
             fi
 
             # Check if cask exists in brew
-            if brew info --cask "$package" &>/dev/null; then
+            # Suppress brew's informational messages (like "already installed", "already up-to-date")
+            # brew info returns 0 if package exists, non-zero if not
+            if brew info --cask "$package" 2>&1 | grep -vE "(is already installed|already up-to-date|To reinstall)" | grep -qE "(^$package:|^==>|^From:)"; then
                 logSuccess "  $package"
             else
-                logError "  $package (not found in brew cask)"
-                ((errors++))
+                # Double-check with exit code (brew info returns non-zero if package doesn't exist)
+                if brew info --cask "$package" &>/dev/null 2>&1; then
+                    logSuccess "  $package"
+                else
+                    logError "  $package (not found in brew cask)"
+                    ((errors++))
+                fi
             fi
         done <<< "$caskPackages"
         echo ""

@@ -174,7 +174,10 @@ def newlineForFile(path: Path, extensionsLower: set[str]) -> str | None:
 
 def tidyFile(path: Path, dryRun: bool, preferredNewline: str | None) -> TidyStats | None:
     try:
-        originalText = path.read_text(encoding="utf-8")
+        # Read file in binary mode to preserve exact line endings, then decode.
+        # This prevents Python from normalising CRLF to LF during read.
+        originalBytes = path.read_bytes()
+        originalText = originalBytes.decode("utf-8")
     except UnicodeDecodeError:
         sys.stderr.write(f"Skipping non-UTF-8 file: {path}\n")
         return None
