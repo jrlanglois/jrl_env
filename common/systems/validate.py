@@ -291,19 +291,19 @@ def checkGitHubRepositoryViaApi(ownerRepo: str) -> tuple[Optional[bool], str]:
         None means we couldn't determine (network error, private repo, etc.)
     """
     import os
-    
+
     apiUrl = f"https://api.github.com/repos/{ownerRepo}"
     isCi = os.getenv('CI') == 'true' or os.getenv('GITHUB_ACTIONS') == 'true'
 
     try:
         req = urllib.request.Request(apiUrl)
         req.add_header('User-Agent', 'jrl_env-validator')
-        
+
         # Use GITHUB_TOKEN if available (automatically provided in GitHub Actions)
         githubToken = os.getenv('GITHUB_TOKEN')
         if githubToken:
             req.add_header('Authorization', f'token {githubToken}')
-        
+
         with urllib.request.urlopen(req, timeout=5) as response:
             if response.status == 200:
                 return True, "Repository exists"
