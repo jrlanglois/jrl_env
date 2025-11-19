@@ -6,12 +6,14 @@ on:
     paths:
       - 'configs/**'
       - 'test/**'
+      - 'systems/**'
       - '.github/workflows/validateConfigs.yml'
   pull_request:
     branches: [ main ]
     paths:
       - 'configs/**'
       - 'test/**'
+      - 'systems/**'
       - '.github/workflows/validateConfigs.yml'
   workflow_dispatch:
 
@@ -23,17 +25,13 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install jq
-        run: brew install jq
-
       - name: Validate JSON syntax
         run: |
-          bash systems/macos/validate.sh
+          python3 systems/macos/validate.py
 
       - name: Validate macOS packages
         run: |
-          chmod +x test/validateMacosPackages.sh
-          bash test/validateMacosPackages.sh configs/macos.json
+          python3 test/validatePackages.py configs/macos.json
 
   validate-ubuntu-config:
     name: Validate Ubuntu Config
@@ -42,19 +40,28 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y jq
-
       - name: Validate JSON syntax
         run: |
-          bash systems/ubuntu/validate.sh
+          python3 systems/ubuntu/validate.py
 
       - name: Validate Ubuntu packages
         run: |
-          chmod +x test/validateUbuntuPackages.sh
-          bash test/validateUbuntuPackages.sh configs/ubuntu.json
+          python3 test/validatePackages.py configs/ubuntu.json
+
+  validate-raspberrypi-config:
+    name: Validate Raspberry Pi Config
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Validate JSON syntax
+        run: |
+          python3 systems/raspberrypi/validate.py
+
+      - name: Validate Raspberry Pi packages
+        run: |
+          python3 test/validatePackages.py configs/raspberrypi.json
 
   validate-windows-config:
     name: Validate Windows Config
@@ -63,103 +70,15 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install jq
-        shell: powershell
-        id: install-jq
-        run: |
-          # Try to install jq via winget, fallback to chocolatey or download
-          $jqInstalled = $false
-          $jqPath = ""
-          
-          # Try winget first (skip msstore source to avoid agreement issues)
-          if (Get-Command winget -ErrorAction SilentlyContinue) {
-            Write-Host "Attempting to install jq via winget..."
-            try {
-              # Try installing from winget repository (not msstore)
-              $result = winget install --id stedolan.jq --source winget --accept-source-agreements --accept-package-agreements --silent 2>&1
-              if ($LASTEXITCODE -eq 0) {
-                $jqInstalled = $true
-                Write-Host "jq installed via winget"
-                # Find where winget installed it
-                $jqPath = (Get-Command jq -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source)
-              } else {
-                Write-Host "winget installation failed, trying alternatives..."
-                Write-Host $result
-              }
-            } catch {
-              Write-Host "winget installation failed, trying alternatives..."
-            }
-          }
-          
-          # Try chocolatey as fallback
-          if (-not $jqInstalled -and (Get-Command choco -ErrorAction SilentlyContinue)) {
-            Write-Host "Attempting to install jq via chocolatey..."
-            try {
-              choco install jq -y
-              if ($LASTEXITCODE -eq 0) {
-                $jqInstalled = $true
-                Write-Host "jq installed via chocolatey"
-                $jqPath = (Get-Command jq -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source)
-              }
-            } catch {
-              Write-Host "chocolatey installation failed"
-            }
-          }
-          
-          # If still not installed, download directly
-          if (-not $jqInstalled) {
-            Write-Host "Downloading jq directly..."
-            $jqUrl = "https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-win64.exe"
-            $jqDir = "$env:ProgramFiles\jq"
-            $jqPath = "$jqDir\jq.exe"
-            New-Item -ItemType Directory -Force -Path $jqDir | Out-Null
-            Invoke-WebRequest -Uri $jqUrl -OutFile $jqPath
-            Write-Host "jq downloaded to $jqPath"
-            # Set output for subsequent steps
-            echo "jq_dir=$jqDir" >> $env:GITHUB_OUTPUT
-          } else {
-            # Extract directory from path
-            $jqDir = Split-Path -Parent $jqPath
-            echo "jq_dir=$jqDir" >> $env:GITHUB_OUTPUT
-          }
-          
-          # Verify jq is available
-          if (Get-Command jq -ErrorAction SilentlyContinue) {
-            Write-Host "jq is available: $(Get-Command jq | Select-Object -ExpandProperty Source)"
-          } else {
-            Write-Host "Warning: jq may not be in PATH for subsequent steps"
-          }
-
       - name: Validate JSON syntax
-        shell: bash
-        env:
-          PATH: ${{ steps.install-jq.outputs.jq_dir }}:${{ env.PATH }}
         run: |
-          # Add jq directory to PATH (convert Windows path to Git Bash format)
-          if [ -n "${{ steps.install-jq.outputs.jq_dir }}" ]; then
-            JQ_DIR=$(echo "${{ steps.install-jq.outputs.jq_dir }}" | sed 's|C:|/c|' | sed 's|\\|/|g')
-            export PATH="$JQ_DIR:$PATH"
-          fi
-          
-          # Basic JSON validation for Windows config
-          if command -v jq >/dev/null 2>&1; then
-            jq empty configs/win11.json
-          else
-            echo "jq not available, skipping JSON validation"
-            exit 0
-          fi
+          python3 helpers/validateJson.py configs/win11.json
 
       - name: Validate Windows packages
         shell: pwsh
         continue-on-error: true
         run: |
-          try {
-            $null = Get-Command winget -ErrorAction Stop
-            powershell -File test/validateWindowsPackages.ps1 -configPath configs/win11.json
-          } catch {
-            Write-Host "winget not available, skipping package validation"
-            exit 0
-          }
+          python3 test/validatePackages.py configs/win11.json
 
   validate-fonts:
     name: Validate Fonts Config
@@ -171,16 +90,15 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y jq curl
+          sudo apt-get install -y curl
 
       - name: Validate JSON syntax
         run: |
-          jq empty configs/fonts.json
+          python3 helpers/validateJson.py configs/fonts.json
 
       - name: Validate Google Fonts
         run: |
-          chmod +x test/validateFonts.sh
-          bash test/validateFonts.sh configs/fonts.json
+          python3 test/validateFonts.py configs/fonts.json
 
   validate-repositories:
     name: Validate Repositories Config
@@ -192,21 +110,18 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y jq git curl
+          sudo apt-get install -y git curl
 
       - name: Validate JSON syntax and structure
         run: |
-          jq empty configs/repositories.json
-          # Check required fields
-          if ! jq -e '.workPathUnix or .workPathWindows' configs/repositories.json > /dev/null; then
+          if ! python3 helpers/validateJson.py configs/repositories.json --required-field workPathUnix && ! python3 helpers/validateJson.py configs/repositories.json --required-field workPathWindows; then
             echo "Error: repositories.json must contain workPathUnix or workPathWindows"
             exit 1
           fi
 
       - name: Validate repositories
         run: |
-          chmod +x test/validateRepositories.sh
-          bash test/validateRepositories.sh configs/repositories.json
+          python3 test/validateRepositories.py configs/repositories.json
 
   validate-git-config:
     name: Validate Git Config
@@ -218,11 +133,11 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y jq python3 python3-pip
+          sudo apt-get install -y python3 python3-pip
 
       - name: Validate JSON syntax
         run: |
-          jq empty configs/gitConfig.json
+          python3 helpers/validateJson.py configs/gitConfig.json
 
       - name: Validate Git config (aliases, name, email, GitHub username)
         run: |
@@ -236,12 +151,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y jq
-
       - name: Validate JSON syntax
         run: |
-          jq empty configs/cursorSettings.json
-
+          python3 helpers/validateJson.py configs/cursorSettings.json

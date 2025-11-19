@@ -56,4 +56,3 @@ jobs:
               echo "::error ::Formatting changed files. Run ./helpers/formatRepo.sh locally and commit the results."
               exit 1
           fi
-

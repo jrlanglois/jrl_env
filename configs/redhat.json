@@ -1,0 +1,37 @@
+{
+    "linuxCommon": true,
+    "dnf":
+    [
+        "docker",
+        "docker-compose",
+        "postgresql",
+        "redis"
+    ],
+    "shell":
+    {
+        "ohMyZshTheme": "agnoster"
+    },
+    "commands":
+    {
+        "preInstall":
+        [
+            {
+                "name": "dnfUpdate",
+                "runOnce": false,
+                "shell": "bash",
+                "command": "sudo dnf check-update || true"
+            }
+        ],
+        "postInstall":
+        [
+            {
+                "name": "dnfUpgrade",
+                "runOnce": false,
+                "shell": "bash",
+                "command": "sudo dnf upgrade -y"
+            }
+        ]
+    },
+    "cruft":
+    []
+}

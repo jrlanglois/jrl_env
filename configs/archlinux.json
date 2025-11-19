@@ -1,0 +1,37 @@
+{
+    "linuxCommon": true,
+    "pacman":
+    [
+        "docker",
+        "docker-compose",
+        "postgresql",
+        "redis"
+    ],
+    "shell":
+    {
+        "ohMyZshTheme": "agnoster"
+    },
+    "commands":
+    {
+        "preInstall":
+        [
+            {
+                "name": "pacmanSync",
+                "runOnce": false,
+                "shell": "bash",
+                "command": "sudo pacman -Sy"
+            }
+        ],
+        "postInstall":
+        [
+            {
+                "name": "pacmanUpgrade",
+                "runOnce": false,
+                "shell": "bash",
+                "command": "sudo pacman -Syu --noconfirm"
+            }
+        ]
+    },
+    "cruft":
+    []
+}

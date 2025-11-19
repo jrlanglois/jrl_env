@@ -3,10 +3,11 @@
 Repository tidy utility implemented in Python with predictable line endings.
 
 Features:
-- Converts tabs to four spaces.
+- Converts tabs to spaces (4 spaces for most files, 2 spaces for YAML).
+- Normalises YAML indentation to 2 spaces.
 - Trims trailing whitespace.
 - Removes trailing blank lines.
-- Forces CRLF for `.ps1`, `.json`, and `.md`, while keeping `.sh` files LF.
+- Forces CRLF for `.ps1`, `.json`, and `.md`, while keeping `.sh`, `.py`, `.yml`, and `.yaml` files LF.
 """
 
 from __future__ import annotations
@@ -18,18 +19,31 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable, List
 
-# Import shared logging utilities
+# Import shared logging utilities from common
 scriptDir = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, scriptDir)
-from logging import Colours, colourise
+commonDir = os.path.join(os.path.dirname(scriptDir), "common")
+sys.path.insert(0, os.path.dirname(commonDir))
+from common.common import Colours, colourise
+from common.core.logging import setVerbosityFromArgs, getVerbosity, Verbosity
 
 
-DEFAULT_EXTENSIONS = [".ps1", ".sh", ".json", ".md"]
-CRLF_EXTENSIONS = {".ps1", ".json", ".md"}
+defaultExtensions = [".ps1", ".sh", ".json", ".md", ".py", ".yml", ".yaml"]
+crlfExtensions = {".ps1", ".json", ".md"}
 
 
 def parseArguments() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Tidies files while preserving line endings.")
+    parser = argparse.ArgumentParser(
+        description="Tidies files while preserving line endings.",
+        epilog=(
+            "Intent: Clean up files by converting tabs to spaces, trimming whitespace,\n"
+            "and enforcing proper line endings (CRLF for .ps1/.json/.md, LF for .sh/.py/.yml/.yaml).\n\n"
+            "Examples:\n"
+            "  python3 helpers/tidy.py --file script.sh\n"
+            "  python3 helpers/tidy.py --path src/ --extensions .py .sh\n"
+            "  python3 helpers/tidy.py --dryRun"
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
     defaultRoot = Path(__file__).resolve().parents[1]
 
     parser.add_argument(
@@ -48,12 +62,11 @@ def parseArguments() -> argparse.Namespace:
         "-e",
         "--extensions",
         nargs="+",
-        default=DEFAULT_EXTENSIONS,
+        default=defaultExtensions,
         help="File extensions to include when scanning a directory.",
     )
     parser.add_argument(
         "-d",
-        "--dry-run",
         "--dryRun",
         dest="dryRun",
         action="store_true",
@@ -63,6 +76,13 @@ def parseArguments() -> argparse.Namespace:
         "positionalPath",
         nargs="?",
         help="Optional path argument for backward compatibility.",
+    )
+    parser.add_argument(
+        "-q",
+        "--quiet",
+        dest="quiet",
+        action="store_true",
+        help="Only show final success/failure message.",
     )
 
     parser.set_defaults(defaultRoot=str(defaultRoot))
@@ -103,7 +123,7 @@ def rebuildWithNewlines(text: str, newlineStyle: str) -> str:
     return text
 
 
-def tidyContent(text: str, preferredNewline: str | None = None) -> tuple[str, TidyStats]:
+def tidyContent(text: str, preferredNewline: str | None = None, isYaml: bool = False) -> tuple[str, TidyStats]:
     newlineStyle = preferredNewline or detectNewlineStyle(text)
     normalised = normaliseNewlines(text)
     hadTrailingNewline = normalised.endswith("\n")
@@ -119,11 +139,21 @@ def tidyContent(text: str, preferredNewline: str | None = None) -> tuple[str, Ti
     tabCount = 0
     whitespaceLineCount = 0
     processedLines: List[str] = []
+    indentSize = 2 if isYaml else 4
 
     for line in lines:
         if "\t" in line:
             tabCount += line.count("\t")
-            line = line.replace("\t", "    ")
+            line = line.replace("\t", " " * indentSize)
+
+        # For YAML files, normalise indentation to 2 spaces
+        if isYaml and line and not line.strip().startswith("#"):
+            # Count leading spaces
+            leadingSpaces = len(line) - len(line.lstrip())
+            if leadingSpaces > 0:
+                # Normalise to multiples of 2 spaces (round down odd numbers)
+                normalisedIndent = (leadingSpaces // 2) * 2
+                line = " " * normalisedIndent + line.lstrip()
 
         trimmedLine = line.rstrip()
         if trimmedLine != line:
@@ -163,7 +193,7 @@ def gatherFiles(root: Path, extensionsLower: set[str]) -> Iterable[Path]:
 
 def newlineForFile(path: Path, extensionsLower: set[str]) -> str | None:
     suffix = path.suffix.lower()
-    if suffix in CRLF_EXTENSIONS:
+    if suffix in crlfExtensions:
         return "\r\n"
     if suffix == ".sh":
         return "\n"
@@ -172,7 +202,7 @@ def newlineForFile(path: Path, extensionsLower: set[str]) -> str | None:
     return None
 
 
-def tidyFile(path: Path, dryRun: bool, preferredNewline: str | None) -> TidyStats | None:
+def tidyFile(path: Path, dryRun: bool, preferredNewline: str | None, isYaml: bool = False) -> TidyStats | None:
     try:
         # Read file in binary mode to preserve exact line endings, then decode.
         # This prevents Python from normalising CRLF to LF during read.
@@ -182,7 +212,7 @@ def tidyFile(path: Path, dryRun: bool, preferredNewline: str | None) -> TidyStat
         sys.stderr.write(f"Skipping non-UTF-8 file: {path}\n")
         return None
 
-    newText, stats = tidyContent(originalText, preferredNewline)
+    newText, stats = tidyContent(originalText, preferredNewline, isYaml)
 
     if stats.modified and not dryRun:
         with path.open("w", encoding="utf-8", newline="") as destination:
@@ -210,17 +240,24 @@ def determineTargets(args: argparse.Namespace, extensionsLower: set[str]) -> tup
 
 def main() -> int:
     args = parseArguments()
+    setVerbosityFromArgs(quiet=args.quiet, verbose=False)
     enableColour = sys.stdout.isatty()
     extensionsLower = {ext.lower() for ext in args.extensions}
 
     try:
         targets, _ = determineTargets(args, extensionsLower)
     except FileNotFoundError as exc:
-        sys.stderr.write(f"{exc}\n")
+        if getVerbosity() == Verbosity.quiet:
+            print("Failure")
+        else:
+            sys.stderr.write(f"{exc}\n")
         return 1
 
     if not targets:
-        print(colourise("No files found to process.", Colours.YELLOW, enableColour))
+        if getVerbosity() == Verbosity.quiet:
+            print("Success")
+        else:
+            print(colourise("No files found to process.", Colours.YELLOW, enableColour))
         return 0
 
     fileCount = 0
@@ -231,8 +268,17 @@ def main() -> int:
     for filePath in targets:
         fileCount += 1
         preferredNewline = newlineForFile(filePath, extensionsLower)
-        stats = tidyFile(filePath, args.dryRun, preferredNewline)
+        isYaml = filePath.suffix.lower() in {".yml", ".yaml"}
+        stats = tidyFile(filePath, args.dryRun, preferredNewline, isYaml)
         if stats is None:
+            continue
+
+        # Skip all output in quiet mode
+        if getVerbosity() == Verbosity.quiet:
+            if stats.modified:
+                modifiedCount += 1
+            totalTabCount += stats.tabCount
+            totalWhitespaceCount += stats.whitespaceLineCount
             continue
 
         if args.dryRun:
@@ -302,71 +348,76 @@ def main() -> int:
         totalTabCount += stats.tabCount
         totalWhitespaceCount += stats.whitespaceLineCount
 
-    print()
+    if getVerbosity() != Verbosity.quiet:
+        print()
 
-    if args.dryRun:
-        print(
-            colourise(
-                f"DRY RUN: Would process {fileCount} file(s)",
-                Colours.YELLOW,
-                enableColour,
-            )
-        )
-        if totalTabCount:
+    if getVerbosity() != Verbosity.quiet:
+        if args.dryRun:
             print(
                 colourise(
-                    f"  Would convert {totalTabCount} tab(s) to spaces",
+                    f"DRY RUN: Would process {fileCount} file(s)",
                     Colours.YELLOW,
-                    enableColour,
-                )
-            )
-        if totalWhitespaceCount:
-            print(
-                colourise(
-                    f"  Would trim trailing whitespace from {totalWhitespaceCount} line(s)",
-                    Colours.YELLOW,
-                    enableColour,
-                )
-            )
-    else:
-        print(
-            colourise(
-                f"Processed {fileCount} file(s)",
-                Colours.CYAN,
-                enableColour,
-            )
-        )
-        if modifiedCount:
-            print(
-                colourise(
-                    f"Modified {modifiedCount} file(s)",
-                    Colours.GREEN,
                     enableColour,
                 )
             )
             if totalTabCount:
                 print(
                     colourise(
-                        f"  Converted {totalTabCount} tab(s) to spaces",
-                        Colours.GREEN,
+                        f"  Would convert {totalTabCount} tab(s) to spaces",
+                        Colours.YELLOW,
                         enableColour,
                     )
                 )
             if totalWhitespaceCount:
                 print(
                     colourise(
-                        f"  Trimmed trailing whitespace from {totalWhitespaceCount} line(s)",
-                        Colours.GREEN,
+                        f"  Would trim trailing whitespace from {totalWhitespaceCount} line(s)",
+                        Colours.YELLOW,
                         enableColour,
                     )
                 )
         else:
-            print(colourise("No files needed tidying. All files are clean!", Colours.GREEN, enableColour))
+            print(
+                colourise(
+                    f"Processed {fileCount} file(s)",
+                    Colours.CYAN,
+                    enableColour,
+                )
+            )
+            if modifiedCount:
+                print(
+                    colourise(
+                        f"Modified {modifiedCount} file(s)",
+                        Colours.GREEN,
+                        enableColour,
+                    )
+                )
+                if totalTabCount:
+                    print(
+                        colourise(
+                            f"  Converted {totalTabCount} tab(s) to spaces",
+                            Colours.GREEN,
+                            enableColour,
+                        )
+                    )
+                if totalWhitespaceCount:
+                    print(
+                        colourise(
+                            f"  Trimmed trailing whitespace from {totalWhitespaceCount} line(s)",
+                            Colours.GREEN,
+                            enableColour,
+                        )
+                    )
+            else:
+                print(colourise("No files needed tidying. All files are clean!", Colours.GREEN, enableColour))
+
+    # Final success/failure message (always show in quiet mode)
+    if getVerbosity() == Verbosity.quiet:
+        print("Success")
+        return 0
 
     return 0
 
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
-

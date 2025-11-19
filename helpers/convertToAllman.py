@@ -5,17 +5,30 @@ import argparse
 import os
 import re
 import sys
+from collections.abc import Iterator
 from pathlib import Path
+from typing import Any
 
-# Import shared logging utilities
+# Import shared logging utilities from common
 scriptDir = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, scriptDir)
-from logging import printSection, printInfo, printSuccess, printWarning
+commonDir = os.path.join(os.path.dirname(scriptDir), "common")
+sys.path.insert(0, os.path.dirname(commonDir))
+from common.common import printSection, printInfo, printSuccess, printWarning
+from common.core.logging import setVerbosityFromArgs, getVerbosity, Verbosity
 
 
-def parseArguments():
+def parseArguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Convert Bash files to Allman brace style."
+        description="Convert Bash files to Allman brace style.",
+        epilog=(
+            "Intent: Enforce Allman brace style in Bash scripts by converting function braces\n"
+            "and else blocks to separate lines, and enforcing inline control keywords.\n\n"
+            "Examples:\n"
+            "  python3 helpers/convertToAllman.py\n"
+            "  python3 helpers/convertToAllman.py --path scripts/ --extensions .sh .bash\n"
+            "  python3 helpers/convertToAllman.py --dryRun"
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     defaultRoot = Path(__file__).resolve().parents[1]
     parser.add_argument(
@@ -39,10 +52,16 @@ def parseArguments():
         action="store_true",
         help="Create a .bak backup before modifying any file.",
     )
+    parser.add_argument(
+        "--quiet",
+        "-q",
+        action="store_true",
+        help="Only show final success/failure message.",
+    )
     return parser.parse_args()
 
 
-def findShellFiles(rootPath, extensions):
+def findShellFiles(rootPath: Path | str, extensions: list[str]) -> Iterator[Path]:
     for root, _, files in os.walk(rootPath):
         for name in files:
             path = Path(root) / name
@@ -50,8 +69,8 @@ def findShellFiles(rootPath, extensions):
                 yield path
 
 
-def convertContent(content):
-    stats = {
+def convertContent(content: str) -> tuple[str, dict[str, Any]]:
+    stats: dict[str, Any] = {
         "changed": False,
         "functionBraceUpdates": 0,
         "elseBraceUpdates": 0,
@@ -114,7 +133,7 @@ def convertContent(content):
     return content, stats
 
 
-def convertFile(filePath, dryRun=False, createBackup=False):
+def convertFile(filePath: Path, dryRun: bool = False, createBackup: bool = False) -> dict[str, Any]:
     text = filePath.read_text(encoding="utf-8")
     newText, stats = convertContent(text)
 
@@ -132,13 +151,18 @@ def convertFile(filePath, dryRun=False, createBackup=False):
     return stats
 
 
-def main():
+def main() -> None:
     args = parseArguments()
+    setVerbosityFromArgs(quiet=args.quiet, verbose=False)
+
     rootPath = Path(args.path).resolve()
     shellFiles = list(findShellFiles(rootPath, args.extensions))
 
     if not shellFiles:
-        print("No matching files found.")
+        if getVerbosity() == Verbosity.quiet:
+            print("Failure")
+        else:
+            print("No matching files found.")
         return
 
     totalChanged = 0
@@ -167,6 +191,11 @@ def main():
                 f"for: {stats['inlineForUpdates']})"
             )
 
+    # Final success/failure message (always show in quiet mode)
+    if getVerbosity() == Verbosity.quiet:
+        print("Success")
+        return
+
     summaryHeader = "DRY RUN SUMMARY" if args.dryRun else "UPDATE SUMMARY"
     print()
     printSection(summaryHeader)
@@ -181,4 +210,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
