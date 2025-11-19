@@ -28,6 +28,7 @@ A valid `configs/` directory must contain the following files with exact names:
 **Optional Configs:**
 
 - `linuxCommon.json` - Shared Linux packages (only used if `useLinuxCommon: true` in platform configs)
+- `android.json` - Android SDK components configuration (used if Android Studio is installed or in platform config)
 
 ### File Naming Conventions
 
@@ -46,7 +47,8 @@ configs/
 ├── fonts.json               # Optional (font installation skipped if missing)
 ├── repositories.json        # Optional (repository cloning skipped if missing)
 ├── cursorSettings.json      # Optional (Cursor config skipped if missing)
-└── linuxCommon.json         # Optional (only if using Linux common packages)
+├── linuxCommon.json         # Optional (only if using Linux common packages)
+└── android.json             # Optional (Android SDK config, used if Android Studio detected)
 ```
 
 ### File Existence Behavior
@@ -58,6 +60,7 @@ configs/
   - No `repositories.json` → Repository cloning step skipped
   - No `cursorSettings.json` → Cursor configuration step skipped
 - **Missing optional configs**: Setup continues normally (e.g., `linuxCommon.json` is only needed if `useLinuxCommon: true` in platform config)
+- **Android config**: `android.json` is used if Android Studio is detected or listed in platform config. If Android Studio is not found and not in config, user will be prompted to configure Android SDK
 
 ### Validation and Error Handling
 
@@ -255,6 +258,9 @@ Same as Ubuntu (apt, snap, cruft)
 {
     "winget": ["string"],             // Winget packages (format: "Publisher.PackageName")
     "windowsStore": ["string"],       // Microsoft Store app IDs
+    "android": {
+        "sdkComponents": ["string"]   // Optional: Override android.json config
+    },
     "commands": {
         "preInstall": [Command],
         "postInstall": [Command]
@@ -374,6 +380,43 @@ apt, yum, dnf, rpm, zypper, pacman
 - `workbench.*`: Workbench appearance and behavior
 - `terminal.*`: Integrated terminal settings
 - `git.*`: Git integration settings
+
+### Android (`android.json`)
+
+```json
+{
+    "android": {
+        "sdkComponents": ["string"]    // Android SDK components to install via sdkmanager
+    }
+}
+```
+
+**Format:** Array of SDK component names (e.g., `"platform-tools"`, `"platforms;android-36"`, `"build-tools;36.1.0"`)
+
+**Purpose:** Configure Android SDK components that should be installed via `sdkmanager`. This is a cross-platform configuration similar to Linux common.
+
+**Usage:**
+
+- **Common approach**: Create `android.json` in the `configs/` directory. This will be used automatically if Android Studio is detected or listed in your platform config.
+- **Platform override**: You can override the common Android config by adding an `android` section directly to your platform config (e.g., `win11.json`, `macos.json`). Platform-specific configs take precedence over `android.json`.
+
+**When Android Configuration Runs:**
+
+1. If Android Studio is listed in your platform config packages (e.g., `"Google.AndroidStudio"` in `winget` array), Android configuration will run automatically after app installation.
+2. If Android Studio is already installed on your system, Android configuration will run automatically.
+3. If Android Studio is not found and not in your config, you will be prompted whether to configure Android SDK components.
+
+**SDK Component Examples:**
+
+- `"platform-tools"` - Android platform tools (adb, fastboot, etc.)
+- `"platforms;android-36"` - Android platform API level 36
+- `"build-tools;36.1.0"` - Build tools version 36.1.0
+- `"ndk;29.0.14206865"` - Android NDK version
+- `"cmake;4.1.2"` - CMake version
+- `"emulator"` - Android emulator
+- `"system-images;android-36;google_apis;x86_64"` - System image for emulator
+
+**Note:** Android SDK must be installed (typically via Android Studio) before SDK components can be configured. The setup will detect Android SDK via `ANDROID_HOME`/`ANDROID_SDK_ROOT` environment variables or common installation paths.
 - `[language]`: Language-specific settings (e.g., `[python]`, `[cpp]`)
 
 ## Command Objects

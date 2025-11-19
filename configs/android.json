@@ -1,0 +1,15 @@
+{
+    "android":
+    {
+        "sdkComponents":
+        [
+            "platform-tools",
+            "platforms;android-36",
+            "build-tools;36.1.0",
+            "ndk;29.0.14206865",
+            "cmake;4.1.2",
+            "emulator",
+            "system-images;android-36;google_apis;x86_64"
+        ]
+    }
+}

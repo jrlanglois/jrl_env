@@ -270,7 +270,7 @@ def collectUnknownFieldErrors(configsPath: Path, targetPlatform: Optional[str] =
             import json
             with open(linuxCommonPath, 'r', encoding='utf-8') as f:
                 linuxCommonData = json.load(f)
-            allowedLinuxCommonFields = {"linuxCommon"}
+            allowedLinuxCommonFields = {"linuxCommon", "packageMappings"}
             errors = detectUnknownFields(linuxCommonData, allowedLinuxCommonFields)
             unknownFieldErrors.extend(errors)
     except Exception:
@@ -806,7 +806,7 @@ def main() -> int:
             try:
                 with open(linuxCommonPath, 'r', encoding='utf-8') as f:
                     linuxCommonData = json.load(f)
-                allowedLinuxCommonFields = {"linuxCommon"}
+                allowedLinuxCommonFields = {"linuxCommon", "packageMappings"}
                 unknownLinuxCommonErrors = detectUnknownFields(linuxCommonData, allowedLinuxCommonFields)
                 allErrors.extend(unknownLinuxCommonErrors)
             except Exception:

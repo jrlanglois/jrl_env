@@ -131,6 +131,22 @@ from common.configure.cloneRepositories import (
     expandPath,
     cloneRepositories,
 )
+from common.configure.configureAndroid import (
+    findAndroidSdkRoot,
+    findSdkManager,
+    isAndroidStudioInstalled,
+    checkAndroidStudioInConfig,
+    installSdkComponents,
+    configureAndroid,
+)
+from common.configure.configureShellEnv import (
+    getShellConfigFile,
+    hasEnvironmentVariable,
+    addEnvironmentVariable,
+    addToPath,
+    configureAndroidEnvironmentVariables,
+    findNdkRoot,
+)
 
 __all__ = [
     # Logging utilities
@@ -212,6 +228,20 @@ __all__ = [
     "cloneRepository",
     "expandPath",
     "cloneRepositories",
+    # Android configuration
+    "findAndroidSdkRoot",
+    "findSdkManager",
+    "isAndroidStudioInstalled",
+    "checkAndroidStudioInConfig",
+    "installSdkComponents",
+    "configureAndroid",
+    # Shell environment configuration
+    "getShellConfigFile",
+    "hasEnvironmentVariable",
+    "addEnvironmentVariable",
+    "addToPath",
+    "configureAndroidEnvironmentVariables",
+    "findNdkRoot",
 ]
 
 # Conditionally add Windows exports if available

@@ -14,10 +14,13 @@ from typing import Callable, List, Optional, TypeAlias
 DependencyChecker: TypeAlias = Callable[[], bool]
 
 from common.common import (
+    configureAndroid,
     configureCursor,
     configureGit,
     configureGithubSsh,
     cloneRepositories,
+    checkAndroidStudioInConfig,
+    isAndroidStudioInstalled,
     determineRunFlags,
     parseSetupArgs,
     printError,
@@ -474,6 +477,7 @@ class SystemBase(ABC):
             "fontsConfigPath": str(configsDir / "fonts.json"),
             "fontInstallDir": self.getFontInstallDir(),
             "reposConfigPath": str(configsDir / "repositories.json"),
+            "androidConfigPath": str(configsDir / "android.json"),
             "platformConfigPath": str(configsDir / self.getConfigFileName()),
         }
 
@@ -648,6 +652,64 @@ class SystemBase(ABC):
                     if self.setupState:
                         markStepFailed(self.setupState, stepName)
                     raise
+            safePrint()
+
+        # Step 3.5: Configure Android (if applicable)
+        stepName = "android"
+        shouldConfigureAndroid = False
+        androidConfigPath = paths.get("androidConfigPath")
+
+        if androidConfigPath and Path(androidConfigPath).exists():
+            androidInConfig = checkAndroidStudioInConfig(paths["platformConfigPath"])
+            androidInstalled = isAndroidStudioInstalled()
+
+            if androidInConfig or androidInstalled:
+                shouldConfigureAndroid = True
+            elif not self.setupArgs.dryRun:
+                printSection("Android Configuration Check")
+                printInfo("Android Studio is not installed and not in your platform config.")
+                printInfo("Would you like to configure Android SDK components?")
+                printInfo("(Note: You'll need to install Android Studio separately if not already installed)")
+                safePrint()
+                print("Configure Android SDK? (y/n): ", end="", flush=True)
+                try:
+                    response = input().strip().lower()
+                    shouldConfigureAndroid = response in ('y', 'yes')
+                except (EOFError, KeyboardInterrupt):
+                    shouldConfigureAndroid = False
+                safePrint()
+            else:
+                printInfo("[DRY RUN] Would check Android Studio installation and prompt for Android configuration")
+                shouldConfigureAndroid = True
+
+        if shouldConfigureAndroid:
+            if isStepComplete(self.setupState, stepName):
+                printSection("Step 3.5: Configuring Android SDK (SKIPPED - already completed)", dryRun=self.setupArgs.dryRun)
+                printInfo("Android SDK configuration was already completed in a previous run.")
+            else:
+                printSection("Step 3.5: Configuring Android SDK", dryRun=self.setupArgs.dryRun)
+                try:
+                    platformAndroidConfig = None
+                    from common.core.utilities import getJsonObject
+                    platformAndroid = getJsonObject(paths["platformConfigPath"], ".android")
+                    if platformAndroid:
+                        platformAndroidConfig = paths["platformConfigPath"]
+
+                    androidSuccess = configureAndroid(
+                        configPath=androidConfigPath if not platformAndroidConfig else None,
+                        platformConfigPath=platformAndroidConfig if platformAndroidConfig else paths["platformConfigPath"],
+                        dryRun=self.setupArgs.dryRun
+                    )
+                    if not androidSuccess:
+                        printWarning("Android SDK configuration had some issues, continuing...")
+                    else:
+                        printSuccess("Android SDK configuration completed")
+                        if self.setupState:
+                            markStepComplete(self.setupState, stepName)
+                except Exception as e:
+                    if self.setupState:
+                        markStepFailed(self.setupState, stepName)
+                    printWarning(f"Android configuration error: {e}")
             safePrint()
 
         # Step 4: Configure Git

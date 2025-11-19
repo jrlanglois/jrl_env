@@ -64,6 +64,16 @@ ubuntuConfigSchema = {
             "type": "array",
             "items": {"type": "string"},
         },
+        "android": {
+            "type": "object",
+            "properties": {
+                "sdkComponents": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                },
+            },
+            "additionalProperties": False,
+        },
         "commands": {
             "type": "object",
             "properties": {
@@ -104,6 +114,16 @@ macosConfigSchema = {
         "brewCask": {
             "type": "array",
             "items": {"type": "string"},
+        },
+        "android": {
+            "type": "object",
+            "properties": {
+                "sdkComponents": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                },
+            },
+            "additionalProperties": False,
         },
         "commands": {
             "type": "object",
@@ -146,6 +166,16 @@ win11ConfigSchema = {
             "type": "array",
             "items": {"type": "string"},
         },
+        "android": {
+            "type": "object",
+            "properties": {
+                "sdkComponents": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                },
+            },
+            "additionalProperties": False,
+        },
         "commands": {
             "type": "object",
             "properties": {
@@ -183,6 +213,16 @@ redhatConfigSchema = {
         "dnf": {
             "type": "array",
             "items": {"type": "string"},
+        },
+        "android": {
+            "type": "object",
+            "properties": {
+                "sdkComponents": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                },
+            },
+            "additionalProperties": False,
         },
         "commands": {
             "type": "object",
@@ -222,6 +262,16 @@ opensuseConfigSchema = {
             "type": "array",
             "items": {"type": "string"},
         },
+        "android": {
+            "type": "object",
+            "properties": {
+                "sdkComponents": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                },
+            },
+            "additionalProperties": False,
+        },
         "commands": {
             "type": "object",
             "properties": {
@@ -259,6 +309,16 @@ archlinuxConfigSchema = {
         "pacman": {
             "type": "array",
             "items": {"type": "string"},
+        },
+        "android": {
+            "type": "object",
+            "properties": {
+                "sdkComponents": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                },
+            },
+            "additionalProperties": False,
         },
         "commands": {
             "type": "object",
@@ -349,13 +409,13 @@ linuxCommonConfigSchema = {
             "type": "array",
             "items": {"type": "string"},
         },
-        "_notes": {
+        "packageMappings": {
             "type": "object",
-            "additionalProperties": True,
+            "additionalProperties": {"type": "string"},
         },
     },
     "required": ["linuxCommon"],
-    "additionalProperties": True,
+    "additionalProperties": False,
 }
 
 # Cursor settings schema (very flexible, just needs to be valid JSON object)
@@ -364,13 +424,33 @@ cursorSettingsSchema = {
     "additionalProperties": True,
 }
 
+# Android config schema
+androidConfigSchema = {
+    "type": "object",
+    "properties": {
+        "android": {
+            "type": "object",
+            "properties": {
+                "sdkComponents": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                },
+            },
+            "required": ["sdkComponents"],
+            "additionalProperties": False,
+        },
+    },
+    "required": ["android"],
+    "additionalProperties": False,
+}
+
 
 def getSchemaForConfig(configType: str, platform: str = None):
     """
     Get the appropriate schema for a config file.
 
     Args:
-        configType: Type of config ("platform", "gitConfig", "fonts", "repositories", "linuxCommon", "cursorSettings")
+        configType: Type of config ("platform", "gitConfig", "fonts", "repositories", "linuxCommon", "cursorSettings", "android")
         platform: Platform name (required for "platform" type)
 
     Returns:
@@ -399,5 +479,7 @@ def getSchemaForConfig(configType: str, platform: str = None):
         return linuxCommonConfigSchema
     elif configType == "cursorSettings":
         return cursorSettingsSchema
+    elif configType == "android":
+        return androidConfigSchema
 
     return None
