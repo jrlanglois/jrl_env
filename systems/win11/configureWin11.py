@@ -348,12 +348,12 @@ def configurePrivacySettings(dryRun: bool = False) -> bool:
                 adRegPath = r"Software\Microsoft\Windows\CurrentVersion\AdvertisingInfo"
                 try:
                     key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, adRegPath, 0, winreg.KEY_WRITE)
-            except FileNotFoundError:
-                key = winreg.CreateKey(winreg.HKEY_CURRENT_USER, adRegPath)
-            winreg.SetValueEx(key, "Enabled", 0, winreg.REG_DWORD, 0)
-            winreg.CloseKey(key)
-        except Exception as e:
-            printWarning(f"Failed to disable advertising ID: {e}")
+                except FileNotFoundError:
+                    key = winreg.CreateKey(winreg.HKEY_CURRENT_USER, adRegPath)
+                winreg.SetValueEx(key, "Enabled", 0, winreg.REG_DWORD, 0)
+                winreg.CloseKey(key)
+            except Exception as e:
+                printWarning(f"Failed to disable advertising ID: {e}")
 
         # Set diagnostic data to required only (requires admin)
         if isAdministrator():
@@ -541,12 +541,12 @@ def disableNotifications(dryRun: bool = False) -> bool:
                 systemRegPath = r"Software\Microsoft\Windows\CurrentVersion\PushNotifications"
                 try:
                     key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, systemRegPath, 0, winreg.KEY_WRITE)
-            except FileNotFoundError:
-                key = winreg.CreateKey(winreg.HKEY_CURRENT_USER, systemRegPath)
-            winreg.SetValueEx(key, "ToastEnabled", 0, winreg.REG_DWORD, 0)
-            winreg.CloseKey(key)
-        except Exception as e:
-            printWarning(f"Failed to disable system notifications: {e}")
+                except FileNotFoundError:
+                    key = winreg.CreateKey(winreg.HKEY_CURRENT_USER, systemRegPath)
+                winreg.SetValueEx(key, "ToastEnabled", 0, winreg.REG_DWORD, 0)
+                winreg.CloseKey(key)
+            except Exception as e:
+                printWarning(f"Failed to disable system notifications: {e}")
 
         # Disable notification banners
         printInfo("Disabling notification banners...")
@@ -686,9 +686,9 @@ def enableWSL2(dryRun: bool = False) -> bool:
         if not dryRun:
             response = input("Would you like to restart now? (Y/N): ").strip()
             if response.upper() == "Y":
-            printInfo("Restarting computer in 10 seconds...")
-            time.sleep(10)
-            subprocess.run(["shutdown", "/r", "/t", "0"], check=False)
+                printInfo("Restarting computer in 10 seconds...")
+                time.sleep(10)
+                subprocess.run(["shutdown", "/r", "/t", "0"], check=False)
 
         return True
     except Exception as e:

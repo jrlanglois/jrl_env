@@ -478,12 +478,12 @@ class SystemBase(ABC):
             printSection("Step 1: Setting up development environment (SKIPPED - already completed)")
             printInfo("Development environment setup was already completed in a previous run.")
         else:
-        printSection("Step 1: Setting up development environment")
+            printSection("Step 1: Setting up development environment")
             try:
-        if not self.setupDevEnv():
-            printWarning("Development environment setup had some issues, continuing...")
-        else:
-            printSuccess("Development environment setup completed")
+                if not self.setupDevEnv():
+                    printWarning("Development environment setup had some issues, continuing...")
+                else:
+                    printSuccess("Development environment setup completed")
                     if self.setupState:
                         markStepComplete(self.setupState, stepName)
             except Exception as e:
@@ -499,12 +499,12 @@ class SystemBase(ABC):
                 printSection("Step 2: Installing fonts (SKIPPED - already completed)", dryRun=self.setupArgs.dryRun)
                 printInfo("Font installation was already completed in a previous run.")
             else:
-            printSection("Step 2: Installing fonts", dryRun=self.setupArgs.dryRun)
+                printSection("Step 2: Installing fonts", dryRun=self.setupArgs.dryRun)
                 try:
-            if not self.installGoogleFonts(paths["fontsConfigPath"], paths["fontInstallDir"], self.setupArgs.dryRun):
-                printWarning("Font installation had some issues, continuing...")
-            else:
-                printSuccess("Font installation completed")
+                    if not self.installGoogleFonts(paths["fontsConfigPath"], paths["fontInstallDir"], self.setupArgs.dryRun):
+                        printWarning("Font installation had some issues, continuing...")
+                    else:
+                        printSuccess("Font installation completed")
                         if self.setupState:
                             markStepComplete(self.setupState, stepName)
                 except Exception as e:
@@ -520,13 +520,13 @@ class SystemBase(ABC):
                 printSection("Step 3: Installing applications (SKIPPED - already completed)", dryRun=self.setupArgs.dryRun)
                 printInfo("Application installation was already completed in a previous run.")
             else:
-            printSection("Step 3: Installing applications", dryRun=self.setupArgs.dryRun)
+                printSection("Step 3: Installing applications", dryRun=self.setupArgs.dryRun)
                 try:
                     installResult = self.installOrUpdateApps(paths["platformConfigPath"], self.setupArgs.dryRun)
                     if not installResult or (hasattr(installResult, 'failedCount') and installResult.failedCount > 0):
-                printWarning("Application installation had some issues, continuing...")
-            else:
-                printSuccess("Application installation completed")
+                        printWarning("Application installation had some issues, continuing...")
+                    else:
+                        printSuccess("Application installation completed")
                         if self.setupState:
                             markStepComplete(self.setupState, stepName)
                     # Track installed packages for rollback
@@ -546,13 +546,13 @@ class SystemBase(ABC):
                 printSection("Step 4: Configuring Git (SKIPPED - already completed)", dryRun=self.setupArgs.dryRun)
                 printInfo("Git configuration was already completed in a previous run.")
             else:
-            printSection("Step 4: Configuring Git", dryRun=self.setupArgs.dryRun)
+                printSection("Step 4: Configuring Git", dryRun=self.setupArgs.dryRun)
                 try:
                     gitSuccess = configureGit(paths["gitConfigPath"], dryRun=self.setupArgs.dryRun)
                     if not gitSuccess:
-                printWarning("Git configuration had some issues, continuing...")
-            else:
-                printSuccess("Git configuration completed")
+                        printWarning("Git configuration had some issues, continuing...")
+                    else:
+                        printSuccess("Git configuration completed")
                         if self.setupState:
                             markStepComplete(self.setupState, stepName)
                         if self.rollbackSession:
@@ -570,13 +570,13 @@ class SystemBase(ABC):
                 printSection("Step 5: Configuring GitHub SSH (SKIPPED - already completed)", dryRun=self.setupArgs.dryRun)
                 printInfo("GitHub SSH configuration was already completed in a previous run.")
             else:
-            printSection("Step 5: Configuring GitHub SSH", dryRun=self.setupArgs.dryRun)
+                printSection("Step 5: Configuring GitHub SSH", dryRun=self.setupArgs.dryRun)
                 try:
                     sshSuccess = configureGithubSsh(paths["gitConfigPath"], dryRun=self.setupArgs.dryRun)
                     if not sshSuccess:
-                printWarning("GitHub SSH configuration had some issues, continuing...")
-            else:
-                printSuccess("GitHub SSH configuration completed")
+                        printWarning("GitHub SSH configuration had some issues, continuing...")
+                    else:
+                        printSuccess("GitHub SSH configuration completed")
                         if self.setupState:
                             markStepComplete(self.setupState, stepName)
                         if self.rollbackSession:
@@ -594,13 +594,13 @@ class SystemBase(ABC):
                 printSection("Step 6: Configuring Cursor (SKIPPED - already completed)", dryRun=self.setupArgs.dryRun)
                 printInfo("Cursor configuration was already completed in a previous run.")
             else:
-            printSection("Step 6: Configuring Cursor", dryRun=self.setupArgs.dryRun)
+                printSection("Step 6: Configuring Cursor", dryRun=self.setupArgs.dryRun)
                 try:
                     cursorSuccess = configureCursor(paths["cursorConfigPath"], paths["cursorSettingsPath"], dryRun=self.setupArgs.dryRun)
                     if not cursorSuccess:
-                printWarning("Cursor configuration had some issues, continuing...")
-            else:
-                printSuccess("Cursor configuration completed")
+                        printWarning("Cursor configuration had some issues, continuing...")
+                    else:
+                        printSuccess("Cursor configuration completed")
                         if self.setupState:
                             markStepComplete(self.setupState, stepName)
                         if self.rollbackSession:
@@ -618,18 +618,18 @@ class SystemBase(ABC):
                 printSection("Step 7: Cloning repositories (SKIPPED - already completed)", dryRun=self.setupArgs.dryRun)
                 printInfo("Repository cloning was already completed in a previous run.")
             else:
-            printSection("Step 7: Cloning repositories", dryRun=self.setupArgs.dryRun)
+                printSection("Step 7: Cloning repositories", dryRun=self.setupArgs.dryRun)
                 try:
-            if self.setupArgs.dryRun or shouldCloneRepositories(paths["reposConfigPath"], self.getRepositoryWorkPathKey()):
-                if not cloneRepositories(paths["reposConfigPath"], dryRun=self.setupArgs.dryRun):
-                    printWarning("Repository cloning had some issues, continuing...")
-                else:
-                    printSuccess("Repository cloning completed")
+                    if self.setupArgs.dryRun or shouldCloneRepositories(paths["reposConfigPath"], self.getRepositoryWorkPathKey()):
+                        if not cloneRepositories(paths["reposConfigPath"], dryRun=self.setupArgs.dryRun):
+                            printWarning("Repository cloning had some issues, continuing...")
+                        else:
+                            printSuccess("Repository cloning completed")
                             if self.setupState:
                                 markStepComplete(self.setupState, stepName)
-            else:
-                printWarning("Repositories directory already exists with content. Skipping repository cloning.")
-                printInfo(f"To clone repositories manually, run: python3 -m common.systems.cli {self.getPlatformName()} repos")
+                    else:
+                        printWarning("Repositories directory already exists with content. Skipping repository cloning.")
+                        printInfo(f"To clone repositories manually, run: python3 -m common.systems.cli {self.getPlatformName()} repos")
                         if self.setupState:
                             markStepComplete(self.setupState, stepName)
                 except Exception as e:
