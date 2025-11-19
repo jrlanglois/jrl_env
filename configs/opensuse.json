@@ -1,0 +1,37 @@
+{
+    "linuxCommon": true,
+    "zypper":
+    [
+        "docker",
+        "docker-compose",
+        "postgresql",
+        "redis"
+    ],
+    "shell":
+    {
+        "ohMyZshTheme": "agnoster"
+    },
+    "commands":
+    {
+        "preInstall":
+        [
+            {
+                "name": "zypperRefresh",
+                "runOnce": false,
+                "shell": "bash",
+                "command": "sudo zypper refresh"
+            }
+        ],
+        "postInstall":
+        [
+            {
+                "name": "zypperUpdate",
+                "runOnce": false,
+                "shell": "bash",
+                "command": "sudo zypper update -y"
+            }
+        ]
+    },
+    "cruft":
+    []
+}

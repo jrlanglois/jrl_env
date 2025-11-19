@@ -8,13 +8,28 @@ import json
 import re
 import sys
 import time
-import urllib.request
 import urllib.error
+import urllib.request
 from email.utils import parseaddr
 from pathlib import Path
+from typing import Optional
+
+# Add project root to path so we can import from common
+scriptDir = Path(__file__).parent.absolute()
+projectRoot = scriptDir.parent
+sys.path.insert(0, str(projectRoot))
+
+from common.common import (
+    printError,
+    printInfo,
+    printSection,
+    printSuccess,
+    printWarning,
+    safePrint,
+)
 
 
-def is_valid_utf8(text):
+def isValidUtf8(text: str) -> bool:
     """Check if text is valid UTF-8"""
     try:
         text.encode('utf-8')
@@ -23,7 +38,7 @@ def is_valid_utf8(text):
         return False
 
 
-def is_web_form_compatible(text):
+def isWebFormCompatible(text: str) -> bool:
     """Check if text is compatible with web forms (GitHub, etc.)
     Allows letters, numbers, spaces, hyphens, apostrophes, and common Unicode characters
     """
@@ -37,34 +52,34 @@ def is_web_form_compatible(text):
         return not any(ord(c) < 32 or c in '<>{}[]|\\`' for c in text)
 
 
-def is_valid_email(email):
+def isValidEmail(email: str) -> bool:
     """Check if email is valid"""
     if not email:
         return False
-    
+
     # Basic email validation
     pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
     if not re.match(pattern, email):
         return False
-    
+
     # Use email.utils.parseaddr for additional validation
     name, addr = parseaddr(email)
     return bool(addr and '@' in addr)
 
 
-def github_username_exists(username):
+def githubUsernameExists(username: str) -> tuple[Optional[bool], str]:
     """Check if GitHub username exists"""
     if not username:
         return False, "Username is empty"
-    
+
     # GitHub username validation: alphanumeric and hyphens, 1-39 chars
     if not re.match(r'^[a-zA-Z0-9]([a-zA-Z0-9-]{0,37}[a-zA-Z0-9])?$', username):
         return False, "Invalid GitHub username format"
-    
+
     try:
         url = f"https://api.github.com/users/{username}"
         req = urllib.request.Request(url, headers={'User-Agent': 'jrl_env-validator'})
-        
+
         with urllib.request.urlopen(req, timeout=10) as response:
             if response.status == 200:
                 return True, "Username exists"
@@ -78,114 +93,115 @@ def github_username_exists(username):
         return None, f"Error checking GitHub: {str(e)}"
 
 
-def validate_git_alias(alias):
+def validateGitAlias(alias: str) -> tuple[bool, str]:
     """Validate a git alias command"""
     if not alias:
         return False, "Alias is empty"
-    
+
     # Basic validation: should be a valid git command
     # This is a simple check - actual validation would require parsing the full command
     if len(alias) > 1000:  # Reasonable limit
         return False, "Alias too long"
-    
+
     return True, "Valid"
 
 
-def validate_git_config(config_path):
+def validateGitConfig(configPath: str) -> int:
     """Main validation function"""
     errors = []
     warnings = []
-    
-    print("=== Validating Git Config ===\n")
-    
+
+    printSection("Validating Git Config")
+    safePrint()
+
     # Read config file
     try:
-        with open(config_path, 'r', encoding='utf-8') as f:
+        with open(configPath, 'r', encoding='utf-8') as f:
             config = json.load(f)
     except FileNotFoundError:
-        print(f"✗ Error: Config file not found: {config_path}")
+        printError(f"Config file not found: {configPath}")
         return 1
     except json.JSONDecodeError as e:
-        print(f"✗ Error: Invalid JSON: {e}")
+        printError(f"Invalid JSON: {e}")
         return 1
     except Exception as e:
-        print(f"✗ Error reading config: {e}")
+        printError(f"Error reading config: {e}")
         return 1
-    
+
     # Validate user section
     if 'user' in config:
         user = config['user']
-        print("Validating user section...")
-        
+        printInfo("Validating user section...")
+
         # Validate name
         if 'name' in user and user['name']:
             name = user['name']
-            if not is_valid_utf8(name):
+            if not isValidUtf8(name):
                 errors.append(f"user.name: Invalid UTF-8 encoding")
-            elif not is_web_form_compatible(name):
+            elif not isWebFormCompatible(name):
                 errors.append(f"user.name: Not compatible with web forms (contains invalid characters)")
             else:
-                print(f"  ✓ user.name: {name}")
+                printSuccess(f"  user.name: {name}")
         else:
             warnings.append("user.name: Not specified")
-        
+
         # Validate email
         if 'email' in user and user['email']:
             email = user['email']
-            if is_valid_email(email):
-                print(f"  ✓ user.email: {email}")
+            if isValidEmail(email):
+                printSuccess(f"  user.email: {email}")
             else:
                 errors.append(f"user.email: Invalid email format: {email}")
         else:
             warnings.append("user.email: Not specified")
-        
+
         # Validate GitHub username
         if 'usernameGitHub' in user and user['usernameGitHub']:
             username = user['usernameGitHub']
-            print(f"  Checking GitHub username: {username}...")
-            exists, message = github_username_exists(username)
+            printInfo(f"  Checking GitHub username: {username}...")
+            exists, message = githubUsernameExists(username)
             if exists:
-                print(f"  ✓ user.usernameGitHub: {username} ({message})")
+                printSuccess(f"  user.usernameGitHub: {username} ({message})")
             elif exists is None:
                 warnings.append(f"user.usernameGitHub: Could not verify ({message})")
             else:
                 errors.append(f"user.usernameGitHub: {message}: {username}")
         else:
             warnings.append("user.usernameGitHub: Not specified")
-        
-        print()
-    
+
+        safePrint()
+
     # Validate aliases
     if 'aliases' in config:
-        print("Validating aliases...")
+        printInfo("Validating aliases...")
         aliases = config['aliases']
-        for alias_name, alias_command in aliases.items():
-            is_valid, message = validate_git_alias(alias_command)
-            if is_valid:
-                print(f"  ✓ alias.{alias_name}")
+        for aliasName, aliasCommand in aliases.items():
+            isValid, message = validateGitAlias(aliasCommand)
+            if isValid:
+                printSuccess(f"  alias.{aliasName}")
             else:
-                errors.append(f"alias.{alias_name}: {message}")
-        print()
-    
+                errors.append(f"alias.{aliasName}: {message}")
+        safePrint()
+
     # Validate defaults section
     if 'defaults' in config:
-        print("Validating defaults...")
+        printInfo("Validating defaults...")
         defaults = config['defaults']
-        
+
         # Validate init.defaultBranch if present
         if 'init.defaultBranch' in defaults:
-            default_branch = defaults['init.defaultBranch']
+            defaultBranch = defaults['init.defaultBranch']
             # Basic validation: should be a valid branch name
-            if re.match(r'^[a-zA-Z0-9._/-]+$', default_branch):
-                print(f"  ✓ init.defaultBranch: {default_branch}")
+            if re.match(r'^[a-zA-Z0-9._/-]+$', defaultBranch):
+                printSuccess(f"  init.defaultBranch: {defaultBranch}")
             else:
-                errors.append(f"init.defaultBranch: Invalid branch name: {default_branch}")
-        
+                errors.append(f"init.defaultBranch: Invalid branch name: {defaultBranch}")
+
         # Validate other defaults (basic checks)
         for key, value in defaults.items():
             if key == 'init.defaultBranch':
                 continue  # Already validated above
-            
+
             # Basic validation: value should be a string or number
             if isinstance(value, (str, int, bool)):
                 # Additional validation for specific keys
@@ -204,50 +220,49 @@ def validate_git_config(config_path):
                 elif key == 'fetch.parallel':
                     # Handle both string and int values from JSON
                     try:
-                        int_value = int(value) if isinstance(value, str) else value
-                        if not isinstance(int_value, int) or int_value < 0:
+                        intValue = int(value) if isinstance(value, str) else value
+                        if not isinstance(intValue, int) or intValue < 0:
                             errors.append(f"defaults.{key}: Invalid value '{value}' (should be a non-negative integer)")
                         else:
-                            print(f"  ✓ defaults.{key}: {value}")
+                            printSuccess(f"  defaults.{key}: {value}")
                     except (ValueError, TypeError):
                         errors.append(f"defaults.{key}: Invalid value '{value}' (should be a non-negative integer)")
                 else:
-                    print(f"  ✓ defaults.{key}: {value}")
+                    printSuccess(f"  defaults.{key}: {value}")
             else:
                 errors.append(f"defaults.{key}: Invalid value type (should be string, number, or boolean)")
-        print()
-    
+        safePrint()
+
     # Report results
     if warnings:
-        print("Warnings:")
+        printWarning("Warnings:")
         for warning in warnings:
-            print(f"  ⚠ {warning}")
-        print()
-    
+            printWarning(f"  {warning}")
+        safePrint()
+
     if errors:
-        print("Errors:")
+        printError("Errors:")
         for error in errors:
-            print(f"  ✗ {error}")
-        print()
-        print("✗ Validation failed")
+            printError(f"  {error}")
+        safePrint()
+        printError("Validation failed")
         return 1
     else:
-        print("✓ All validations passed!")
+        printSuccess("All validations passed!")
         if warnings:
-            print("(with warnings)")
+            printWarning("(with warnings)")
         return 0
 
 
 if __name__ == '__main__':
     if len(sys.argv) < 2:
-        print("Usage: python3 validateGitConfig.py <path-to-gitConfig.json>")
+        printError("Usage: python3 validateGitConfig.py <path-to-gitConfig.json>")
         sys.exit(1)
-    
-    config_path = sys.argv[1]
-    start_time = time.perf_counter()
-    exit_code = validate_git_config(config_path)
-    elapsed = time.perf_counter() - start_time
-    print()
-    print(f"Validation completed in {elapsed:.2f}s")
-    sys.exit(exit_code)
 
+    configPath = sys.argv[1]
+    startTime = time.perf_counter()
+    exitCode = validateGitConfig(configPath)
+    elapsed = time.perf_counter() - startTime
+    safePrint()
+    printInfo(f"Validation completed in {elapsed:.2f}s")
+    sys.exit(exitCode)

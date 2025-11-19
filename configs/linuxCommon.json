@@ -1,0 +1,88 @@
+{
+    "linuxCommon":
+    [
+        "bat",
+        "ca-certificates",
+        "clang",
+        "cmake",
+        "curl",
+        "exa",
+        "fd-find",
+        "g++",
+        "gdb",
+        "gettext",
+        "git",
+        "git-lfs",
+        "gnupg",
+        "htop",
+        "libasound2-dev",
+        "libbz2-dev",
+        "libcurl4-openssl-dev",
+        "libffi-dev",
+        "libfontconfig1-dev",
+        "libfreetype-dev",
+        "liblzma-dev",
+        "libncursesw5-dev",
+        "libreadline-dev",
+        "libsqlite3-dev",
+        "libssl-dev",
+        "llvm",
+        "make",
+        "neovim",
+        "ninja-build",
+        "nodejs",
+        "npm",
+        "python3",
+        "python3-pip",
+        "ripgrep",
+        "rsync",
+        "shellcheck",
+        "tk-dev",
+        "tmux",
+        "tree",
+        "unzip",
+        "vim",
+        "wget",
+        "xz-utils",
+        "zip",
+        "zlib1g-dev",
+        "zsh"
+    ],
+    "_notes": {
+        "debianOnlyRemoved": [
+            "apt-transport-https",
+            "build-essential",
+            "software-properties-common",
+            "lsb-release"
+        ],
+        "rpmNameMappings": {
+            "libasound2-dev": "alsa-lib-devel",
+            "libbz2-dev": "bzip2-devel",
+            "libcurl4-openssl-dev": "libcurl-devel",
+            "libffi-dev": "libffi-devel",
+            "libfontconfig1-dev": "fontconfig-devel",
+            "libfreetype-dev": "freetype-devel",
+            "liblzma-dev": "xz-devel",
+            "libncursesw5-dev": "ncurses-devel",
+            "libreadline-dev": "readline-devel",
+            "libsqlite3-dev": "sqlite-devel",
+            "libssl-dev": "openssl-devel",
+            "zlib1g-dev": "zlib-devel",
+            "tk-dev": "tk-devel",
+            "xz-utils": "xz"
+        },
+        "mayNeedEPEL": [
+            "bat",
+            "exa",
+            "fd-find",
+            "ripgrep",
+            "shellcheck",
+            "neovim",
+            "git-lfs"
+        ],
+        "mayNeedNodeSource": [
+            "nodejs",
+            "npm"
+        ]
+    }
+}

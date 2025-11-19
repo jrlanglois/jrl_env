@@ -2,73 +2,58 @@
 
 Utility scripts and shared modules for keeping the repo consistent and DRY.
 
+## Overview
+
+This directory contains formatting and maintenance scripts that help maintain code quality and consistency across the repository. All Python scripts import from `common/common.py` for shared logging and utilities.
+
 ## Shared Modules
 
-### `utilities.sh`
-Generic Bash utility functions used across the codebase:
-- **`sourceIfExists(filePath)`**: Safely source a file if it exists, otherwise echo an error to stderr. Used throughout all `.sh` files to prevent failures when optional files are missing.
+### `common/common.py`
 
-### `logging.sh`
-Shared Bash logging functions for consistent output formatting. All scripts should use these instead of raw `echo` statements:
-- **`logInfo(message)`**: Print an info message in cyan
-- **`logSuccess(message)`**: Print a success message with green checkmark
-- **`logError(message)`**: Print an error message with red cross
-- **`logWarning(message)`**: Print a warning message with yellow warning symbol
-- **`logNote(message)`**: Print a note in yellow
-- **`logSection(message)`**: Print a section header in cyan with `===` borders
+Single entry point for all common utilities:
 
-**Note**: Requires `common/colours.sh` to be sourced first.
+- **`common/common.py`**: Python entry point - imports all common utilities and modules
 
-### `logging.py`
-Shared Python logging functions for consistent output formatting in Python scripts:
-- **`printInfo(message)`**: Print an info message in cyan
-- **`printSuccess(message)`**: Print a success message in green
-- **`printError(message)`**: Print an error message in red
-- **`printWarning(message)`**: Print a warning message in yellow
-- **`printSection(message)`**: Print a section header in cyan with `===` borders
-- **`safePrint(*args, **kwargs)`**: Thread-safe print function (uses a lock)
-- **`colourise(text, code, enable)`**: Apply ANSI colour codes to text if enabled
+All helper scripts import from `common/common.py` for consistent logging and utilities.
+
+See [`common/README.md`](../common/README.md) for detailed documentation on common modules.
 
 ## Formatting Scripts
 
-At a glance:
-
 | Script | Purpose | Typical command |
 | --- | --- | --- |
-| `tidy.py` (via `tidy.ps1` / `tidy.sh`) | Clean a single file (tabs → spaces, trim whitespace, enforce CRLF on `.ps1/.json/.md` and LF on `.sh`) | `./helpers/tidy.sh file.sh` |
-| `tidyRepo.py` (via `tidyRepo.ps1` / `tidyRepo.sh`) | Clean every file under a path | `./helpers/tidyRepo.sh --dry-run` |
-| `convertToAllman.py` | Enforce Allman braces + inline `if …; then` style | `python helpers/convertToAllman.py` |
-| `formatRepo.sh` | Run the whole formatting pipeline (Allman + tidy) | `./helpers/formatRepo.sh` |
+| `tidy.py` | Clean files (tabs → spaces, trim whitespace, enforce CRLF on `.ps1/.json/.md` and LF on `.sh/.py`) | `python3 helpers/tidy.py --file file.sh` or `python3 helpers/tidy.py --path .` |
+| `convertToAllman.py` | Enforce Allman braces + inline `if …; then` style | `python3 helpers/convertToAllman.py` |
+| `formatRepo.py` | Run the whole formatting pipeline (Allman + tidy) | `python3 helpers/formatRepo.py` |
+| `validateJson.py` | Validate JSON syntax and optional required fields | `python3 helpers/validateJson.py config.json` |
 
-All helper scripts use Allman-style control blocks and camelCase identifiers for consistency.
+All helper scripts support `--help` and `--quiet` flags. Use `--help` for detailed usage information.
 
 ## Whitespace tidy
 
-### `tidy.py` (via `tidy.ps1` / `tidy.sh`)
+### `tidy.py`
 
 - Converts tabs to four spaces
 - Trims trailing whitespace and blank line spam
-- Supports dry runs
-- Forces CRLF endings for `.ps1`, `.json`, and `.md`, while keeping `.sh` LF
+- Supports dry runs via `--dryRun` flag
+- Forces CRLF endings for `.ps1`, `.json`, and `.md`, while keeping `.sh` and `.py` files LF
+- Processes `.ps1`, `.sh`, `.json`, `.md`, and `.py` files by default
+- Can process a single file or an entire directory tree
 
+**Single file:**
+
+```bash
+python3 helpers/tidy.py --file path/to/file.sh [--dryRun] [--quiet]
 ```
-# Windows
-.\helpers\tidy.ps1 -filePath "path\to\file.ps1" [-dryRun]
 
-# macOS/Linux
-./helpers/tidy.sh path/to/file.sh [--dry-run]
+**Entire repository or directory:**
+
+```bash
+python3 helpers/tidy.py --path . [--dryRun] [--quiet]
+python3 helpers/tidy.py --path src/scripts [--dryRun] [--quiet]
 ```
 
-### `tidyRepo.py` (via `tidyRepo.ps1` / `tidyRepo.sh`)
-
-- Recursively runs the single-file tidy across `.ps1`, `.sh`, `.json`, and `.md`
-- Shares the same flags as the single-file version (`--dry-run`, `--path`, etc.)
-
-```
-./helpers/tidyRepo.sh              # entire repo
-./helpers/tidyRepo.sh src/scripts  # specific directory
-./helpers/tidyRepo.sh --dry-run
-```
+Use `--quiet` to only show final success/failure message.
 
 ## Brace formatting
 
@@ -79,17 +64,22 @@ All helper scripts use Allman-style control blocks and camelCase identifiers for
 - Keeps `if/while/for` keywords inline (e.g., `if [ … ]; then`)
 - Supports dry runs and optional `.bak` backups
 
+```bash
+python3 helpers/convertToAllman.py --dryRun [--quiet]
+python3 helpers/convertToAllman.py --path macos [--quiet]
+python3 helpers/convertToAllman.py --createBackup [--quiet]
 ```
-python3 helpers/convertToAllman.py --dryRun
-python3 helpers/convertToAllman.py --path macos
-python3 helpers/convertToAllman.py --createBackup
-```
+
+Use `--quiet` to only show final success/failure message.
 
 ## Full pipeline
 
-### `formatRepo.sh`
-Runs the Allman conversion followed by `tidyRepo.sh` so the repo ends up idempotently formatted:
+### `formatRepo.py`
 
+Runs the Allman conversion followed by `tidy.py` so the repo ends up idempotently formatted:
+
+```bash
+python3 helpers/formatRepo.py [--dryRun] [--quiet]
 ```
-./helpers/formatRepo.sh
-```
+
+Supports `--dryRun` to preview changes and `--quiet` to only show final success/failure message.

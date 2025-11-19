@@ -31,7 +31,12 @@ jobs:
           fi
 
       - name: Python syntax check
-        run: python -m compileall helpers
+        run: |
+          python3 -m compileall helpers common test systems setup.py 2>&1 | grep -v "Listing" || true
+          if python3 -m compileall helpers common test systems setup.py 2>&1 | grep -i "error\|syntax"; then
+            echo "Python syntax errors found"
+            exit 1
+          fi
 
   formatting:
     strategy:
@@ -43,9 +48,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Setup Python and dependencies
+        uses: ./.github/actions/setupPython
+
       - name: Run formatting pipeline
         shell: bash
-        run: bash ./helpers/formatRepo.sh
+        run: python3 helpers/formatRepo.py
 
       - name: Fail if formatting changes files
         shell: bash
@@ -53,7 +61,6 @@ jobs:
           if ! git diff --quiet
           then
               git status -sb
-              echo "::error ::Formatting changed files. Run ./helpers/formatRepo.sh locally and commit the results."
+              echo "::error ::Formatting changed files. Run 'python3 helpers/formatRepo.py' locally and commit the results."
               exit 1
           fi
-
