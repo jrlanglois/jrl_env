@@ -4,6 +4,7 @@ Shared logging utilities for consistent output formatting across Python scripts
 """
 
 import sys
+import os
 from datetime import datetime
 from enum import IntEnum
 from threading import Lock
@@ -30,6 +31,48 @@ _verbosity: Verbosity = Verbosity.normal
 # Thread-safe print lock (for scripts that use threading)
 printLock = Lock()
 
+# Detect if console supports Unicode emojis
+def _supportsUnicode() -> bool:
+    """Check if the console supports Unicode emoji characters."""
+    # On Windows, be conservative - only use Unicode if we can confirm UTF-8 support
+    if sys.platform == "win32":
+        try:
+            # Try to reconfigure stdout to UTF-8 if possible (Python 3.7+)
+            if hasattr(sys.stdout, 'reconfigure'):
+                try:
+                    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+                    sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+                except (ValueError, LookupError, OSError):
+                    # Reconfiguration failed, fall back to ASCII
+                    return False
+            # Test if we can actually encode and print a Unicode emoji
+            currentEncoding = getattr(sys.stdout, 'encoding', None) or 'utf-8'
+            if currentEncoding.lower() in ('cp1252', 'windows-1252', 'ascii'):
+                return False
+            testEmoji = "✓"
+            testEmoji.encode(currentEncoding)
+            # Also test that we can actually print it (some consoles claim UTF-8 but don't support it)
+            try:
+                # Use a test print to verify
+                testStr = testEmoji
+                testStr.encode(currentEncoding)
+                return True
+            except (UnicodeEncodeError, UnicodeError):
+                return False
+        except (UnicodeEncodeError, AttributeError, LookupError, TypeError):
+            # If encoding fails, fall back to ASCII
+            return False
+    # On Unix-like systems, assume UTF-8 support
+    return True
+
+# Cache the Unicode support check (do this after potential stdout reconfiguration)
+_unicodeSupported = _supportsUnicode()
+
+# ASCII fallbacks for emojis (use ASCII if Unicode not supported)
+_EMOJI_ERROR = "✗" if _unicodeSupported else "[ERROR]"
+_EMOJI_SUCCESS = "✓" if _unicodeSupported else "[SUCCESS]"
+_EMOJI_WARNING = "⚠" if _unicodeSupported else "[WARNING]"
+
 
 def setVerbosity(level: Verbosity) -> None:
     """Set the global verbosity level."""
@@ -52,9 +95,24 @@ def setVerbosityFromArgs(quiet: bool = False, verbose: bool = False) -> None:
         setVerbosity(Verbosity.normal)
 
 def safePrint(*args, **kwargs):
-    """Thread-safe print function"""
+    """Thread-safe print function with encoding error handling."""
     with printLock:
-        print(*args, **kwargs)
+        try:
+            print(*args, **kwargs, flush=True)
+        except (UnicodeEncodeError, UnicodeError):
+            # Fallback: encode to ASCII with error replacement
+            encodedArgs = []
+            for arg in args:
+                if isinstance(arg, str):
+                    # Replace Unicode characters that can't be encoded
+                    encodedArgs.append(arg.encode('ascii', errors='replace').decode('ascii'))
+                else:
+                    encodedArgs.append(str(arg).encode('ascii', errors='replace').decode('ascii'))
+            try:
+                print(*encodedArgs, **kwargs, flush=True)
+            except Exception:
+                # Last resort: print without any formatting
+                print(*[str(arg).encode('ascii', errors='replace').decode('ascii') for arg in args], **kwargs, flush=True)
 
 
 def getTimestamp() -> str:
@@ -76,16 +134,16 @@ def printWarning(message: str, includeTimestamp: bool = True) -> None:
     """Print a warning message in yellow with ⚠ emoji. Only shown at normal or verbose verbosity."""
     if _verbosity >= Verbosity.normal:
         # Prepend emoji if not already present anywhere in the message
-        if "⚠" not in message:
-            message = f"⚠ {message.lstrip()}"
+        if _EMOJI_WARNING not in message and "⚠" not in message and "[WARNING]" not in message:
+            message = f"{_EMOJI_WARNING} {message.lstrip()}"
         formatted = formatWithTimestamp(message) if includeTimestamp else message
         safePrint(f"{Colours.YELLOW}{formatted}{Colours.NC}")
 
 def printError(message: str, includeTimestamp: bool = True) -> None:
     """Print an error message in red with ✗ emoji. Always shown (even in quiet mode)."""
     # Prepend emoji if not already present anywhere in the message
-    if "✗" not in message:
-        message = f"✗ {message.lstrip()}"
+    if _EMOJI_ERROR not in message and "✗" not in message and "[ERROR]" not in message:
+        message = f"{_EMOJI_ERROR} {message.lstrip()}"
     formatted = formatWithTimestamp(message) if includeTimestamp else message
     safePrint(f"{Colours.RED}{formatted}{Colours.NC}")
 
@@ -93,8 +151,8 @@ def printSuccess(message: str, includeTimestamp: bool = True) -> None:
     """Print a success message in green with ✓ emoji. Only shown at normal or verbose verbosity."""
     if _verbosity >= Verbosity.normal:
         # Prepend emoji if not already present anywhere in the message
-        if "✓" not in message:
-            message = f"✓ {message.lstrip()}"
+        if _EMOJI_SUCCESS not in message and "✓" not in message and "[SUCCESS]" not in message:
+            message = f"{_EMOJI_SUCCESS} {message.lstrip()}"
         formatted = formatWithTimestamp(message) if includeTimestamp else message
         safePrint(f"{Colours.GREEN}{formatted}{Colours.NC}")
 
