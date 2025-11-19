@@ -290,11 +290,20 @@ def checkGitHubRepositoryViaApi(ownerRepo: str) -> tuple[Optional[bool], str]:
         Tuple of (exists: bool|None, message: str)
         None means we couldn't determine (network error, private repo, etc.)
     """
+    import os
+    
     apiUrl = f"https://api.github.com/repos/{ownerRepo}"
+    isCi = os.getenv('CI') == 'true' or os.getenv('GITHUB_ACTIONS') == 'true'
 
     try:
         req = urllib.request.Request(apiUrl)
         req.add_header('User-Agent', 'jrl_env-validator')
+        
+        # Use GITHUB_TOKEN if available (automatically provided in GitHub Actions)
+        githubToken = os.getenv('GITHUB_TOKEN')
+        if githubToken:
+            req.add_header('Authorization', f'token {githubToken}')
+        
         with urllib.request.urlopen(req, timeout=5) as response:
             if response.status == 200:
                 return True, "Repository exists"
@@ -304,6 +313,9 @@ def checkGitHubRepositoryViaApi(ownerRepo: str) -> tuple[Optional[bool], str]:
         if e.code == 404:
             return None, "Repository not found or is private (404)"
         elif e.code == 403:
+            # In CI, 403s are common due to rate limits or private repos - suppress warning
+            if isCi:
+                return None, None  # Return None message to suppress warning
             return None, "Repository access forbidden (403) - may be private or rate limited"
         else:
             return None, f"HTTP error {e.code}"
@@ -563,8 +575,9 @@ def validateRepositoriesJson(filePath: Path) -> tuple[list[str], list[str]]:
                 if repoExists is False:
                     # Repository definitely doesn't exist or is inaccessible
                     warnings.append(f"repositories: {repoMessage}: {repo}")
-                elif repoExists is None:
+                elif repoExists is None and repoMessage:
                     # Couldn't determine (network issue, private repo, etc.) - just warn
+                    # repoMessage may be None in CI to suppress 403 warnings
                     warnings.append(f"repositories: {repoMessage}: {repo}")
     except Exception as e:
         errors.append(f"repositories: Validation failed - {e}")
