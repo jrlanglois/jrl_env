@@ -84,6 +84,12 @@ def parseArguments() -> argparse.Namespace:
         action="store_true",
         help="Only show final success/failure message.",
     )
+    parser.add_argument(
+        "--verbose",
+        dest="verbose",
+        action="store_true",
+        help="Show verbose output including per-file status messages.",
+    )
 
     parser.set_defaults(defaultRoot=str(defaultRoot))
     return parser.parse_args()
@@ -240,7 +246,7 @@ def determineTargets(args: argparse.Namespace, extensionsLower: set[str]) -> tup
 
 def main() -> int:
     args = parseArguments()
-    setVerbosityFromArgs(quiet=args.quiet, verbose=False)
+    setVerbosityFromArgs(quiet=args.quiet, verbose=args.verbose)
     enableColour = sys.stdout.isatty()
     extensionsLower = {ext.lower() for ext in args.extensions}
 
@@ -313,7 +319,8 @@ def main() -> int:
                         )
                     )
             else:
-                print(colourise(f"File is already tidy: {filePath}", Colours.GREEN, enableColour))
+                if getVerbosity() == Verbosity.verbose:
+                    print(colourise(f"File is already tidy: {filePath}", Colours.GREEN, enableColour))
         else:
             if stats.modified:
                 modifiedCount += 1
@@ -343,7 +350,8 @@ def main() -> int:
                         )
                     )
             else:
-                print(colourise(f"File is already tidy: {filePath}", Colours.GREEN, enableColour))
+                if getVerbosity() == Verbosity.verbose:
+                    print(colourise(f"File is already tidy: {filePath}", Colours.GREEN, enableColour))
 
         totalTabCount += stats.tabCount
         totalWhitespaceCount += stats.whitespaceLineCount
