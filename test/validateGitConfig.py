@@ -69,6 +69,8 @@ def isValidEmail(email: str) -> bool:
 
 def githubUsernameExists(username: str) -> tuple[Optional[bool], str]:
     """Check if GitHub username exists"""
+    import os
+
     if not username:
         return False, "Username is empty"
 
@@ -76,9 +78,17 @@ def githubUsernameExists(username: str) -> tuple[Optional[bool], str]:
     if not re.match(r'^[a-zA-Z0-9]([a-zA-Z0-9-]{0,37}[a-zA-Z0-9])?$', username):
         return False, "Invalid GitHub username format"
 
+    isCi = os.getenv('CI') == 'true' or os.getenv('GITHUB_ACTIONS') == 'true'
+
     try:
         url = f"https://api.github.com/users/{username}"
-        req = urllib.request.Request(url, headers={'User-Agent': 'jrl_env-validator'})
+        req = urllib.request.Request(url)
+        req.add_header('User-Agent', 'jrl_env-validator')
+
+        # Use GITHUB_TOKEN if available (automatically provided in GitHub Actions)
+        githubToken = os.getenv('GITHUB_TOKEN')
+        if githubToken:
+            req.add_header('Authorization', f'token {githubToken}')
 
         with urllib.request.urlopen(req, timeout=10) as response:
             if response.status == 200:
@@ -88,7 +98,16 @@ def githubUsernameExists(username: str) -> tuple[Optional[bool], str]:
     except urllib.error.HTTPError as e:
         if e.code == 404:
             return False, "Username does not exist on GitHub"
-        return False, f"GitHub API error: {e.code}"
+        elif e.code == 403:
+            # 403 can mean rate limiting, private account, or API restrictions
+            # In CI, this is common and shouldn't fail validation
+            if isCi:
+                return None, "Could not verify (rate limited or API restricted)"
+            return None, "Could not verify (403 - may be rate limited or API restricted)"
+        else:
+            return None, f"GitHub API error: {e.code}"
+    except (urllib.error.URLError, TimeoutError):
+        return None, "Could not reach GitHub API - network issue or timeout"
     except Exception as e:
         return None, f"Error checking GitHub: {str(e)}"
 
