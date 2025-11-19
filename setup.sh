@@ -20,8 +20,6 @@ if ! command -v python3 >/dev/null 2>&1; then
 
     # Detect OS to provide installation instructions
     osType="unknown"
-    distroId=""
-    distroIdLike=""
 
     if [[ "$OSTYPE" == "darwin"* ]]; then
         osType="macos"
@@ -30,8 +28,6 @@ if ! command -v python3 >/dev/null 2>&1; then
         if [ -f /etc/os-release ]; then
             # shellcheck source=/dev/null
             source /etc/os-release
-            distroId="$ID"
-            distroIdLike="${ID_LIKE:-}"
 
             if [[ "$ID" == "ubuntu" ]] || [[ "$ID" == "debian" ]]; then
                 osType="ubuntu"

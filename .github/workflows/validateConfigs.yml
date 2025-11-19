@@ -25,9 +25,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Validate JSON syntax
+      - name: Setup Python and dependencies
+        uses: ./.github/actions/setupPython
+
+      - name: Validate JSON syntax and schema
         run: |
-          python3 systems/macos/validate.py
+          python3 -m common.systems.validate macos
 
       - name: Validate macOS packages
         run: |
@@ -40,9 +43,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Validate JSON syntax
+      - name: Setup Python and dependencies
+        uses: ./.github/actions/setupPython
+
+      - name: Validate JSON syntax and schema
         run: |
-          python3 systems/ubuntu/validate.py
+          python3 -m common.systems.validate ubuntu
 
       - name: Validate Ubuntu packages
         run: |
@@ -55,9 +61,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Validate JSON syntax
+      - name: Setup Python and dependencies
+        uses: ./.github/actions/setupPython
+
+      - name: Validate JSON syntax and schema
         run: |
-          python3 systems/raspberrypi/validate.py
+          python3 -m common.systems.validate raspberrypi
 
       - name: Validate Raspberry Pi packages
         run: |
@@ -70,9 +79,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Validate JSON syntax
+      - name: Setup Python and dependencies
+        uses: ./.github/actions/setupPython
+
+      - name: Validate JSON syntax and schema
         run: |
-          python3 helpers/validateJson.py configs/win11.json
+          python3 -m common.systems.validate win11
 
       - name: Validate Windows packages
         shell: pwsh
@@ -87,10 +99,13 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install dependencies
+      - name: Install system dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y curl
+
+      - name: Setup Python and dependencies
+        uses: ./.github/actions/setupPython
 
       - name: Validate JSON syntax
         run: |
@@ -107,17 +122,17 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install dependencies
+      - name: Install system dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y git curl
 
-      - name: Validate JSON syntax and structure
+      - name: Setup Python and dependencies
+        uses: ./.github/actions/setupPython
+
+      - name: Validate JSON syntax
         run: |
-          if ! python3 helpers/validateJson.py configs/repositories.json --required-field workPathUnix && ! python3 helpers/validateJson.py configs/repositories.json --required-field workPathWindows; then
-            echo "Error: repositories.json must contain workPathUnix or workPathWindows"
-            exit 1
-          fi
+          python3 helpers/validateJson.py configs/repositories.json
 
       - name: Validate repositories
         run: |
@@ -130,10 +145,8 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y python3 python3-pip
+      - name: Setup Python and dependencies
+        uses: ./.github/actions/setupPython
 
       - name: Validate JSON syntax
         run: |
@@ -141,7 +154,6 @@ jobs:
 
       - name: Validate Git config (aliases, name, email, GitHub username)
         run: |
-          chmod +x test/validateGitConfig.py
           python3 test/validateGitConfig.py configs/gitConfig.json
 
   validate-cursor-config:
@@ -150,6 +162,9 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Setup Python and dependencies
+        uses: ./.github/actions/setupPython
 
       - name: Validate JSON syntax
         run: |
