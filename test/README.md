@@ -129,6 +129,79 @@ All validation scripts require:
 
 ## Unit Tests
 
+All unit tests use Python's built-in `unittest` framework and follow repository naming conventions (camelCase for methods, PascalCase for classes).
+
+### `testSetupValidation.py`
+
+End-to-end tests for setup validation that simulate user journeys, testing success and failure scenarios.
+
+**Framework:** Uses Python's built-in `unittest` framework (standard library, no external dependencies).
+
+**Naming Conventions:** Follows repository conventions:
+- **Test Classes**: PascalCase (e.g., `TestSetupValidation`, `TestSetupValidationIntegration`)
+- **Test Methods**: camelCase with `test` prefix (e.g., `testValidConfigDirectory`, `testMissingPlatformConfig`)
+- **Helper Methods**: camelCase (e.g., `createValidConfig`, `setUp`, `tearDown`)
+- **Variables**: camelCase (e.g., `tempDir`, `configFile`, `platformConfig`)
+
+**Test Coverage:**
+
+- Valid config directory scenarios
+- Missing config directory scenarios
+- Empty config directory scenarios
+- Invalid JSON scenarios
+- Missing platform config scenarios
+- Custom config directory (CLI arg and env var)
+- Complete setup validation flow (success and failure paths)
+- Permission error handling
+
+**Usage:**
+
+```bash
+# Run all setup validation tests
+python3 test/testSetupValidation.py
+
+# Run with verbose output (default)
+python3 test/testSetupValidation.py -v
+
+# Run via unittest module
+python3 -m unittest test.testSetupValidation
+
+# Run specific test class
+python3 -m unittest test.testSetupValidation.TestSetupValidation
+
+# Run specific test method
+python3 -m unittest test.testSetupValidation.TestSetupValidation.testValidConfigDirectory
+```
+
+**Test Structure:**
+
+- `TestSetupValidation`: Unit tests for individual validation functions
+- `TestSetupValidationIntegration`: Integration tests for setup flow
+
+**Features:**
+
+- **22+ test cases** covering all validation scenarios
+- **Temporary directory handling** for isolated test environments
+- **Mocking support** for testing CLI arguments and environment variables
+- **Cross-platform compatibility** tests
+- **User journey simulation** - tests flow as if a real user is running setup
+- **Standard unittest patterns** - uses `setUp()`, `tearDown()`, `assertTrue()`, `assertFalse()`, etc.
+
+**Example Output:**
+
+```text
+testValidConfigDirectory ... ok
+testMissingConfigDirectory ... ok
+testInvalidJsonPlatformConfig ... ok
+...
+----------------------------------------------------------------------
+Ran 22 tests in 0.078s
+
+OK
+```
+
+These tests verify that setup validation fails early and clearly when configuration files are missing or invalid.
+
 ### `testUtilities.py`
 
 Comprehensive unit tests for core utility functions using Python's built-in `unittest` framework.

@@ -399,9 +399,9 @@ class PackageValidator:
         aptPackages = []
 
         # Check if linuxCommon is enabled
-        useLinuxCommon = getJsonValue(str(self.configPath), ".linuxCommon", "false")
+        useLinuxCommon = getJsonValue(str(self.configPath), ".useLinuxCommon", False)
 
-        if useLinuxCommon == "true":
+        if useLinuxCommon:
             commonConfigPath = self.configPath.parent / "linuxCommon.json"
             if commonConfigPath.exists():
                 printInfo("Merging linuxCommon packages...")
@@ -476,7 +476,7 @@ class PackageValidator:
         else:
             # Normal validation for platform-specific configs
             for jsonKey, checker in self.checkers.items():
-                if jsonKey == "apt" and self.config.get("linuxCommon") == "true":
+                if jsonKey == "apt" and self.config.get("useLinuxCommon") is True:
                     # Special handling for apt with linuxCommon
                     packages = self._mergeLinuxCommon()
                 else:

@@ -9,6 +9,8 @@ Usage:
 Options:
     --help, -h        Show this help message and exit
     --version, -v     Show version information and exit
+    --configDir DIR   Use custom configuration directory (default: ./configs)
+                       Can also be set via JRL_ENV_CONFIG_DIR environment variable
     --skipFonts       Skip font installation
     --skipApps        Skip application installation
     --skipGit         Skip Git configuration
@@ -355,6 +357,31 @@ def main() -> int:
     printSection("jrl_env Unified Setup")
     safePrint()
 
+    # Check internet connectivity (required for package installation, repository cloning, etc.)
+    from common.common import hasInternetConnectivity
+    from common.core.logging import getVerbosity, Verbosity, printSuccess
+
+    if getVerbosity() >= Verbosity.verbose:
+        printInfo("Checking internet connectivity...")
+
+    if not hasInternetConnectivity():
+        printError(
+            "No internet connectivity detected!\n"
+            "Setup requires internet access for:\n"
+            "  - Installing Python dependencies\n"
+            "  - Installing packages via package managers\n"
+            "  - Cloning repositories\n"
+            "  - Downloading fonts\n"
+            "\n"
+            "Please check your network connection and try again."
+        )
+        safePrint()
+        return 1
+
+    if getVerbosity() >= Verbosity.verbose:
+        printSuccess("Internet connectivity verified")
+    safePrint()
+
     # Install Python dependencies first
     installRequirements()
     safePrint()
@@ -364,8 +391,10 @@ def main() -> int:
     platformName, setupScript = detectPlatform()
 
     if platformName == "unknown" or setupScript is None:
-        printError(f"Unsupported operating system: {getOperatingSystem()}")
-        printError("Supported platforms: macOS, Ubuntu, Raspberry Pi, Windows 11")
+        printError(
+            f"Unsupported operating system: {getOperatingSystem()}\n"
+            "Supported platforms: macOS, Ubuntu, Raspberry Pi, Windows 11"
+        )
         return 1
 
     if not setupScript.exists():
@@ -381,9 +410,11 @@ def main() -> int:
     # If setup already ran, run update script instead
     if setupAlreadyRan:
         printWarning("Setup appears to have been run before.")
-        printInfo("Running UPDATE mode:")
-        printInfo("  - Pulling latest changes from repository")
-        printInfo("  - Re-running setup to update configuration")
+        printInfo(
+            "Running UPDATE mode:\n"
+            "  - Pulling latest changes from repository\n"
+            "  - Re-running setup to update configuration"
+        )
         safePrint()
 
         # Use unified update script
@@ -395,8 +426,10 @@ def main() -> int:
             return 1
 
     # First-time setup
-    printInfo("Running in FIRST-TIME SETUP mode.")
-    printInfo("This will configure your development environment from scratch.")
+    printInfo(
+        "Running in FIRST-TIME SETUP mode.\n"
+        "This will configure your development environment from scratch."
+    )
     safePrint()
 
     # Try to use system class if available, otherwise fall back to script

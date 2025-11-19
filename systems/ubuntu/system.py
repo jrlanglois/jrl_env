@@ -40,10 +40,12 @@ class UbuntuSystem(SystemBase):
 
     def installOrUpdateApps(self, configPath: str, dryRun: bool) -> bool:
         """Install or update applications on Ubuntu."""
+        from common.core.utilities import getJsonValue
         from common.install.packageManagers import AptPackageManager, SnapPackageManager
 
         apt = AptPackageManager()
         snap = SnapPackageManager()
+        useLinuxCommon = getJsonValue(configPath, ".useLinuxCommon", False)
 
         return self._installAppsWithPackageManagers(
             configPath=configPath,
@@ -58,7 +60,7 @@ class UbuntuSystem(SystemBase):
             checkSecondary=snap.check,
             installSecondary=snap.install,
             updateSecondary=snap.update,
-            useLinuxCommon=False,
+            useLinuxCommon=useLinuxCommon,
         )
 
 

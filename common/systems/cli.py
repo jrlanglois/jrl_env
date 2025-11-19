@@ -226,6 +226,8 @@ def printHelp() -> None:
             ("--verbose", "Enable verbose output (show debug messages)"),
             ("--quiet, -q", "Enable quiet mode (only show errors)"),
             ("--dryRun", "Preview changes without making them"),
+            ("--configDir DIR", "Use custom configuration directory (default: ./configs)\n"
+             "                    Can also be set via JRL_ENV_CONFIG_DIR environment variable"),
         ],
         examples=[
             "python3 -m common.systems.cli ubuntu fonts",
@@ -256,12 +258,15 @@ def main() -> int:
         print(f"jrl_env version {__version__}")
         return 0
 
-    if len(sys.argv) < 3:
+    # Filter out configDir args for platform/operation parsing
+    filteredArgs = [arg for arg in sys.argv[1:] if not arg.startswith("--configDir") and arg not in ("--help", "-h", "--version", "-v", "--dryRun", "--dry-run", "--verbose", "--quiet", "-q")]
+
+    if len(filteredArgs) < 2:
         printHelp()
         return 1
 
-    platformName = sys.argv[1]
-    operation = sys.argv[2]
+    platformName = filteredArgs[0]
+    operation = filteredArgs[1]
     dryRun = "--dryRun" in sys.argv or "--dry-run" in sys.argv
 
     systemClass = getSystemClass(platformName)
@@ -271,6 +276,14 @@ def main() -> int:
 
     projectRoot = scriptDir
     system = systemClass(projectRoot)
+
+    # Set configDir if provided via CLI or env var
+    from common.core.utilities import getConfigDirectory
+    configDir = getConfigDirectory(scriptDir)
+    if configDir != (scriptDir / "configs"):
+        # Create a mock SetupArgs with configDir
+        from common.install.setupArgs import SetupArgs
+        system.setupArgs = SetupArgs(configDir=str(configDir))
 
     return runOperation(system, operation, dryRun)
 

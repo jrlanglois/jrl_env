@@ -40,9 +40,11 @@ class RedhatSystem(SystemBase):
 
     def installOrUpdateApps(self, configPath: str, dryRun: bool) -> bool:
         """Install or update applications on RedHat/Fedora/CentOS."""
+        from common.core.utilities import getJsonValue
         from common.install.packageManagers import DnfPackageManager
 
         dnf = DnfPackageManager()
+        useLinuxCommon = getJsonValue(configPath, ".useLinuxCommon", False)
 
         return self._installAppsWithPackageManagers(
             configPath=configPath,
@@ -54,7 +56,7 @@ class RedhatSystem(SystemBase):
             checkPrimary=dnf.check,
             installPrimary=dnf.install,
             updatePrimary=dnf.update,
-            useLinuxCommon=True,
+            useLinuxCommon=useLinuxCommon,
         )
 
 

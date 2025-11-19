@@ -269,11 +269,21 @@ All validation scripts support `--help` and `--quiet` flags. See [`test/README.m
 
 To adapt this setup for your own machines:
 
-1. **Fork the repository** and modify the config files with your preferences
-2. **Copy the structure** and create your own scripts based on these examples
-3. **Use as a template** for building your own environment setup system
+1. **Use your own config directory** (recommended): Point the setup to your own config directory without modifying the repository:
+   ```bash
+   python3 setup.py --configDir /path/to/your/configs
+   # Or set environment variable:
+   export JRL_ENV_CONFIG_DIR=/path/to/your/configs
+   python3 setup.py
+   ```
 
-The scripts are designed to be modular and configurable. Update the JSON files in `configs/` to match your needs, and adjust script paths or logic as required for your environment.
+2. **Fork the repository** and modify the config files with your preferences
+
+3. **Copy the structure** and create your own scripts based on these examples
+
+4. **Use as a template** for building your own environment setup system
+
+The scripts are designed to be modular and configurable. You can use your own configuration files without modifying the repository code, making it easy to maintain your personal configs separately from the tool itself.
 
 ### Status Checking
 

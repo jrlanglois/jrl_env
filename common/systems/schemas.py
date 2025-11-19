@@ -55,7 +55,7 @@ platformConfigSchema = {
 ubuntuConfigSchema = {
     "type": "object",
     "properties": {
-        "linuxCommon": {"type": "boolean"},
+        "useLinuxCommon": {"type": "boolean"},
         "apt": {
             "type": "array",
             "items": {"type": "string"},
@@ -179,7 +179,7 @@ win11ConfigSchema = {
 redhatConfigSchema = {
     "type": "object",
     "properties": {
-        "linuxCommon": {"type": "boolean"},
+        "useLinuxCommon": {"type": "boolean"},
         "dnf": {
             "type": "array",
             "items": {"type": "string"},
@@ -217,7 +217,7 @@ redhatConfigSchema = {
 opensuseConfigSchema = {
     "type": "object",
     "properties": {
-        "linuxCommon": {"type": "boolean"},
+        "useLinuxCommon": {"type": "boolean"},
         "zypper": {
             "type": "array",
             "items": {"type": "string"},
@@ -255,7 +255,7 @@ opensuseConfigSchema = {
 archlinuxConfigSchema = {
     "type": "object",
     "properties": {
-        "linuxCommon": {"type": "boolean"},
+        "useLinuxCommon": {"type": "boolean"},
         "pacman": {
             "type": "array",
             "items": {"type": "string"},
