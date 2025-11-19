@@ -40,9 +40,11 @@ class OpensuseSystem(SystemBase):
 
     def installOrUpdateApps(self, configPath: str, dryRun: bool) -> bool:
         """Install or update applications on OpenSUSE."""
+        from common.core.utilities import getJsonValue
         from common.install.packageManagers import ZypperPackageManager
 
         zypper = ZypperPackageManager()
+        useLinuxCommon = getJsonValue(configPath, ".useLinuxCommon", False)
 
         return self._installAppsWithPackageManagers(
             configPath=configPath,
@@ -54,7 +56,7 @@ class OpensuseSystem(SystemBase):
             checkPrimary=zypper.check,
             installPrimary=zypper.install,
             updatePrimary=zypper.update,
-            useLinuxCommon=True,
+            useLinuxCommon=useLinuxCommon,
         )
 
 

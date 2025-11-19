@@ -29,6 +29,7 @@ class SetupArgs:
     resume: bool = False
     noResume: bool = False
     listSteps: bool = False
+    configDir: Optional[str] = None
 
 
 @dataclass
@@ -59,8 +60,9 @@ def parseSetupArgs(args: Optional[list[str]] = None) -> SetupArgs:
         args = sys.argv[1:]
 
     setupArgs = SetupArgs()
-
-    for arg in args:
+    i = 0
+    while i < len(args):
+        arg = args[i]
         if arg == "--skipFonts":
             setupArgs.skipFonts = True
         elif arg == "--skipApps":
@@ -89,6 +91,15 @@ def parseSetupArgs(args: Optional[list[str]] = None) -> SetupArgs:
             setupArgs.noResume = True
         elif arg == "--listSteps":
             setupArgs.listSteps = True
+        elif arg.startswith("--configDir="):
+            setupArgs.configDir = arg.split("=", 1)[1]
+        elif arg == "--configDir":
+            if i + 1 < len(args):
+                setupArgs.configDir = args[i + 1]
+                i += 1  # Skip the next argument as it's the value
+            else:
+                printError("--configDir requires a directory path")
+                sys.exit(1)
         elif arg == "--version" or arg == "-v":
             from common.version import __version__
             print(f"jrl_env version {__version__}")
@@ -96,6 +107,7 @@ def parseSetupArgs(args: Optional[list[str]] = None) -> SetupArgs:
         else:
             printError(f"Unknown option: {arg}")
             sys.exit(1)
+        i += 1
 
     # Set verbosity level based on parsed arguments
     from common.core.logging import setVerbosityFromArgs

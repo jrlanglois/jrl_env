@@ -1,5 +1,5 @@
 {
-    "linuxCommon": true,
+    "useLinuxCommon": true,
     "apt":
     [
         "docker-compose",

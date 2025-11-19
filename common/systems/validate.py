@@ -11,7 +11,10 @@ If platform is not specified, validates all platform configs.
 
 import json
 import re
+import subprocess
 import sys
+import urllib.error
+import urllib.request
 from pathlib import Path
 from typing import List, Optional, Tuple
 
@@ -40,6 +43,93 @@ from common.common import (
 )
 from common.systems.update import detectPlatform
 from common.systems.schemas import getSchemaForConfig
+
+
+def validateConfigDirectory(configsDir: Path, platformName: str) -> bool:
+    """
+    Validate that the config directory exists and is accessible.
+
+    Args:
+        configsDir: Path to config directory
+        platformName: Platform name for error messages
+
+    Returns:
+        True if valid, False otherwise
+    """
+    from common.common import printError, printInfo
+
+    if not configsDir.exists():
+        printError(
+            f"Configuration directory does not exist: {configsDir}\n"
+            "Please ensure the config directory path is correct."
+        )
+        return False
+
+    if not configsDir.is_dir():
+        printError(f"Configuration path is not a directory: {configsDir}")
+        return False
+
+    # Check if directory is readable
+    try:
+        list(configsDir.iterdir())
+    except PermissionError:
+        printError(f"Permission denied accessing configuration directory: {configsDir}")
+        return False
+    except Exception as e:
+        printError(f"Error accessing configuration directory: {e}")
+        return False
+
+    # Check if directory is empty
+    files = list(configsDir.glob("*.json"))
+    if not files:
+        printError(
+            f"Configuration directory is empty: {configsDir}\n"
+            "No JSON configuration files found."
+        )
+        return False
+
+    printInfo(f"Configuration directory validated: {configsDir}")
+    return True
+
+
+def validatePlatformConfig(platformConfigPath: Path, platformName: str) -> bool:
+    """
+    Validate that the platform config file exists and is valid JSON.
+
+    Args:
+        platformConfigPath: Path to platform config file
+        platformName: Platform name for error messages
+
+    Returns:
+        True if valid, False otherwise
+    """
+    from common.common import printError, printInfo
+
+    if not platformConfigPath.exists():
+        printError(
+            f"Platform configuration file not found: {platformConfigPath}\n"
+            f"Required file for platform '{platformName}' is missing.\n"
+            "Please create this file or ensure you're using the correct config directory."
+        )
+        return False
+
+    # Validate JSON syntax
+    try:
+        with open(platformConfigPath, 'r', encoding='utf-8') as f:
+            json.load(f)
+    except json.JSONDecodeError as e:
+        printError(
+            f"Invalid JSON in platform configuration file: {platformConfigPath}\n"
+            f"JSON error: {e}\n"
+            "Please fix the JSON syntax errors before continuing."
+        )
+        return False
+    except Exception as e:
+        printError(f"Error reading platform configuration file: {e}")
+        return False
+
+    printInfo(f"Platform configuration file validated: {platformConfigPath.name}")
+    return True
 
 
 def validateJsonFile(filePath: Path, description: str, schema: Optional[dict] = None) -> tuple[bool, list[str], list[str]]:
@@ -88,6 +178,248 @@ def validateJsonFile(filePath: Path, description: str, schema: Optional[dict] = 
         return (False, errors, warnings)
 
 
+def detectUnknownFields(data: dict, allowedFields: set, path: str = "root") -> list[str]:
+    """
+    Detect unknown fields in a JSON object.
+
+    Args:
+        data: JSON data dictionary
+        allowedFields: Set of allowed field names
+        path: Current path in the JSON structure (for error messages)
+
+    Returns:
+        List of error messages for unknown fields
+    """
+    errors = []
+
+    if not isinstance(data, dict):
+        return errors
+
+    for key in data.keys():
+        currentPath = f"{path}.{key}" if path != "root" else key
+        if key not in allowedFields:
+            errors.append(f"Unknown field '{currentPath}' is not supported")
+        elif isinstance(data[key], dict):
+            # Recursively check nested objects
+            # Note: We don't validate nested objects here as they have their own schemas
+            pass
+
+    return errors
+
+
+def collectUnknownFieldErrors(configsPath: Path, targetPlatform: Optional[str] = None) -> list[str]:
+    """
+    Collect all unknown field errors from config files.
+
+    Args:
+        configsPath: Path to configs directory
+        targetPlatform: Optional platform to validate (if None, validates all)
+
+    Returns:
+        List of unknown field error messages
+    """
+    unknownFieldErrors = []
+
+    platforms = ["win11", "macos", "ubuntu", "raspberrypi", "redhat", "opensuse", "archlinux"]
+    if targetPlatform:
+        platforms = [targetPlatform]
+
+    # Check platform configs
+    for platform in platforms:
+        platformConfigPath = configsPath / f"{platform}.json"
+        if platformConfigPath.exists():
+            try:
+                errors, _ = validateAppsJson(platformConfigPath, platform)
+                # Filter for unknown field errors
+                unknownFieldErrors.extend([e for e in errors if "Unknown field" in e])
+            except Exception:
+                pass  # Already handled by main validation
+
+    # Check shared configs
+    try:
+        reposPath = configsPath / "repositories.json"
+        if reposPath.exists():
+            errors, _ = validateRepositoriesJson(reposPath)
+            unknownFieldErrors.extend([e for e in errors if "Unknown field" in e])
+    except Exception:
+        pass
+
+    try:
+        gitConfigPath = configsPath / "gitConfig.json"
+        if gitConfigPath.exists():
+            errors, _ = validateGitConfigJson(gitConfigPath)
+            unknownFieldErrors.extend([e for e in errors if "Unknown field" in e])
+    except Exception:
+        pass
+
+    try:
+        fontsPath = configsPath / "fonts.json"
+        if fontsPath.exists():
+            import json
+            with open(fontsPath, 'r', encoding='utf-8') as f:
+                fontsData = json.load(f)
+            allowedFontFields = {"googleFonts"}
+            errors = detectUnknownFields(fontsData, allowedFontFields)
+            unknownFieldErrors.extend(errors)
+    except Exception:
+        pass
+
+    try:
+        linuxCommonPath = configsPath / "linuxCommon.json"
+        if linuxCommonPath.exists():
+            import json
+            with open(linuxCommonPath, 'r', encoding='utf-8') as f:
+                linuxCommonData = json.load(f)
+            allowedLinuxCommonFields = {"linuxCommon"}
+            errors = detectUnknownFields(linuxCommonData, allowedLinuxCommonFields)
+            unknownFieldErrors.extend(errors)
+    except Exception:
+        pass
+
+    return unknownFieldErrors
+
+
+def checkGitHubRepositoryViaApi(ownerRepo: str) -> tuple[Optional[bool], str]:
+    """
+    Check if a GitHub repository exists via API.
+
+    Args:
+        ownerRepo: Repository in format "owner/repo"
+
+    Returns:
+        Tuple of (exists: bool|None, message: str)
+        None means we couldn't determine (network error, private repo, etc.)
+    """
+    import os
+    
+    apiUrl = f"https://api.github.com/repos/{ownerRepo}"
+    isCi = os.getenv('CI') == 'true' or os.getenv('GITHUB_ACTIONS') == 'true'
+
+    try:
+        req = urllib.request.Request(apiUrl)
+        req.add_header('User-Agent', 'jrl_env-validator')
+        
+        # Use GITHUB_TOKEN if available (automatically provided in GitHub Actions)
+        githubToken = os.getenv('GITHUB_TOKEN')
+        if githubToken:
+            req.add_header('Authorization', f'token {githubToken}')
+        
+        with urllib.request.urlopen(req, timeout=5) as response:
+            if response.status == 200:
+                return True, "Repository exists"
+            else:
+                return False, f"Unexpected status {response.status}"
+    except urllib.error.HTTPError as e:
+        if e.code == 404:
+            return None, "Repository not found or is private (404)"
+        elif e.code == 403:
+            # In CI, 403s are common due to rate limits or private repos - suppress warning
+            if isCi:
+                return None, None  # Return None message to suppress warning
+            return None, "Repository access forbidden (403) - may be private or rate limited"
+        else:
+            return None, f"HTTP error {e.code}"
+    except (urllib.error.URLError, TimeoutError):
+        return None, "Could not reach GitHub API - network issue or timeout"
+    except Exception:
+        return None, "Error checking repository"
+
+
+def checkRepositoryExists(repoUrl: str) -> tuple[Optional[bool], str]:
+    """
+    Check if a repository exists.
+
+    Args:
+        repoUrl: Repository URL (GitHub SSH/HTTPS or other Git URL)
+
+    Returns:
+        Tuple of (exists: bool|None, message: str)
+        None means we couldn't determine (network error, private repo, etc.)
+    """
+    # Convert GitHub SSH URLs to HTTPS for API checking
+    githubMatch = re.match(r'^git@github\.com:(.+?)(?:\.git)?$', repoUrl)
+    if githubMatch:
+        ownerRepo = githubMatch.group(1)
+        return checkGitHubRepositoryViaApi(ownerRepo)
+
+    # Check GitHub HTTPS URLs
+    if repoUrl.startswith("https://github.com/"):
+        ownerRepo = repoUrl.replace("https://github.com/", "").replace(".git", "")
+        return checkGitHubRepositoryViaApi(ownerRepo)
+
+    # For other Git URLs, try git ls-remote (if git is available)
+    if repoUrl.startswith("git@") or repoUrl.startswith("http://") or repoUrl.startswith("https://"):
+        try:
+            result = subprocess.run(
+                ["git", "ls-remote", repoUrl],
+                capture_output=True,
+                timeout=5,
+                check=False,
+            )
+            if result.returncode == 0:
+                return True, "Repository exists"
+            else:
+                return False, "Repository not accessible or does not exist"
+        except (subprocess.TimeoutExpired, FileNotFoundError):
+            return None, "Could not validate (git not available or timeout)"
+        except Exception:
+            return None, "Error checking repository"
+
+    return None, "Unknown URL format"
+
+
+def makeHttpRequest(url: str, userAgent: str = 'jrl_env-validator', timeout: int = 5) -> tuple[Optional[int], Optional[str]]:
+    """
+    Make an HTTP request and return status code and error message.
+
+    Args:
+        url: URL to request
+        userAgent: User-Agent header value
+        timeout: Request timeout in seconds
+
+    Returns:
+        Tuple of (statusCode: int|None, errorMessage: str|None)
+        If statusCode is not None, request succeeded. If errorMessage is not None, request failed.
+    """
+    try:
+        req = urllib.request.Request(url)
+        req.add_header('User-Agent', userAgent)
+        with urllib.request.urlopen(req, timeout=timeout) as response:
+            return response.status, None
+    except urllib.error.HTTPError as e:
+        return None, f"HTTP error {e.code}"
+    except (urllib.error.URLError, TimeoutError):
+        return None, "Network issue or timeout"
+    except Exception:
+        return None, "Error making request"
+
+
+def checkFontExists(fontName: str) -> tuple[Optional[bool], str]:
+    """
+    Check if a Google Font exists.
+
+    Args:
+        fontName: Font name to check
+
+    Returns:
+        Tuple of (exists: bool|None, message: str)
+        None means we couldn't determine (network error, etc.)
+    """
+    fontUrlName = fontName.replace(" ", "+")
+    cssUrl = f"https://fonts.googleapis.com/css2?family={fontUrlName}:wght@400"
+
+    status, error = makeHttpRequest(cssUrl, 'Mozilla/5.0', 5)
+
+    if status == 200:
+        return True, "Font exists"
+    elif status is not None:
+        return False, f"Unexpected status {status}"
+    elif error and "404" in error:
+        return False, "Font not found (404)"
+    else:
+        return None, f"Could not reach Google Fonts API - {error}"
+
+
 def validateAppsJson(filePath: Path, platform: str) -> tuple[list[str], list[str]]:
     """
     Validate apps JSON configuration.
@@ -105,6 +437,44 @@ def validateAppsJson(filePath: Path, platform: str) -> tuple[list[str], list[str
     try:
         with open(filePath, 'r', encoding='utf-8') as f:
             content = json.load(f)
+
+        # Define allowed fields for each platform
+        baseFields = {"useLinuxCommon", "commands", "shell", "cruft"}
+        platformFields = {
+            "win11": baseFields | {"winget", "windowsStore"},
+            "macos": baseFields | {"brew", "brewCask"},
+            "ubuntu": baseFields | {"apt", "snap"},
+            "raspberrypi": baseFields | {"apt", "snap"},
+            "redhat": baseFields | {"dnf"},
+            "opensuse": baseFields | {"zypper"},
+            "archlinux": baseFields | {"pacman"},
+        }
+
+        allowedFields = platformFields.get(platform, baseFields)
+
+        # Check for unknown top-level fields
+        unknownFieldErrors = detectUnknownFields(content, allowedFields)
+        errors.extend(unknownFieldErrors)
+
+        # Check for unknown fields in nested objects
+        if "commands" in content and isinstance(content["commands"], dict):
+            allowedCommandFields = {"preInstall", "postInstall"}
+            commandErrors = detectUnknownFields(content["commands"], allowedCommandFields, "commands")
+            errors.extend(commandErrors)
+
+            # Check command objects
+            for phase in ["preInstall", "postInstall"]:
+                if phase in content["commands"] and isinstance(content["commands"][phase], list):
+                    for i, cmd in enumerate(content["commands"][phase]):
+                        if isinstance(cmd, dict):
+                            allowedCmdFields = {"name", "shell", "command", "runOnce"}
+                            cmdErrors = detectUnknownFields(cmd, allowedCmdFields, f"commands.{phase}[{i}]")
+                            errors.extend(cmdErrors)
+
+        if "shell" in content and isinstance(content["shell"], dict):
+            allowedShellFields = {"ohMyZshTheme"}
+            shellErrors = detectUnknownFields(content["shell"], allowedShellFields, "shell")
+            errors.extend(shellErrors)
 
         if platform == "win11":
             winget = content.get("winget", [])
@@ -174,6 +544,11 @@ def validateRepositoriesJson(filePath: Path) -> tuple[list[str], list[str]]:
         with open(filePath, 'r', encoding='utf-8') as f:
             content = json.load(f)
 
+        # Check for unknown fields
+        allowedFields = {"workPathUnix", "workPathWindows", "repositories"}
+        unknownFieldErrors = detectUnknownFields(content, allowedFields)
+        errors.extend(unknownFieldErrors)
+
         if not content.get("workPathWindows") and not content.get("workPathUnix"):
             errors.append("repositories: Missing workPathWindows or workPathUnix")
 
@@ -185,8 +560,25 @@ def validateRepositoriesJson(filePath: Path) -> tuple[list[str], list[str]]:
         else:
             # Validate repository URLs
             for repo in repositories:
-                if not re.match(r'^(https://|git@)', repo):
+                if not isinstance(repo, str) or not repo.strip():
+                    warnings.append(f"repositories: Invalid repository entry: {repo}")
+                    continue
+
+                repo = repo.strip()
+                # Check URL format
+                if not re.match(r'^(https://|git@|http://|git://)', repo):
                     warnings.append(f"repositories: Invalid URL format: {repo}")
+                    continue
+
+                # Try to validate repository existence (non-blocking)
+                repoExists, repoMessage = checkRepositoryExists(repo)
+                if repoExists is False:
+                    # Repository definitely doesn't exist or is inaccessible
+                    warnings.append(f"repositories: {repoMessage}: {repo}")
+                elif repoExists is None and repoMessage:
+                    # Couldn't determine (network issue, private repo, etc.) - just warn
+                    # repoMessage may be None in CI to suppress 403 warnings
+                    warnings.append(f"repositories: {repoMessage}: {repo}")
     except Exception as e:
         errors.append(f"repositories: Validation failed - {e}")
 
@@ -210,10 +602,20 @@ def validateGitConfigJson(filePath: Path) -> tuple[list[str], list[str]]:
         with open(filePath, 'r', encoding='utf-8') as f:
             content = json.load(f)
 
+        # Define allowed fields
+        allowedTopLevelFields = {"user", "defaults", "aliases", "lfs"}
+        unknownFieldErrors = detectUnknownFields(content, allowedTopLevelFields)
+        errors.extend(unknownFieldErrors)
+
         if not content.get("user"):
             warnings.append("gitConfig: No user section specified")
         else:
             user = content["user"]
+            if isinstance(user, dict):
+                allowedUserFields = {"name", "email", "usernameGitHub"}
+                userErrors = detectUnknownFields(content["user"], allowedUserFields, "user")
+                errors.extend(userErrors)
+
             if not user.get("name"):
                 warnings.append("gitConfig: Missing user.name")
             if not user.get("email"):
@@ -224,6 +626,11 @@ def validateGitConfigJson(filePath: Path) -> tuple[list[str], list[str]]:
 
         if not content.get("aliases"):
             warnings.append("gitConfig: No aliases section specified")
+
+        if "lfs" in content and isinstance(content["lfs"], dict):
+            allowedLfsFields = {"enabled"}
+            lfsErrors = detectUnknownFields(content["lfs"], allowedLfsFields, "lfs")
+            errors.extend(lfsErrors)
     except Exception as e:
         errors.append(f"gitConfig: Validation failed - {e}")
 
@@ -266,6 +673,8 @@ def printHelp() -> None:
         options=[
             ("--help, -h", "Show this help message and exit"),
             ("--quiet, -q", "Only show final success/failure message"),
+            ("--configDir DIR", "Use custom configuration directory (default: ./configs)\n"
+             "                    Can also be set via JRL_ENV_CONFIG_DIR environment variable"),
         ],
     )
 
@@ -282,12 +691,16 @@ def main() -> int:
     from common.core.logging import setVerbosityFromArgs, getVerbosity, Verbosity
     setVerbosityFromArgs(quiet=quiet, verbose=False)
 
-    configsPath = scriptDir / "configs"
+    # Get config directory (supports --configDir and JRL_ENV_CONFIG_DIR)
+    from common.core.utilities import getConfigDirectory
+    scriptDir = Path(__file__).parent.parent.parent
+    configsPath = getConfigDirectory(scriptDir)
 
     # Determine which platform to validate (if specified)
     targetPlatform = None
-    if len(sys.argv) > 1:
-        targetPlatform = sys.argv[1].lower()
+    args = [arg for arg in sys.argv[1:] if not arg.startswith("--configDir") and arg != "--quiet" and arg != "-q" and arg != "--help" and arg != "-h"]
+    if len(args) > 0:
+        targetPlatform = args[0].lower()
         if targetPlatform not in ("win11", "macos", "ubuntu", "raspberrypi", "redhat", "opensuse", "archlinux"):
             printError(f"Unknown platform: {targetPlatform}")
             printInfo("Valid platforms: win11, macos, ubuntu, raspberrypi, redhat, opensuse, archlinux")
@@ -327,9 +740,27 @@ def main() -> int:
     allWarnings.extend(warnings)
     if isValid:
         try:
+            # Check for unknown fields in fonts.json
+            with open(fontsPath, 'r', encoding='utf-8') as f:
+                fontsData = json.load(f)
+            allowedFontFields = {"googleFonts"}
+            unknownFontErrors = detectUnknownFields(fontsData, allowedFontFields)
+            allErrors.extend(unknownFontErrors)
+
             fonts = getJsonArray(str(fontsPath), ".googleFonts[]?")
             if not fonts or len(fonts) == 0:
                 allWarnings.append("fonts: No fonts specified")
+            else:
+                # Validate font existence
+                for font in fonts:
+                    if not isinstance(font, str) or not font.strip():
+                        continue
+                    font = font.strip()
+                    fontExists, fontMessage = checkFontExists(font)
+                    if fontExists is False:
+                        allWarnings.append(f"fonts: {fontMessage}: {font}")
+                    elif fontExists is None:
+                        allWarnings.append(f"fonts: {fontMessage}: {font}")
         except Exception as e:
             allErrors.append(f"fonts: Validation failed - {e}")
 
@@ -359,6 +790,8 @@ def main() -> int:
     allErrors.extend(errors)
     allWarnings.extend(warnings)
     if isValid:
+        # cursorSettings.json can have any valid Cursor/VSCode settings, so we don't restrict fields
+        # Schema validation handles structure validation
         printInfo("  ✓ cursorSettings.json structure valid")
 
     # Validate linuxCommon.json if it exists
@@ -368,11 +801,25 @@ def main() -> int:
         isValid, errors, warnings = validateJsonFile(linuxCommonPath, "linuxCommon.json", linuxCommonSchema)
         allErrors.extend(errors)
         allWarnings.extend(warnings)
+        if isValid:
+            # Check for unknown fields
+            try:
+                with open(linuxCommonPath, 'r', encoding='utf-8') as f:
+                    linuxCommonData = json.load(f)
+                allowedLinuxCommonFields = {"linuxCommon"}
+                unknownLinuxCommonErrors = detectUnknownFields(linuxCommonData, allowedLinuxCommonFields)
+                allErrors.extend(unknownLinuxCommonErrors)
+            except Exception:
+                pass  # Already handled by schema validation
 
     safePrint()
 
+    # Separate unknown field errors from other errors
+    unknownFieldErrors = [e for e in allErrors if "Unknown field" in e]
+    otherErrors = [e for e in allErrors if "Unknown field" not in e]
+
     # Report results
-    if len(allErrors) == 0 and len(allWarnings) == 0:
+    if len(otherErrors) == 0 and len(allWarnings) == 0 and len(unknownFieldErrors) == 0:
         result = 0
         if getVerbosity() == Verbosity.quiet:
             print("Success")
@@ -387,23 +834,58 @@ def main() -> int:
                     printWarning(f"{warning}")
                 safePrint()
 
-        if len(allErrors) > 0:
+        if len(otherErrors) > 0:
+            # Critical errors (not unknown fields)
             if getVerbosity() != Verbosity.quiet:
                 printError("Errors:")
-                for error in allErrors:
+                for error in otherErrors:
                     printError(f"{error}")
+                if len(unknownFieldErrors) > 0:
+                    printWarning("Unknown fields detected:")
+                    for error in unknownFieldErrors:
+                        printWarning(f"{error}")
                 safePrint()
                 printError("Validation failed. Please fix errors before running setup.")
             else:
                 print("Failure")
             return 1
+        elif len(unknownFieldErrors) > 0:
+            # Only unknown field errors - these are non-fatal
+            if getVerbosity() != Verbosity.quiet:
+                printWarning("Unknown fields detected in configuration files:")
+                for error in unknownFieldErrors:
+                    printWarning(f"{error}")
+                if len(allWarnings) > 0:
+                    printWarning("Other warnings:")
+                    for warning in allWarnings:
+                        printWarning(f"{warning}")
+            # Return special code for unknown fields (2 instead of 1)
+            return 2
         else:
+            # Only warnings, no errors
             result = 0
             if getVerbosity() == Verbosity.quiet:
                 print("Success")
             else:
                 printSuccess("Validation passed with warnings.")
             return result
+
+
+__all__ = [
+    "validateConfigDirectory",
+    "validatePlatformConfig",
+    "validateJsonFile",
+    "detectUnknownFields",
+    "checkGitHubRepositoryViaApi",
+    "checkRepositoryExists",
+    "checkFontExists",
+    "makeHttpRequest",
+    "validateAppsJson",
+    "validateRepositoriesJson",
+    "validateGitConfigJson",
+    "collectUnknownFieldErrors",
+    "main",
+]
 
 
 if __name__ == "__main__":

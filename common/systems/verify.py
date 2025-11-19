@@ -257,6 +257,10 @@ def runVerification(system: Optional[object] = None) -> bool:
     printSection("Setup Verification")
     safePrint()
 
+    # Get config directory (supports --configDir and JRL_ENV_CONFIG_DIR)
+    from common.core.utilities import getConfigDirectory
+    configsPath = getConfigDirectory(scriptDir)
+
     # Get platform name
     if system:
         platformName = system.getPlatformName()
@@ -266,7 +270,6 @@ def runVerification(system: Optional[object] = None) -> bool:
         if platformName == "unknown":
             printError("Unable to detect platform for verification")
             return False
-        configsPath = scriptDir / "configs"
         paths = {
             "fontsConfigPath": str(configsPath / "fonts.json"),
             "fontInstallDir": Path.home() / ".local/share/fonts" if platformName != "win11" else str(Path.home() / "AppData/Local/Microsoft/Windows/Fonts"),
@@ -282,7 +285,6 @@ def runVerification(system: Optional[object] = None) -> bool:
 
     # 1. Check critical packages
     printInfo("1. Verifying critical packages...")
-    configsPath = scriptDir / "configs"
     platformConfigPath = configsPath / f"{platformName}.json"
     checkFunc, extractor = getAppChecker(platformName)
 
@@ -341,6 +343,26 @@ def main() -> int:
     """Main verification entry point (standalone)."""
     import sys
     from common.core.logging import setVerbosityFromArgs, getVerbosity, Verbosity
+
+    # Check for --help flag
+    if "--help" in sys.argv or "-h" in sys.argv:
+        print(
+            "Usage: python3 -m common.systems.verify [options]\n"
+            "\n"
+            "Verifies that setup completed successfully by checking critical components.\n"
+            "\n"
+            "Options:\n"
+            "  --help, -h        Show this help message and exit\n"
+            "  --quiet, -q       Enable quiet mode (only show errors)\n"
+            "  --configDir DIR   Use custom configuration directory (default: ./configs)\n"
+            "                    Can also be set via JRL_ENV_CONFIG_DIR environment variable\n"
+            "\n"
+            "Examples:\n"
+            "  python3 -m common.systems.verify\n"
+            "  python3 -m common.systems.verify --quiet\n"
+            "  python3 -m common.systems.verify --configDir /path/to/configs\n"
+        )
+        return 0
 
     # Parse quiet flag
     quiet = "--quiet" in sys.argv or "-q" in sys.argv

@@ -34,6 +34,8 @@ from common.core.utilities import (
     findOperatingSystem,
     getOperatingSystem,
     isOperatingSystem,
+    getConfigDirectory,
+    hasInternetConnectivity,
 )
 
 # Import and expose Linux package manager
@@ -150,6 +152,8 @@ __all__ = [
     "findOperatingSystem",
     "getOperatingSystem",
     "isOperatingSystem",
+    "getConfigDirectory",
+    "hasInternetConnectivity",
     # Linux package manager
     "PackageManager",
     "AptPackageManager",

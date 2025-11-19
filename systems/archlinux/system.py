@@ -40,9 +40,11 @@ class ArchlinuxSystem(SystemBase):
 
     def installOrUpdateApps(self, configPath: str, dryRun: bool) -> bool:
         """Install or update applications on ArchLinux."""
+        from common.core.utilities import getJsonValue
         from common.install.packageManagers import PacmanPackageManager
 
         pacman = PacmanPackageManager()
+        useLinuxCommon = getJsonValue(configPath, ".useLinuxCommon", False)
 
         return self._installAppsWithPackageManagers(
             configPath=configPath,
@@ -54,7 +56,7 @@ class ArchlinuxSystem(SystemBase):
             checkPrimary=pacman.check,
             installPrimary=pacman.install,
             updatePrimary=pacman.update,
-            useLinuxCommon=True,
+            useLinuxCommon=useLinuxCommon,
         )
 
 

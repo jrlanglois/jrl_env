@@ -255,16 +255,112 @@ class SystemBase(ABC):
         """
         return True
 
-    def validateConfigs(self) -> None:
-        """Validate configuration files."""
-        printInfo("Validating configuration files...")
+    def validateConfigs(self) -> bool:
+        """
+        Validate configuration files.
+
+        Returns:
+            True if validation passed, False otherwise
+
+        Raises:
+            SystemExit: If validation fails with errors
+        """
+        from common.systems.validate import validateConfigDirectory, validatePlatformConfig
+
+        printSection("Validating Configuration Files")
+        safePrint()
+
+        # Validate config directory exists and is accessible
+        paths = self.setupPaths()
+        configsDir = Path(paths["platformConfigPath"]).parent
+
+        if not validateConfigDirectory(configsDir, self.getPlatformName()):
+            printError(
+                "Configuration directory validation failed!\n"
+                "Please fix the issues above before continuing."
+            )
+            safePrint()
+            raise SystemExit(1)
+
+        # Validate platform config file exists and is valid
+        platformConfigPath = Path(paths["platformConfigPath"])
+        if not validatePlatformConfig(platformConfigPath, self.getPlatformName()):
+            printError(
+                "Platform configuration validation failed!\n"
+                "Please fix the issues above before continuing."
+            )
+            safePrint()
+            raise SystemExit(1)
+
+        # Run full validation (includes shared configs)
+        printInfo("Running full configuration validation...")
+        safePrint()
         try:
-            from common.systems.validate import main as validateMain
+            from common.systems.validate import main as validateMain, collectUnknownFieldErrors
             result = validateMain()
-            if result != 0:
-                printWarning("Validation had issues. Continuing anyway...")
+
+            if result == 1:
+                # Critical errors (not unknown fields)
+                printError(
+                    "Configuration validation failed!\n"
+                    "Please fix the errors above before continuing.\n"
+                    "Run 'python3 -m common.systems.validate' for detailed validation."
+                )
+                safePrint()
+                raise SystemExit(1)
+            elif result == 2:
+                # Unknown fields detected - prompt user
+                paths = self.setupPaths()
+                configsDir = Path(paths["platformConfigPath"]).parent
+                unknownFieldErrors = collectUnknownFieldErrors(configsDir, self.getPlatformName())
+
+                printWarning("Unknown fields detected in your configuration files:")
+                for error in unknownFieldErrors:
+                    printWarning(f"  - {error}")
+                safePrint()
+                printWarning("These fields are not recognized by jrl_env and will be ignored.")
+                printInfo(
+                    "If you continue, setup will proceed but these fields will have no effect.\n"
+                )
+                safePrint()
+
+                # Prompt user
+                if self.setupArgs.dryRun:
+                    printInfo(
+                        "Dry-run mode: Would prompt to continue (y/n)\n"
+                        "Proceeding with dry-run..."
+                    )
+                else:
+                    print("Do you want to continue anyway? (y/n): ", end="", flush=True)
+                    try:
+                        response = input().strip().lower()
+                        if response not in ('y', 'yes'):
+                            printError(
+                                "Setup cancelled by user due to unknown configuration fields.\n"
+                                "Please remove or fix the unknown fields and try again."
+                            )
+                            safePrint()
+                            raise SystemExit(1)
+                        printInfo("User chose to continue despite unknown fields.")
+                    except (EOFError, KeyboardInterrupt):
+                        printError("\nSetup cancelled by user.")
+                        safePrint()
+                        raise SystemExit(1)
+                safePrint()
+
+        except SystemExit:
+            raise
         except Exception as e:
-            printWarning(f"Could not run validation script: {e}. Continuing anyway...")
+            printError(
+                f"Could not run validation script: {e}\n"
+                "This is a critical error. Please report this issue."
+            )
+            safePrint()
+            raise SystemExit(1)
+
+        printSuccess("All configuration files validated successfully!")
+        safePrint()
+        return True
 
     def listSteps(self) -> int:
         """
@@ -346,8 +442,10 @@ class SystemBase(ABC):
 
         safePrint()
         if existingState:
-            printInfo(f"Note: Found incomplete setup from {existingState.timestamp}")
-            printInfo("Use --resume to automatically resume, or --noResume to start fresh")
+            printInfo(
+                f"Note: Found incomplete setup from {existingState.timestamp}\n"
+                "Use --resume to automatically resume, or --noResume to start fresh"
+            )
         return 0
 
     def setupPaths(self) -> dict:
@@ -357,7 +455,18 @@ class SystemBase(ABC):
         Returns:
             Dictionary with path keys
         """
-        configsDir = self.projectRoot / "configs"
+        # Use custom config directory if provided, otherwise use default
+        if hasattr(self, 'setupArgs') and self.setupArgs and self.setupArgs.configDir:
+            configsDir = Path(self.setupArgs.configDir)
+        else:
+            # Check for environment variable
+            import os
+            envConfigDir = os.environ.get("JRL_ENV_CONFIG_DIR")
+            if envConfigDir:
+                configsDir = Path(envConfigDir)
+            else:
+                configsDir = self.projectRoot / "configs"
+
         return {
             "gitConfigPath": str(configsDir / "gitConfig.json"),
             "cursorConfigPath": str(configsDir / "cursorSettings.json"),
@@ -420,7 +529,7 @@ class SystemBase(ABC):
                 printInfo(f"Found incomplete setup from {existingState.timestamp}")
                 if existingState.failedAtStep:
                     printInfo(f"Setup failed at: {existingState.failedAtStep}")
-                printInfo(f"Completed steps: {', '.join(sorted(existingState.completedSteps)) or 'None'}")
+                printInfo(f"Completed steps: {', '.join(sorted(existingState.completedSteps)) or 'None'}\n")
                 safePrint()
                 print("Would you like to resume from the last successful step? (y/n): ", end="", flush=True)
                 try:
@@ -432,8 +541,10 @@ class SystemBase(ABC):
 
         if shouldResume and existingState:
             printSection("Resuming Setup")
-            printInfo(f"Resuming from session: {existingState.sessionId}")
-            printInfo(f"Skipping completed steps: {', '.join(sorted(existingState.completedSteps)) or 'None'}")
+            printInfo(
+                f"Resuming from session: {existingState.sessionId}\n"
+                f"Skipping completed steps: {', '.join(sorted(existingState.completedSteps)) or 'None'}"
+            )
             self.setupState = existingState
             safePrint()
         else:

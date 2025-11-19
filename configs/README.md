@@ -2,106 +2,379 @@
 
 JSON configuration files that define what gets installed and configured on each platform. All configuration files use 4-space indentation and CRLF line endings.
 
+## Configuration Directory Specification
+
+### Required Filenames
+
+A valid `configs/` directory must contain the following files with exact names:
+
+**Platform-Specific Configs (at least one required):**
+
+- `macos.json` - macOS configuration
+- `ubuntu.json` - Ubuntu/Debian configuration
+- `raspberrypi.json` - Raspberry Pi OS configuration
+- `redhat.json` - RedHat/Fedora/CentOS configuration
+- `opensuse.json` - OpenSUSE configuration
+- `archlinux.json` - Arch Linux configuration
+- `win11.json` - Windows 11 configuration
+
+**Shared Configs (all optional, but recommended):**
+
+- `gitConfig.json` - Git user configuration, aliases, and defaults (skipped if missing)
+- `fonts.json` - Google Fonts to install (skipped if missing)
+- `repositories.json` - Git repositories to clone (skipped if missing)
+- `cursorSettings.json` - Cursor/VSCode editor settings (skipped if missing)
+
+**Optional Configs:**
+
+- `linuxCommon.json` - Shared Linux packages (only used if `useLinuxCommon: true` in platform configs)
+
+### File Naming Conventions
+
+- All config files must use lowercase filenames
+- Platform configs use the format: `<platform>.json` (e.g., `ubuntu.json`, `macos.json`)
+- Shared configs use camelCase: `gitConfig.json`, `cursorSettings.json`
+- File extensions must be `.json` (lowercase)
+- No spaces or special characters in filenames (except hyphens in platform names like `raspberrypi`)
+
+### Directory Structure
+
+```text
+configs/
+├── <platform>.json          # One or more platform configs (required for detected platform)
+├── gitConfig.json           # Optional (Git config step skipped if missing)
+├── fonts.json               # Optional (font installation skipped if missing)
+├── repositories.json        # Optional (repository cloning skipped if missing)
+├── cursorSettings.json      # Optional (Cursor config skipped if missing)
+└── linuxCommon.json         # Optional (only if using Linux common packages)
+```
+
+### File Existence Behavior
+
+- **Missing platform config**: Setup will print an error and skip app installation, but continue with other steps (e.g., running on Ubuntu without `ubuntu.json` will skip app installation)
+- **Missing shared configs**: Setup will skip the corresponding step gracefully:
+  - No `gitConfig.json` → Git configuration step skipped
+  - No `fonts.json` → Font installation step skipped
+  - No `repositories.json` → Repository cloning step skipped
+  - No `cursorSettings.json` → Cursor configuration step skipped
+- **Missing optional configs**: Setup continues normally (e.g., `linuxCommon.json` is only needed if `useLinuxCommon: true` in platform config)
+
+### Validation and Error Handling
+
+**Validation Behavior:**
+
+The setup system performs strict validation and **fails early** with verbose error messages:
+
+1. **Config directory validation**:
+   - Checks that directory exists and is accessible
+   - Verifies directory is not empty (must contain at least one JSON file)
+   - Fails setup immediately if validation fails
+
+2. **Platform config validation**:
+   - Verifies platform config file exists (required for detected platform)
+   - Validates JSON syntax before proceeding
+   - Fails setup immediately if file is missing or invalid JSON
+
+3. **Full configuration validation**:
+   - Validates all config files (platform + shared configs)
+   - Checks JSON syntax, schema compliance, and data validity
+   - Fails setup immediately if any errors are found
+   - Warnings are shown but don't stop setup (e.g., empty arrays)
+
+4. **Invalid JSON**:
+   - JSON syntax errors cause immediate failure with clear error messages
+   - Setup does not proceed with invalid configurations
+
+5. **Empty or useless configs**:
+   - Empty arrays (e.g., `"apt": []`) generate warnings but don't stop setup
+   - Empty config files may cause steps to be skipped
+
+**Error Messages:**
+
+When validation fails, you'll see:
+- Clear error messages indicating what's wrong
+- Specific file paths and line numbers (when available)
+- Actionable guidance on how to fix the issues
+- Setup stops immediately - no partial execution
+
+**Manual Validation:**
+
+You can also run validation manually before setup:
+```bash
+python3 -m common.systems.validate --configDir /path/to/configs
+```
+
+This is useful for:
+- Pre-flight checks before running setup
+- CI/CD pipelines
+- Debugging configuration issues
+
 ## Platform-Specific Configs
 
-### `macos.json`
+### macOS (`macos.json`)
 
-macOS-specific configuration:
+```json
+{
+    "brew": ["string"],              // Homebrew packages (formula names)
+    "brewCask": ["string"],          // Homebrew Cask applications (cask names)
+    "shell": {
+        "ohMyZshTheme": "string"     // Oh My Zsh theme name
+    },
+    "commands": {
+        "preInstall": [Command],     // Commands to run before installation
+        "postInstall": [Command]     // Commands to run after installation
+    }
+}
+```
 
-- **`brew`**: Homebrew packages to install
-- **`brewCask`**: Homebrew Cask applications to install
-- **`ohMyZshTheme`**: Oh My Zsh theme to use
-- **`commands`**: Optional `preInstall` and `postInstall` command objects
+**Package Managers:**
 
-### `ubuntu.json`
+- `brew`: Homebrew formula packages (e.g., `"git"`, `"node"`, `"postgresql"`)
+- `brewCask`: Homebrew Cask GUI applications (e.g., `"google-chrome"`, `"visual-studio-code"`)
 
-Ubuntu-specific configuration:
+### Ubuntu (`ubuntu.json`)
 
-- **`linuxCommon`**: Boolean flag to merge packages from `linuxCommon.json`
-- **`apt`**: APT packages to install
-- **`snap`**: Snap packages to install
-- **`cruft`**: Packages to uninstall (wildcard patterns)
-- **`ohMyZshTheme`**: Oh My Zsh theme to use
-- **`commands`**: Optional `preInstall` and `postInstall` command objects
+```json
+{
+    "useLinuxCommon": boolean,       // Merge packages from linuxCommon.json (default: false)
+    "apt": ["string"],                // APT packages (Debian/Ubuntu package names)
+    "snap": ["string"],               // Snap packages (snap package names)
+    "cruft": ["string"],              // Packages to uninstall (supports wildcards: `"package*"`)
+    "shell": {
+        "ohMyZshTheme": "string"      // Oh My Zsh theme name
+    },
+    "commands": {
+        "preInstall": [Command],
+        "postInstall": [Command]
+    }
+}
+```
 
-### `raspberrypi.json`
+**Package Managers:**
 
-Raspberry Pi-specific configuration:
+- `apt`: APT packages (e.g., `"docker.io"`, `"postgresql"`, `"redis-server"`)
+- `snap`: Snap packages (e.g., `"code"`, `"slack"`, `"spotify"`)
+- `cruft`: Wildcard patterns for packages to remove (e.g., `"libreoffice*"`, `"chromium*"`)
 
-- **`linuxCommon`**: Boolean flag to merge packages from `linuxCommon.json`
-- **`apt`**: APT packages to install
-- **`snap`**: Snap packages to install
-- **`cruft`**: Packages to uninstall (wildcard patterns)
-- **`ohMyZshTheme`**: Oh My Zsh theme to use
-- **`commands`**: Optional `preInstall` and `postInstall` command objects
+### Raspberry Pi (`raspberrypi.json`)
 
-### `win11.json`
+Same structure as `ubuntu.json`:
 
-Windows 11-specific configuration:
+```json
+{
+    "linuxCommon": boolean,
+    "apt": ["string"],
+    "snap": ["string"],
+    "cruft": ["string"],
+    "shell": {
+        "ohMyZshTheme": "string"
+    },
+    "commands": {
+        "preInstall": [Command],
+        "postInstall": [Command]
+    }
+}
+```
 
-- **`winget`**: Winget packages to install (format: `Publisher.PackageName`)
-- **`commands`**: Optional `preInstall` and `postInstall` command objects
+**Package Managers:**
+
+Same as Ubuntu (apt, snap, cruft)
+
+### RedHat/Fedora/CentOS (`redhat.json`)
+
+```json
+{
+    "linuxCommon": boolean,           // Merge packages from linuxCommon.json
+    "dnf": ["string"],                // DNF packages (RPM package names)
+    "shell": {
+        "ohMyZshTheme": "string"
+    },
+    "commands": {
+        "preInstall": [Command],
+        "postInstall": [Command]
+    },
+    "cruft": ["string"]               // Packages to uninstall (wildcards supported)
+}
+```
+
+**Package Managers:**
+
+- `dnf`: DNF packages (e.g., `"docker"`, `"postgresql"`, `"redis"`)
+
+**Note:** Package names from `linuxCommon.json` are automatically mapped to RPM equivalents (e.g., `libcurl4-openssl-dev` → `libcurl-devel`).
+
+### OpenSUSE (`opensuse.json`)
+
+```json
+{
+    "linuxCommon": boolean,
+    "zypper": ["string"],             // Zypper packages (RPM package names)
+    "shell": {
+        "ohMyZshTheme": "string"
+    },
+    "commands": {
+        "preInstall": [Command],
+        "postInstall": [Command]
+    },
+    "cruft": ["string"]
+}
+```
+
+**Package Managers:**
+
+- `zypper`: Zypper packages (e.g., `"docker"`, `"postgresql"`, `"redis"`)
+
+**Note:** Package names from `linuxCommon.json` are automatically mapped to RPM equivalents.
+
+### ArchLinux (`archlinux.json`)
+
+```json
+{
+    "linuxCommon": boolean,
+    "pacman": ["string"],             // Pacman packages (Arch package names)
+    "shell": {
+        "ohMyZshTheme": "string"
+    },
+    "commands": {
+        "preInstall": [Command],
+        "postInstall": [Command]
+    },
+    "cruft": ["string"]
+}
+```
+
+**Package Managers:**
+
+- `pacman`: Pacman packages (e.g., `"docker"`, `"postgresql"`, `"redis"`)
+
+**Note:** Package names from `linuxCommon.json` may need manual mapping for Arch-specific package names.
+
+### Windows 11 (`win11.json`)
+
+```json
+{
+    "winget": ["string"],             // Winget packages (format: "Publisher.PackageName")
+    "windowsStore": ["string"],       // Microsoft Store app IDs
+    "commands": {
+        "preInstall": [Command],
+        "postInstall": [Command]
+    }
+}
+```
+
+**Package Managers:**
+
+- `winget`: Windows Package Manager packages (format: `"Publisher.PackageName"`, e.g., `"Git.Git"`, `"Microsoft.VisualStudioCode"`)
+- `windowsStore`: Microsoft Store app IDs (e.g., `"9MV0B5HZVK9Z"`)
 
 ## Shared Configs
 
-### `linuxCommon.json`
+### Linux Common (`linuxCommon.json`)
 
-Common Linux packages shared across all Linux distributions:
+```json
+{
+    "linuxCommon": ["string"]         // Package names that should exist in all Linux package managers
+}
+```
 
-- **`linuxCommon`**: Array of package names that should exist in all supported Linux package managers (apt, yum, dnf, rpm)
-- Packages are automatically merged with distro-specific packages when `linuxCommon: true` is set in the platform config
-- Package names are automatically mapped to RPM equivalents for RPM-based systems (e.g., `libcurl4-openssl-dev` → `libcurl-devel`)
+**Purpose:** Shared packages across all Linux distributions. Packages are automatically merged when `useLinuxCommon: true` is set in platform configs.
 
-### `fonts.json`
+**Package Name Mapping:**
 
-Google Fonts to download and install:
+- Debian/Ubuntu package names are automatically mapped to RPM equivalents for RPM-based systems
+- Example mappings: `libcurl4-openssl-dev` → `libcurl-devel`, `zlib1g-dev` → `zlib-devel`
 
-- **`fonts`**: Array of font objects with:
-  - **`name`**: Font family name (e.g., "Roboto")
-  - **`variants`**: Array of font variants to install (e.g., `["400", "400italic", "700", "700italic"]`)
+**Supported Package Managers:**
 
-Fonts are downloaded from Google Fonts API and installed to platform-specific font directories.
+apt, yum, dnf, rpm, zypper, pacman
 
-### `repositories.json`
+### Fonts (`fonts.json`)
 
-Git repositories to clone:
+```json
+{
+    "googleFonts": ["string"]         // Font family names from Google Fonts
+}
+```
 
-- **`workPathUnix`**: Unix-style work directory path (e.g., `"$HOME/Projects"`)
-- **`workPathWindows`**: Windows-style work directory path (e.g., `"C:\\Projects"`)
-- **`repositories`**: Array of repository URLs (SSH or HTTPS)
+**Format:** Array of font family names (e.g., `"Roboto"`, `"Inter"`, `"Open Sans"`)
 
-Repositories are cloned into a structured directory: `<workPath>/<owner>/<repo>/`
+**Installation:** Fonts are downloaded from Google Fonts API and installed to platform-specific directories:
 
-### `gitConfig.json`
+- **Linux/macOS**: `~/.local/share/fonts/`
+- **Windows**: `%LOCALAPPDATA%\Microsoft\Windows\Fonts\`
 
-Git configuration:
+### Repositories (`repositories.json`)
 
-- **`user`**: Git user information
-  - **`name`**: User name (must be valid UTF-8 and web-compatible)
-  - **`email`**: User email (must be valid email format)
-- **`defaults`**: Git default settings
-  - **`init.defaultBranch`**: Default branch name
-  - **`pull.rebase`**: Pull rebase setting
-  - **`fetch.parallel`**: Fetch parallel setting (integer)
-  - Any other Git config keys
-- **`aliases`**: Git aliases
-  - Key-value pairs where key is the alias name and value is the command
-- **`lfs`**: Git LFS configuration
-  - **`enabled`**: Boolean to enable/disable Git LFS
-- **`usernameGitHub`**: GitHub username for SSH key generation
+```json
+{
+    "workPathUnix": "string",         // Unix-style work directory (supports $HOME, ~)
+    "workPathWindows": "string",      // Windows-style work directory (supports C:\\)
+    "repositories": ["string"]       // Git repository URLs (SSH or HTTPS)
+}
+```
 
-### `cursorSettings.json`
+**Format:**
 
-Cursor editor settings:
+- `workPathUnix`: Path like `"$HOME/work"` or `"~/Projects"`
+- `workPathWindows`: Path like `"D:\\work"` or `"C:\\Projects"`
+- `repositories`: Array of Git URLs (e.g., `"git@github.com:user/repo.git"` or `"https://github.com/user/repo.git"`)
 
-- Any valid Cursor/VSCode settings JSON
-- Settings are merged with existing Cursor settings (config file takes precedence)
-- Common settings include:
-  - **`editor.fontFamily`**: Font family for editor
-  - **`editor.fontSize`**: Font size
-  - **`editor.tabSize`**: Tab size
-  - **`editor.wordWrap`**: Word wrap setting
-  - Any other Cursor/VSCode settings
+**Cloning Structure:** Repositories are cloned to `<workPath>/<owner>/<repo>/`
+
+### Git Config (`gitConfig.json`)
+
+```json
+{
+    "user": {
+        "name": "string",             // Git user name (UTF-8, web-compatible)
+        "email": "string",            // Git user email (valid email format)
+        "usernameGitHub": "string"    // GitHub username (for SSH key generation)
+    },
+    "defaults": {
+        "init.defaultBranch": "string",
+        "pull.rebase": "string|boolean",
+        "fetch.parallel": number,
+        // ... any other Git config keys
+    },
+    "aliases": {
+        "aliasName": "string"         // Key-value pairs: alias name → Git command
+    },
+    "lfs": {
+        "enabled": boolean            // Enable/disable Git LFS
+    }
+}
+```
+
+**Format:**
+
+- `user.name`: Must be valid UTF-8 and web-compatible
+- `user.email`: Must be valid email format
+- `defaults`: Any Git config keys (values can be strings, booleans, or numbers)
+- `aliases`: Key-value pairs where key is alias name, value is Git command
+- `lfs.enabled`: Boolean to enable/disable Git LFS
+
+### Cursor Settings (`cursorSettings.json`)
+
+```json
+{
+    // Any valid Cursor/VSCode settings JSON
+    "editor.fontSize": number,
+    "editor.fontFamily": "string",
+    "editor.tabSize": number,
+    // ... any other Cursor/VSCode settings
+}
+```
+
+**Format:** Any valid Cursor/VSCode settings JSON. Settings are merged with existing Cursor settings (config file takes precedence).
+
+**Common Settings:**
+
+- `editor.*`: Editor settings (font, tab size, word wrap, etc.)
+- `files.*`: File handling settings (auto-save, trim whitespace, etc.)
+- `workbench.*`: Workbench appearance and behavior
+- `terminal.*`: Integrated terminal settings
+- `git.*`: Git integration settings
+- `[language]`: Language-specific settings (e.g., `[python]`, `[cpp]`)
 
 ## Command Objects
 
@@ -109,17 +382,24 @@ Command objects can be specified in `preInstall` and `postInstall` arrays:
 
 ```json
 {
-  "name": "Command Name",
-  "shell": "bash",
-  "command": "echo 'Hello World'",
-  "runOnce": true
+    "name": "string",                 // Human-readable command name
+    "shell": "string",                // Shell to use: "bash", "powershell", "cmd", "zsh"
+    "command": "string",               // Command to execute
+    "runOnce": boolean                // If true, command only runs once (tracked via flag files)
 }
 ```
 
-- **`name`**: Human-readable name for the command
-- **`shell`**: Shell to use (`bash`, `powershell`, `cmd`, etc.)
-- **`command`**: Command to execute
-- **`runOnce`**: If `true`, command is only run once (tracked via flag files)
+**Fields:**
+
+- `name`: Human-readable identifier for the command
+- `shell`: Shell interpreter (`bash`, `powershell`, `cmd`, `zsh`, etc.)
+- `command`: Command string to execute
+- `runOnce`: If `true`, command execution is tracked via flag files and only runs once per system
+
+**Execution Order:**
+
+- `preInstall`: Executed before package installation
+- `postInstall`: Executed after package installation
 
 ## Validation
 
@@ -142,7 +422,7 @@ python3 -m common.systems.validate ubuntu [--quiet]
 ```bash
 # Package validation
 python3 test/validatePackages.py configs/macos.json [--quiet]
-python3 test/validateLinuxCommonPackages.py configs/linuxCommon.json [--quiet]
+python3 test/validateLinuxCommonPackages.py configs/linuxCommon.json [--all | package-manager] [--quiet]
 
 # Other configs
 python3 test/validateFonts.py configs/fonts.json [--quiet]
@@ -183,3 +463,4 @@ Example:
 3. **Validate before committing**: Run validation scripts locally before committing changes
 4. **Document custom commands**: Add comments or documentation for non-standard commands
 5. **Test on clean systems**: Test configuration changes on clean systems to catch issues early
+6. **Linux Common packages**: Only include packages in `linuxCommon.json` that exist in all supported Linux package managers (apt, yum, dnf, rpm, zypper, pacman)

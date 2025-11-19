@@ -263,9 +263,11 @@ def getAppChecker(platformName: str) -> tuple[Optional[Callable[[str], bool]], s
     return (None, "", "")
 
 
-def checkRepositories(platformName: str) -> None:
+def checkRepositories(platformName: str, configsPath: Optional[Path] = None) -> None:
     """Check repository status."""
-    configsPath = scriptDir / "configs"
+    if configsPath is None:
+        from common.core.utilities import getConfigDirectory
+        configsPath = getConfigDirectory(scriptDir)
     reposConfigPath = configsPath / "repositories.json"
 
     if not reposConfigPath.exists():
@@ -413,6 +415,10 @@ def runStatusCheck(system: Optional[object] = None) -> int:
     printSection("jrl_env Status Check")
     safePrint()
 
+    # Get config directory (supports --configDir and JRL_ENV_CONFIG_DIR)
+    from common.core.utilities import getConfigDirectory
+    configsPath = getConfigDirectory(scriptDir)
+
     # Get platform name
     if system:
         platformName = system.getPlatformName()
@@ -423,7 +429,6 @@ def runStatusCheck(system: Optional[object] = None) -> int:
         if platformName == "unknown":
             printError("Unable to detect platform")
             return 1
-        configsPath = scriptDir / "configs"
         paths = {
             "fontsConfigPath": str(configsPath / "fonts.json"),
             "fontInstallDir": Path.home() / ".local/share/fonts" if platformName != "win11" else str(Path.home() / "AppData/Local/Microsoft/Windows/Fonts"),
@@ -441,7 +446,6 @@ def runStatusCheck(system: Optional[object] = None) -> int:
     checkPackageManager(platformName)
 
     # Check installed apps
-    configsPath = scriptDir / "configs"
     platformConfigPath = configsPath / f"{platformName}.json"
     checkFunc, extractor, label = getAppChecker(platformName)
     if checkFunc:
@@ -454,7 +458,7 @@ def runStatusCheck(system: Optional[object] = None) -> int:
         checkFonts(platformName, fontsConfigPath, fontInstallDir)
 
     # Check repositories
-    checkRepositories(platformName)
+    checkRepositories(platformName, configsPath)
 
     # Check Cursor
     checkCursor(platformName)
@@ -466,30 +470,21 @@ def runStatusCheck(system: Optional[object] = None) -> int:
 
 def printHelp() -> None:
     """Print help information for the status script."""
-    from common.core.logging import printHelpText
-
-    printHelpText(
-        title="Status Checker",
-        intent=[
-            "Check the current state of your development environment by verifying:",
-            "- Installed applications and packages",
-            "- Git installation and configuration",
-            "- Installed fonts",
-            "- Cloned repositories",
-            "- Cursor editor configuration",
-        ],
-        usage=[
-            "python3 -m common.systems.status",
-            "python3 -m common.systems.cli <platform> status",
-        ],
-        options=[
-            ("--help, -h", "Show this help message and exit"),
-            ("--quiet, -q", "Only show final success/failure message"),
-        ],
-        examples=[
-            "python3 -m common.systems.status",
-            "python3 -m common.systems.cli ubuntu status",
-        ],
+    print(
+        "Usage: python3 -m common.systems.status [options]\n"
+        "\n"
+        "Checks installed applications, configurations, and repositories.\n"
+        "\n"
+        "Options:\n"
+        "  --help, -h        Show this help message and exit\n"
+        "  --quiet, -q       Enable quiet mode (only show errors)\n"
+        "  --configDir DIR   Use custom configuration directory (default: ./configs)\n"
+        "                    Can also be set via JRL_ENV_CONFIG_DIR environment variable\n"
+        "\n"
+        "Examples:\n"
+        "  python3 -m common.systems.status\n"
+        "  python3 -m common.systems.status --quiet\n"
+        "  python3 -m common.systems.status --configDir /path/to/configs\n"
     )
 
 
