@@ -11,12 +11,7 @@ import sys
 import time
 from pathlib import Path
 
-# Add project root to path so we can import from common
-scriptDir = Path(__file__).parent.absolute()
-projectRoot = scriptDir.parent.parent
-sys.path.insert(0, str(projectRoot))
-
-from common.common import (
+from common.core.logging import (
     printError,
     printInfo,
     printSection,
@@ -813,6 +808,21 @@ def configureWin11(dryRun: bool = False) -> bool:
         printWarning("Some settings may not have been configured. Please review the errors above.")
 
     return success
+
+
+__all__ = [
+    "configureWin11",
+    "configureRegionalSettings",
+    "configure24HourTime",
+    "configureDarkMode",
+    "configureFileExplorer",
+    "configurePrivacySettings",
+    "configureTaskbar",
+    "enableDeveloperMode",
+    "disableNotifications",
+    "enableWSL2",
+    "isAdministrator",
+]
 
 
 if __name__ == "__main__":

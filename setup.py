@@ -30,6 +30,7 @@ Options:
 import subprocess
 import sys
 from pathlib import Path
+from typing import Optional
 
 # Add project root to path so we can import from common
 projectRoot = Path(__file__).parent.absolute()
@@ -56,39 +57,38 @@ def getSystemClass(platformName: str):
         platformName: Platform name (e.g., "ubuntu", "macos", "win11")
 
     Returns:
-        System class if available, None otherwise
+        GenericSystem configured for the platform
     """
     try:
-        moduleName = f"systems.{platformName}.system"
-        systemModule = __import__(moduleName, fromlist=[f"{platformName.capitalize()}System"])
-        className = f"{platformName.capitalize()}System"
-        if platformName == "win11":
-            className = "Win11System"
-        elif platformName == "raspberrypi":
-            className = "RaspberrypiSystem"
-        elif platformName == "archlinux":
-            className = "ArchlinuxSystem"
-        elif platformName == "opensuse":
-            className = "OpensuseSystem"
-        elif platformName == "redhat":
-            className = "RedhatSystem"
-        return getattr(systemModule, className, None)
-    except (ImportError, AttributeError):
+        from common.systems.genericSystem import GenericSystem
+        from common.systems.platform import Platform
+
+        # Convert platform name to Platform enum
+        try:
+            platform = Platform[platformName]
+            # Return a lambda that creates GenericSystem with the platform
+            return lambda projectRoot: GenericSystem(projectRoot, platform)
+        except KeyError:
+            printError(f"Unsupported platform: {platformName}")
+            return None
+    except (ImportError, AttributeError) as e:
+        printError(f"Failed to import GenericSystem: {e}")
         return None
 
 
-def detectPlatform() -> tuple[str, Path]:
+def detectPlatform() -> tuple[str, Optional[Path]]:
     """
-    Detect the operating system and return the platform name and setup script path.
+    Detect the operating system and return the platform name.
 
     Returns:
-        Tuple of (platform_name, setup_script_path)
+        Tuple of (platform_name, None)
         Platform name will be one of: "macos", "ubuntu", "raspberrypi", "redhat", "opensuse", "archlinux", "win11", or "unknown"
+        Second value is None (kept for backwards compatibility)
     """
     osType = findOperatingSystem()
 
     if isOperatingSystem("macos"):
-        return ("macos", projectRoot / "systems" / "macos" / "setup.py")
+        return ("macos", None)
     elif isOperatingSystem("linux"):
         # Try to detect specific Linux distribution
         osRelease = Path("/etc/os-release")
@@ -106,31 +106,30 @@ def detectPlatform() -> tuple[str, Path]:
                 # Check ID first
                 if distroId:
                     if distroId in ("ubuntu", "debian"):
-                        return ("ubuntu", projectRoot / "systems" / "ubuntu" / "setup.py")
+                        return ("ubuntu", None)
                     elif distroId == "raspbian":
-                        return ("raspberrypi", projectRoot / "systems" / "raspberrypi" / "setup.py")
+                        return ("raspberrypi", None)
                     elif distroId in ("rhel", "fedora", "centos"):
-                        return ("redhat", projectRoot / "systems" / "redhat" / "setup.py")
+                        return ("redhat", None)
                     elif distroId in ("opensuse-leap", "opensuse-tumbleweed", "sles"):
-                        return ("opensuse", projectRoot / "systems" / "opensuse" / "setup.py")
+                        return ("opensuse", None)
                     elif distroId == "arch":
-                        return ("archlinux", projectRoot / "systems" / "archlinux" / "setup.py")
+                        return ("archlinux", None)
 
                 # Check ID_LIKE as fallback
                 if distroIdLike:
                     if "rhel" in distroIdLike or "fedora" in distroIdLike or "centos" in distroIdLike:
-                        return ("redhat", projectRoot / "systems" / "redhat" / "setup.py")
+                        return ("redhat", None)
                     elif "suse" in distroIdLike or "opensuse" in distroIdLike:
-                        return ("opensuse", projectRoot / "systems" / "opensuse" / "setup.py")
+                        return ("opensuse", None)
                     elif "arch" in distroIdLike:
-                        return ("archlinux", projectRoot / "systems" / "archlinux" / "setup.py")
+                        return ("archlinux", None)
             except (OSError, IOError):
                 pass
         # Default to ubuntu for generic Linux
-        return ("ubuntu", projectRoot / "systems" / "ubuntu" / "setup.py")
+        return ("ubuntu", None)
     elif isOperatingSystem("windows"):
-        # Windows now uses Python setup script
-        return ("win11", projectRoot / "systems" / "win11" / "setup.py")
+        return ("win11", None)
     else:
         return ("unknown", None)
 
@@ -388,17 +387,13 @@ def main() -> int:
 
     # Detect platform
     printInfo("Detecting operating system...")
-    platformName, setupScript = detectPlatform()
+    platformName, _ = detectPlatform()
 
-    if platformName == "unknown" or setupScript is None:
+    if platformName == "unknown":
         printError(
             f"Unsupported operating system: {getOperatingSystem()}\n"
-            "Supported platforms: macOS, Ubuntu, Raspberry Pi, Windows 11"
+            "Supported platforms: macOS, Ubuntu, Raspberry Pi, RedHat, OpenSUSE, ArchLinux, Windows 11"
         )
-        return 1
-
-    if not setupScript.exists():
-        printError(f"Setup script not found: {setupScript}")
         return 1
 
     printSuccess(f"Detected platform: {platformName}")

@@ -108,16 +108,24 @@ class SystemBase(ABC):
     def setupDevEnv(self) -> bool:
         """
         Set up development environment (optional step).
-        Default implementation tries to import and call setupDevEnv module.
+        Uses unified setupDevEnv implementation from common.install.
 
         Returns:
             True if successful, False otherwise
         """
         try:
-            moduleName = f"systems.{self.getPlatformName()}.setupDevEnv"
-            setupDevEnvModule = __import__(moduleName, fromlist=["setupDevEnv"])
-            return setupDevEnvModule.setupDevEnv()
-        except (ImportError, AttributeError):
+            from common.install.setupDevEnv import setupDevEnv as setupDevEnvFunc
+            from common.systems.platform import Platform
+
+            # Convert platform name to Platform enum
+            platformName = self.getPlatformName()
+            platform = Platform[platformName]
+
+            # Call unified setup function
+            dryRun = self.setupArgs.dryRun if self.setupArgs else False
+            return setupDevEnvFunc(platform, self.projectRoot, dryRun=dryRun)
+        except Exception as e:
+            printWarning(f"Development environment setup skipped: {e}")
             return True
 
     def runPreSetupSteps(self) -> bool:

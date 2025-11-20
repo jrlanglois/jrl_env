@@ -80,14 +80,149 @@ jrl_env/
 
 ### Unified Setup (Recommended)
 
-The easiest way to get started is using the unified setup script at the root, which auto-detects your operating system:
+The easiest way to get started on a fresh machine is to download the latest release and run the unified setup script, which auto-detects your operating system and handles everything automatically.
+
+#### Step 1: Download the Release
+
+Download the latest release `.zip` file from the [GitHub releases page](https://github.com/jrlanglois/jrl_env/releases/latest).
+
+No Git installation required at this stage!
+
+#### Step 2: Extract and Navigate
+
+Extract the downloaded `.zip` file to a location of your choice, then open a terminal or PowerShell window in the extracted directory.
+
+**Windows 11:**
+
+```powershell
+cd path\to\extracted\jrl_env
+```
+
+**ArchLinux / macOS / OpenSUSE / Raspberry Pi / RedHat / Ubuntu:**
+
+```bash
+cd path/to/extracted/jrl_env
+```
+
+#### Step 3: Run Setup
+
+Execute the unified setup script:
+
+**Windows 11:**
+
+```powershell
+.\setup.ps1
+```
+
+**ArchLinux / macOS / OpenSUSE / Raspberry Pi / RedHat / Ubuntu:**
+
+```bash
+./setup.sh
+```
+
+The setup script will automatically:
+
+- **Install Python3** (if not already present) via your system's package manager
+- **Install Python dependencies** from `requirements.txt` (e.g., `jsonschema` for config validation)
+- **Detect your operating system** and route to the appropriate platform-specific setup
+- **Install Git** (if not already present) along with other essential tools
+- **Configure Git** with your user info, aliases, and SSH keys for GitHub
+- **Install applications** specified in your platform's config file
+- **Install Google Fonts** for a consistent development environment
+- **Configure Cursor editor** with your preferred settings
+- **Clone repositories** to your workspace directory
+- **Run verification checks** to ensure everything is set up correctly
+- **Detect setup state** (first-time vs. update mode) and handle accordingly
+
+#### Available Options
+
+**Information & Help:**
+
+- `--help, -h`: Show help message with all available options
+- `--version, -v`: Show version information
+- `--listSteps`: Preview what steps will be executed without running setup
+
+**Output Control:**
+
+- `--quiet, -q`: Only show final success/failure message
+- `--verbose`: Enable verbose output (show debug messages)
+- `--dryRun`: Preview changes without making them
+
+**Execution Control:**
+
+- `--resume`: Automatically resume from last successful step if setup was interrupted
+- `--noResume`: Do not resume from previous setup (start fresh)
+- `--noBackup`: Skip backing up existing configuration files
+
+**Selective Operations:**
+
+- `--appsOnly`: Only install/update applications
+- `--skipFonts`: Skip font installation
+- `--skipApps`: Skip application installation
+- `--skipGit`: Skip Git configuration
+- `--skipCursor`: Skip Cursor editor configuration
+- `--skipRepos`: Skip repository cloning
+- `--skipSsh`: Skip GitHub SSH configuration
+
+**Custom Configuration:**
+
+- `--configDir <path>`: Use a custom configuration directory instead of the default `configs/`
+
+**Examples:**
+
+**Windows 11:**
+
+```powershell
+# Run setup in dry-run mode to preview changes
+.\setup.ps1 --dryRun
+
+# Run setup with verbose output and skip font installation
+.\setup.ps1 --verbose --skipFonts
+
+# Resume interrupted setup
+.\setup.ps1 --resume
+```
+
+**ArchLinux / macOS / OpenSUSE / Raspberry Pi / RedHat / Ubuntu:**
+
+```bash
+# Run setup in dry-run mode to preview changes
+./setup.sh --dryRun
+
+# Run setup with verbose output and skip font installation
+./setup.sh --verbose --skipFonts
+
+# Resume interrupted setup
+./setup.sh --resume
+```
+
+#### After Setup Completes
+
+Once setup finishes successfully:
+
+- Git is installed and configured with your credentials
+- Your preferred applications are installed and ready to use
+- Fonts are installed system-wide
+- Cursor editor is configured with your settings
+- Repositories are cloned to your workspace directory
+- Your machine is ready for development!
+
+You can verify the setup by running:
+
+```bash
+python3 -m common.systems.cli <platform> status
+```
+
+### Alternative Setup: Clone with Git
+
+If you already have Git and Python3 installed, you can clone the repository and run setup directly:
 
 **Windows 11:**
 
 ```powershell
 git clone https://github.com/jrlanglois/jrl_env.git
 cd jrl_env
-python3 setup.py
+.\setup.ps1
 ```
 
 **ArchLinux / macOS / OpenSUSE / Raspberry Pi / RedHat / Ubuntu:**
@@ -95,83 +230,11 @@ python3 setup.py
 ```bash
 git clone https://github.com/jrlanglois/jrl_env.git
 cd jrl_env
-python3 setup.py
+./setup.sh
 ```
 
-The unified setup script will:
+**Note:** If you don't have Python3 installed yet, the setup scripts will detect this and offer to install it for you.
 
-- **Automatically install Python dependencies** from `requirements.txt` (e.g., `jsonschema` for config validation)
-- Auto-detect your operating system
-- Route to the appropriate platform-specific setup script
-- Detect if setup has already been run (first-time vs. update mode)
-- Execute all configuration and installation tasks automatically
-- Run verification checks after setup completes
-
-**Options:**
-
-- `--help, -h`: Show help message
-- `--version, -v`: Show version information
-- `--quiet, -q`: Only show final success/failure message
-- `--verbose`: Enable verbose output (show debug messages)
-- `--resume`: Automatically resume from last successful step if setup was interrupted
-- `--noResume`: Do not resume from previous setup (start fresh)
-- `--listSteps`: Preview what steps will be executed without running setup
-- `--skipFonts`, `--skipApps`, `--skipGit`, `--skipCursor`, `--skipRepos`, `--skipSsh`: Skip specific steps
-- `--appsOnly`: Only install/update applications
-- `--dryRun`: Preview changes without making them
-- `--noBackup`: Skip backing up existing configuration files
-
-**Note:** The setup script will automatically install required Python packages. If you prefer to install them manually:
-
-```bash
-pip install -r requirements.txt
-```
-
-### Platform-Specific Setup
-
-Alternatively, you can run the platform-specific setup scripts directly:
-
-**Windows 11:**
-
-```powershell
-python3 systems/win11/setup.py
-```
-
-**macOS:**
-
-```bash
-python3 systems/macos/setup.py
-```
-
-**Ubuntu:**
-
-```bash
-python3 systems/ubuntu/setup.py
-```
-
-**Raspberry Pi:**
-
-```bash
-python3 systems/raspberrypi/setup.py
-```
-
-**RedHat/Fedora/CentOS:**
-
-```bash
-python3 systems/redhat/setup.py
-```
-
-**OpenSUSE:**
-
-```bash
-python3 systems/opensuse/setup.py
-```
-
-**ArchLinux:**
-
-```bash
-python3 systems/archlinux/setup.py
-```
 
 ### Individual Operations
 
@@ -270,11 +333,12 @@ All validation scripts support `--help` and `--quiet` flags. See [`test/README.m
 To adapt this setup for your own machines:
 
 1. **Use your own config directory** (recommended): Point the setup to your own config directory without modifying the repository:
+
    ```bash
-   python3 setup.py --configDir /path/to/your/configs
+   ./setup.sh --configDir /path/to/your/configs
    # Or set environment variable:
    export JRL_ENV_CONFIG_DIR=/path/to/your/configs
-   python3 setup.py
+   ./setup.sh
    ```
 
 2. **Fork the repository** and modify the config files with your preferences
@@ -307,27 +371,34 @@ This restores backed-up configurations and uninstalls packages installed during 
 
 ## Architecture
 
-This repository follows DRY (Don't Repeat Yourself) and SOLID principles:
+This repository follows DRY (Don't Repeat Yourself) and SOLID principles with a **data-driven architecture**:
 
 - **Single Entry Point**:
   - `common/common.py` is the single entry point that all Python scripts import from. It exposes all common utilities and modules.
+- **Data-Driven Platform Support**: All platform-specific behaviour is configured via data rather than code:
+  - `common/systems/genericSystem.py`: Unified system implementation that works for all platforms
+  - `common/systems/systemsConfig.py`: Platform configuration data (package managers, paths, dependencies)
+  - `common/systems/systemBase.py`: Base class with shared setup orchestration logic
+  - `common/systems/setupOrchestrator.py`: Orchestrates setup process across all platforms
 - **Shared Logic**: Common Python functionality is centralised in `common/` (e.g., Git configuration, app installation, font installation)
-- **Thin Wrappers**: Platform-specific scripts (`systems/archlinux/`, `systems/macos/`, `systems/opensuse/`, `systems/raspberrypi/`, `systems/redhat/`, `systems/ubuntu/`, `systems/win11/`) are thin wrappers that set platform-specific variables and import from `common/common.py`
 - **OS Detection**: `common/core/utilities.py` provides OS detection functions (`findOperatingSystem()`, `getOperatingSystem()`, `isOperatingSystem()`) to identify the current platform
 - **Shared Utilities**: Core utilities are in `common/core/`:
   - `common/core/utilities.py`: Generic Python utilities (e.g., `commandExists()`, JSON helpers, OS detection)
   - `common/core/logging.py`: Consistent logging functions with verbosity levels (`printInfo`, `printSuccess`, `printError`, `printWarning`, `printSection`, `printVerbose`, `safePrint`, `colourise`)
   - `common/core/logging.py`: Verbosity levels (`quiet`, `normal`, `verbose`) and ISO8601 timestamps
-- **Linux Package Helpers**: `common/linux/packageManager.py` provides distro-agnostic OOP abstractions so any Linux system can use its package manager (`apt`, `yum`, `dnf`, `rpm`) and reuse install/update logic
-- **Windows Package Helpers**: `common/windows/packageManager.py` provides Windows-specific package management utilities for winget and Microsoft Store
-- **Setup Utilities**: `common/install/setupUtils.py` provides shared setup functions (`initLogging`, `backupConfigs`, `checkDependencies`, `shouldCloneRepositories`) used across all platform setup scripts
+- **Platform-Agnostic Package Management**:
+  - `common/install/packageManagers.py`: Unified package manager abstractions (Brew, Apt, Snap, Pacman, Zypper, DNF, Winget)
+  - `common/linux/packageManager.py`: Legacy distro-agnostic OOP abstractions for Linux package managers
+  - `common/windows/packageManager.py`: Windows-specific package management utilities
+- **Unified Development Environment**: `common/install/setupDevEnv.py` provides unified dev environment setup (zsh, Oh My Zsh, essential tools) for all platforms
+- **Windows Configuration**: `common/windows/configureSystem.py` handles Windows-specific system configuration (registry, dark mode, regional settings, WSL2)
+- **Setup Utilities**: `common/install/setupUtils.py` provides shared setup functions (`initLogging`, `backupConfigs`, `checkDependencies`, `shouldCloneRepositories`)
 - **Setup State**: `common/install/setupState.py` tracks setup progress to enable resuming from interrupted setups
 - **Rollback**: `common/install/rollback.py` provides rollback capability for failed setups
 - **Verification**: `common/systems/verify.py` performs post-setup verification checks
 - **Schema Validation**: `common/systems/schemas.py` and `common/systems/validate.py` provide JSON schema validation
 - **Helper Scripts**: Utility scripts are in `helpers/`:
   - All helper scripts import from `common/common.py` for consistent logging and utilities
-- **Python Migration**: The codebase has been migrated from Bash to Python3 for improved readability, maintainability, and reduced context switching. All platform-specific scripts and test scripts are now Python-based.
 
 See [`common/README.md`](common/README.md) for detailed documentation on the common modules.
 
