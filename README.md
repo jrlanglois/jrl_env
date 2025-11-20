@@ -333,21 +333,25 @@ See [`common/README.md`](common/README.md) for detailed documentation on the com
 
 ## Style Guide
 
-This repository follows consistent coding style conventions:
+This repository follows a consistent and intentionally opinionated coding style. I'm particular about my environment and I like things the way I like them.
+
+If you find something that causes a real technical issue, I'm happy to adjust it.
+
+If it's a style debate, I have zero interest in entertaining it.
 
 - **Naming**:
   - **Classes/Structs**: PascalCase (e.g., `PackageManager`, `TidyStats`, `Colours`)
   - **Functions/Variables/Macros**: camelCase (e.g., `printInfo`, `backupConfigs`, `isWingetInstalled`, `packageMappings`)
 - **Indentation**: 4 spaces, no tabs.
-- **Braces**: Allman style (opening brace/bracket on its own line) where possible. Applies to code blocks, JSON objects, and JSON arrays.
+- **Braces**: Allman style (opening brace/bracket on its own line) where possible. Applies to code blocks, objects, and arrays.
 - **Boolean functions**: Use `is/was/{verb}` prefixes for clarity (e.g., `isGitInstalled`, `isRepositoryCloned`).
 - **Spelling**: Canadian English conventions (`-ise` for verbs, `-our` for nouns like `colour`, `behaviour`).
 - **JSON formatting**: 4-space indentation, CRLF line endings.
-- **Logging**: Use shared logging functions from `common/common.py` with verbosity levels (`--quiet`, `--verbose`). All messages include ISO8601 timestamps.
-- **Dry Run Support**: All setup, update, and configuration scripts support `--dryRun` flag to preview changes without making them.
-- **Help Text**: All major scripts support `--help` flag for usage information.
+- **Timestamps**: ISO8601.
 
-These conventions apply to all Python (`.py`) and PowerShell (`.ps1`) scripts in this repository. Note: PowerShell has some syntax quirks that may prevent Allman braces in certain cases (e.g., pipeline operations), but we use them wherever possible.
+These conventions apply to all Python (`.py`) and PowerShell (`.ps1`) scripts in this repository.
+
+Note: PowerShell has some syntax quirks that may prevent Allman braces in certain cases (e.g., pipeline operations), but I use them wherever possible.
 
 ## Requirements
 
