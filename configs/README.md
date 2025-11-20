@@ -1,6 +1,12 @@
 # Configuration Files
 
-JSON configuration files that define what gets installed and configured on each platform. All configuration files use 4-space indentation and CRLF line endings.
+JSON configuration files that define what gets installed and configured on each platform. 
+
+All configuration files use:
+* 4-spaces (not tabs)
+* CRLF line endings.
+  * This is my preference. I don't really care about yours!
+  * This shouldn't have an impact when providing your own hand-rolled configurations to the setup environment.
 
 ## Configuration Directory Specification
 
