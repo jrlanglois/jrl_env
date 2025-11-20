@@ -1,6 +1,6 @@
 # Configuration Files
 
-JSON configuration files that define what gets installed and configured on each platform. 
+JSON configuration files that define what gets installed and configured on each platform.
 
 All configuration files use:
 * 4-spaces (not tabs)
@@ -16,12 +16,12 @@ A valid `configs/` directory must contain the following files with exact names:
 
 **Platform-Specific Configs (at least one required):**
 
+- `archlinux.json` - Arch Linux configuration
 - `macos.json` - macOS configuration
-- `ubuntu.json` - Ubuntu/Debian configuration
+- `opensuse.json` - OpenSUSE configuration
 - `raspberrypi.json` - Raspberry Pi OS configuration
 - `redhat.json` - RedHat/Fedora/CentOS configuration
-- `opensuse.json` - OpenSUSE configuration
-- `archlinux.json` - Arch Linux configuration
+- `ubuntu.json` - Ubuntu/Debian configuration
 - `win11.json` - Windows 11 configuration
 
 **Shared Configs (all optional, but recommended):**

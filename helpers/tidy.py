@@ -385,9 +385,10 @@ def main() -> int:
                     )
                 )
         else:
+            extensionsList = ', '.join(args.extensions)
             print(
                 colourise(
-                    f"Processed {fileCount} file(s)",
+                    f"Processed {fileCount} file(s) ({extensionsList})",
                     Colours.CYAN,
                     enableColour,
                 )

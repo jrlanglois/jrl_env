@@ -63,7 +63,7 @@ def main() -> int:
 
     success = True
 
-    printSection("Running convertToAllman.py", dryRun=dryRun)
+    printSection("Running convertToAllman.py (Bash .sh files)", dryRun=dryRun)
     convertScript = scriptDir / "convertToAllman.py"
     try:
         convertArgs = [sys.executable, str(convertScript)]
@@ -90,7 +90,7 @@ def main() -> int:
     if not quiet:
         safePrint()
 
-    printSection("Running tidy.py", dryRun=dryRun)
+    printSection("Running tidy.py (All text files: .ps1, .sh, .json, .md, .py, .yml, .yaml)", dryRun=dryRun)
     tidyScript = scriptDir / "tidy.py"
     try:
         tidyArgs = [sys.executable, str(tidyScript), "--path", str(repoRoot)]

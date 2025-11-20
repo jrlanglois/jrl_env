@@ -32,7 +32,7 @@ _verbosity: Verbosity = Verbosity.normal
 printLock = Lock()
 
 # Detect if console supports Unicode emojis
-def _supportsUnicode() -> bool:
+def supportsUnicode() -> bool:
     """Check if the console supports Unicode emoji characters."""
     # On Windows, be conservative - only use Unicode if we can confirm UTF-8 support
     if sys.platform == "win32":
@@ -66,12 +66,12 @@ def _supportsUnicode() -> bool:
     return True
 
 # Cache the Unicode support check (do this after potential stdout reconfiguration)
-_unicodeSupported = _supportsUnicode()
+unicodeSupported = supportsUnicode()
 
 # ASCII fallbacks for emojis (use ASCII if Unicode not supported)
-_EMOJI_ERROR = "✗" if _unicodeSupported else "[ERROR]"
-_EMOJI_SUCCESS = "✓" if _unicodeSupported else "[SUCCESS]"
-_EMOJI_WARNING = "⚠" if _unicodeSupported else "[WARNING]"
+emojiError = "✗" if unicodeSupported else "[ERROR]"
+emojiSuccess = "✓" if unicodeSupported else "[SUCCESS]"
+emojiWarning = "⚠" if unicodeSupported else "[WARNING]"
 
 
 def setVerbosity(level: Verbosity) -> None:
@@ -134,16 +134,16 @@ def printWarning(message: str, includeTimestamp: bool = True) -> None:
     """Print a warning message in yellow with ⚠ emoji. Only shown at normal or verbose verbosity."""
     if _verbosity >= Verbosity.normal:
         # Prepend emoji if not already present anywhere in the message
-        if _EMOJI_WARNING not in message and "⚠" not in message and "[WARNING]" not in message:
-            message = f"{_EMOJI_WARNING} {message.lstrip()}"
+        if emojiWarning not in message and "⚠" not in message and "[WARNING]" not in message:
+            message = f"{emojiWarning} {message.lstrip()}"
         formatted = formatWithTimestamp(message) if includeTimestamp else message
         safePrint(f"{Colours.YELLOW}{formatted}{Colours.NC}")
 
 def printError(message: str, includeTimestamp: bool = True) -> None:
     """Print an error message in red with ✗ emoji. Always shown (even in quiet mode)."""
     # Prepend emoji if not already present anywhere in the message
-    if _EMOJI_ERROR not in message and "✗" not in message and "[ERROR]" not in message:
-        message = f"{_EMOJI_ERROR} {message.lstrip()}"
+    if emojiError not in message and "✗" not in message and "[ERROR]" not in message:
+        message = f"{emojiError} {message.lstrip()}"
     formatted = formatWithTimestamp(message) if includeTimestamp else message
     safePrint(f"{Colours.RED}{formatted}{Colours.NC}")
 
@@ -151,8 +151,8 @@ def printSuccess(message: str, includeTimestamp: bool = True) -> None:
     """Print a success message in green with ✓ emoji. Only shown at normal or verbose verbosity."""
     if _verbosity >= Verbosity.normal:
         # Prepend emoji if not already present anywhere in the message
-        if _EMOJI_SUCCESS not in message and "✓" not in message and "[SUCCESS]" not in message:
-            message = f"{_EMOJI_SUCCESS} {message.lstrip()}"
+        if emojiSuccess not in message and "✓" not in message and "[SUCCESS]" not in message:
+            message = f"{emojiSuccess} {message.lstrip()}"
         formatted = formatWithTimestamp(message) if includeTimestamp else message
         safePrint(f"{Colours.GREEN}{formatted}{Colours.NC}")
 

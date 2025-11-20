@@ -111,15 +111,15 @@ class PackageManager(ABC):
         """Initialise the package manager."""
         if not self.requireManager():
             return False
-        self.labelValue = self._getLabel()
+        self.labelValue = self.getLabel()
         return True
 
     @abstractmethod
-    def _getLabel(self) -> str:
+    def getLabel(self) -> str:
         """Get the label for this package manager."""
         pass
 
-    def _runCommand(self, cmd: list[str], silent: bool = True) -> bool:
+    def runCommand(self, cmd: list[str], silent: bool = True) -> bool:
         """Run a command and return success status."""
         try:
             stdout = subprocess.DEVNULL if silent else None
@@ -148,7 +148,7 @@ class AptPackageManager(PackageManager):
         if self.cacheUpdated:
             return
         printInfo("Updating apt package cache...")
-        self._runCommand(["sudo", "apt-get", "update", "-y"])
+        self.runCommand(["sudo", "apt-get", "update", "-y"])
         self.cacheUpdated = True
 
     def checkPackage(self, package: str) -> bool:
@@ -169,13 +169,13 @@ class AptPackageManager(PackageManager):
 
     def installPackage(self, package: str) -> bool:
         self.prepareCache()
-        return self._runCommand(["sudo", "apt-get", "install", "-y", package])
+        return self.runCommand(["sudo", "apt-get", "install", "-y", package])
 
     def updatePackage(self, package: str) -> bool:
         self.prepareCache()
-        return self._runCommand(["sudo", "apt-get", "install", "--only-upgrade", "-y", package])
+        return self.runCommand(["sudo", "apt-get", "install", "--only-upgrade", "-y", package])
 
-    def _getLabel(self) -> str:
+    def getLabel(self) -> str:
         return "APT packages"
 
 
@@ -192,7 +192,7 @@ class YumPackageManager(PackageManager):
         if self.cacheUpdated:
             return
         printInfo("Refreshing yum metadata...")
-        self._runCommand(["sudo", "yum", "makecache", "-y"])
+        self.runCommand(["sudo", "yum", "makecache", "-y"])
         self.cacheUpdated = True
 
     def checkPackage(self, package: str) -> bool:
@@ -207,14 +207,14 @@ class YumPackageManager(PackageManager):
     def installPackage(self, package: str) -> bool:
         self.prepareCache()
         mappedPackage = mapPackageName(package, "yum")
-        return self._runCommand(["sudo", "yum", "install", "-y", mappedPackage])
+        return self.runCommand(["sudo", "yum", "install", "-y", mappedPackage])
 
     def updatePackage(self, package: str) -> bool:
         self.prepareCache()
         mappedPackage = mapPackageName(package, "yum")
-        return self._runCommand(["sudo", "yum", "update", "-y", mappedPackage])
+        return self.runCommand(["sudo", "yum", "update", "-y", mappedPackage])
 
-    def _getLabel(self) -> str:
+    def getLabel(self) -> str:
         return "YUM packages"
 
 
@@ -231,7 +231,7 @@ class DnfPackageManager(PackageManager):
         if self.cacheUpdated:
             return
         printInfo("Refreshing dnf metadata...")
-        self._runCommand(["sudo", "dnf", "makecache", "-y"])
+        self.runCommand(["sudo", "dnf", "makecache", "-y"])
         self.cacheUpdated = True
 
     def checkPackage(self, package: str) -> bool:
@@ -246,14 +246,14 @@ class DnfPackageManager(PackageManager):
     def installPackage(self, package: str) -> bool:
         self.prepareCache()
         mappedPackage = mapPackageName(package, "dnf")
-        return self._runCommand(["sudo", "dnf", "install", "-y", mappedPackage])
+        return self.runCommand(["sudo", "dnf", "install", "-y", mappedPackage])
 
     def updatePackage(self, package: str) -> bool:
         self.prepareCache()
         mappedPackage = mapPackageName(package, "dnf")
-        return self._runCommand(["sudo", "dnf", "upgrade", "-y", mappedPackage])
+        return self.runCommand(["sudo", "dnf", "upgrade", "-y", mappedPackage])
 
-    def _getLabel(self) -> str:
+    def getLabel(self) -> str:
         return "DNF packages"
 
 
@@ -282,14 +282,14 @@ class RpmPackageManager(PackageManager):
     def installPackage(self, package: str) -> bool:
         self.prepareCache()
         mappedPackage = mapPackageName(package, "rpm")
-        return self._runCommand(["sudo", "rpm", "-i", mappedPackage])
+        return self.runCommand(["sudo", "rpm", "-i", mappedPackage])
 
     def updatePackage(self, package: str) -> bool:
         self.prepareCache()
         mappedPackage = mapPackageName(package, "rpm")
-        return self._runCommand(["sudo", "rpm", "-U", mappedPackage])
+        return self.runCommand(["sudo", "rpm", "-U", mappedPackage])
 
-    def _getLabel(self) -> str:
+    def getLabel(self) -> str:
         return "RPM packages"
 
 
@@ -306,7 +306,7 @@ class ZypperPackageManager(PackageManager):
         if self.cacheUpdated:
             return
         printInfo("Refreshing zypper repositories...")
-        self._runCommand(["sudo", "zypper", "refresh"])
+        self.runCommand(["sudo", "zypper", "refresh"])
         self.cacheUpdated = True
 
     def checkPackage(self, package: str) -> bool:
@@ -321,14 +321,14 @@ class ZypperPackageManager(PackageManager):
     def installPackage(self, package: str) -> bool:
         self.prepareCache()
         mappedPackage = mapPackageName(package, "zypper")
-        return self._runCommand(["sudo", "zypper", "install", "-y", mappedPackage])
+        return self.runCommand(["sudo", "zypper", "install", "-y", mappedPackage])
 
     def updatePackage(self, package: str) -> bool:
         self.prepareCache()
         mappedPackage = mapPackageName(package, "zypper")
-        return self._runCommand(["sudo", "zypper", "update", "-y", mappedPackage])
+        return self.runCommand(["sudo", "zypper", "update", "-y", mappedPackage])
 
-    def _getLabel(self) -> str:
+    def getLabel(self) -> str:
         return "Zypper packages"
 
 
@@ -345,7 +345,7 @@ class PacmanPackageManager(PackageManager):
         if self.cacheUpdated:
             return
         printInfo("Synchronising pacman package database...")
-        self._runCommand(["sudo", "pacman", "-Sy"])
+        self.runCommand(["sudo", "pacman", "-Sy"])
         self.cacheUpdated = True
 
     def checkPackage(self, package: str) -> bool:
@@ -358,13 +358,13 @@ class PacmanPackageManager(PackageManager):
 
     def installPackage(self, package: str) -> bool:
         self.prepareCache()
-        return self._runCommand(["sudo", "pacman", "-S", "--noconfirm", package])
+        return self.runCommand(["sudo", "pacman", "-S", "--noconfirm", package])
 
     def updatePackage(self, package: str) -> bool:
         self.prepareCache()
-        return self._runCommand(["sudo", "pacman", "-S", "--noconfirm", "--needed", package])
+        return self.runCommand(["sudo", "pacman", "-S", "--noconfirm", "--needed", package])
 
-    def _getLabel(self) -> str:
+    def getLabel(self) -> str:
         return "Pacman packages"
 
 

@@ -6,10 +6,13 @@ Platform-specific setup, update, status, and configuration scripts. All scripts 
 
 ```
 systems/
-├── win11/        # Windows 11 scripts
+├── archlinux/    # Arch Linux scripts
 ├── macos/        # macOS scripts
+├── opensuse/     # OpenSUSE scripts
+├── raspberrypi/  # Raspberry Pi scripts
+├── redhat/       # RedHat/Fedora/CentOS scripts
 ├── ubuntu/       # Ubuntu scripts
-└── raspberrypi/  # Raspberry Pi scripts
+└── win11/        # Windows 11 scripts
 ```
 
 ## Platform Scripts
@@ -86,7 +89,7 @@ python3 -m common.systems.validate [--quiet] [--verbose]
 python3 -m common.systems.validate <platform> [--quiet] [--verbose]
 ```
 
-Validates JSON syntax, schema compliance, packages, fonts, repositories, and Git config. Valid platforms: `win11`, `macos`, `ubuntu`, `raspberrypi`, `redhat`, `opensuse`, `archlinux`.
+Validates JSON syntax, schema compliance, packages, fonts, repositories, and Git config. Valid platforms: `archlinux`, `macos`, `opensuse`, `raspberrypi`, `redhat`, `ubuntu`, `win11`.
 
 ### `setupDevEnv.py`
 
