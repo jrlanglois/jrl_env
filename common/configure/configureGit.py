@@ -186,14 +186,15 @@ def configureGitDefaults(configPath: Optional[str] = None, dryRun: bool = False)
 
     defaultsJson = readJsonSection(configPath or "", "defaults")
 
-    defaultBranch = getJsonValue(defaultsJson, "init.defaultBranch", "main")
-    colourUi = getJsonValue(defaultsJson, "color.ui", "auto")
-    pullRebase = getJsonValue(defaultsJson, "pull.rebase", "false")
-    pushDefault = getJsonValue(defaultsJson, "push.default", "simple")
-    pushAutoSetup = getJsonValue(defaultsJson, "push.autoSetupRemote", "true")
-    rebaseAutoStash = getJsonValue(defaultsJson, "rebase.autoStash", "true")
-    mergeFf = getJsonValue(defaultsJson, "merge.ff", "false")
-    fetchParallel = getJsonValue(defaultsJson, "fetch.parallel", "8")
+    # defaultsJson is a dict, access it directly
+    defaultBranch = defaultsJson.get("init.defaultBranch", "main")
+    colourUi = defaultsJson.get("color.ui", "auto")
+    pullRebase = defaultsJson.get("pull.rebase", "false")
+    pushDefault = defaultsJson.get("push.default", "simple")
+    pushAutoSetup = defaultsJson.get("push.autoSetupRemote", "true")
+    rebaseAutoStash = defaultsJson.get("rebase.autoStash", "true")
+    mergeFf = defaultsJson.get("merge.ff", "false")
+    fetchParallel = defaultsJson.get("fetch.parallel", "8")
 
     setGitConfig(
         "init.defaultBranch",

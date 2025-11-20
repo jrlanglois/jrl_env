@@ -9,7 +9,7 @@ Helper tooling enforces Allman braces, camelCase for functions/variables, Pascal
 
 ## Overview
 
-Automated setup scripts for Windows 11, macOS, Ubuntu, Raspberry Pi, RedHat/Fedora/CentOS, OpenSUSE, and ArchLinux. Manages application installation, system configuration, Git setup, Cursor editor settings, font installation, and repository cloning.
+Automated setup scripts for ArchLinux, macOS, OpenSUSE, Raspberry Pi, RedHat/Fedora/CentOS, Ubuntu, and Windows 11. Manages application installation, system configuration, Git setup, Cursor editor settings, font installation, and repository cloning.
 
 ### Purpose
 
@@ -21,59 +21,59 @@ Obviously this is a public repository to make things easier for myself. You can 
 
 ```text
 jrl_env/
-├── configs/          # JSON configuration files
-│   ├── win11.json
-│   ├── macos.json
-│   ├── ubuntu.json
-│   ├── raspberrypi.json
-│   ├── redhat.json
-│   ├── opensuse.json
-│   ├── archlinux.json
-│   ├── linuxCommon.json
-│   ├── fonts.json
-│   ├── repositories.json
-│   ├── gitConfig.json
-│   └── cursorSettings.json
 ├── common/           # Shared logic (Python modules)
-│   ├── common.py     # Single entry point for Python - imports all common utilities
+│   ├── configure/    # Configuration modules
+│   │   ├── cloneRepositories.py
+│   │   ├── configureCursor.py
+│   │   ├── configureGit.py
+│   │   └── configureGithubSsh.py
 │   ├── core/         # Core utilities (colours, logging, utilities)
 │   │   ├── logging.py
 │   │   └── utilities.py  # Includes OS detection functions
-│   ├── configure/    # Configuration modules
-│   │   ├── configureGit.py
-│   │   ├── configureCursor.py
-│   │   ├── configureGithubSsh.py
-│   │   └── cloneRepositories.py
 │   ├── install/      # Installation modules
 │   │   ├── installApps.py
 │   │   ├── installFonts.py
 │   │   ├── setupArgs.py
 │   │   └── setupUtils.py
-│   ├── systems/      # System base classes
-│   │   ├── systemBase.py  # Base class for all system setups
-│   │   └── cli.py         # Unified CLI for individual operations
 │   ├── linux/        # Linux-specific helpers (package managers, etc.)
 │   │   └── packageManager.py
-│   └── windows/      # Windows-specific helpers
-│       └── packageManager.py
+│   ├── systems/      # System base classes
+│   │   ├── cli.py         # Unified CLI for individual operations
+│   │   └── systemBase.py  # Base class for all system setups
+│   ├── windows/      # Windows-specific helpers
+│   │   └── packageManager.py
+│   └── common.py     # Single entry point for Python - imports all common utilities
+├── configs/          # JSON configuration files
+│   ├── archlinux.json
+│   ├── cursorSettings.json
+│   ├── fonts.json
+│   ├── gitConfig.json
+│   ├── linuxCommon.json
+│   ├── macos.json
+│   ├── opensuse.json
+│   ├── raspberrypi.json
+│   ├── redhat.json
+│   ├── repositories.json
+│   ├── ubuntu.json
+│   └── win11.json
 ├── helpers/          # Utility scripts and shared modules
+│   ├── convertToAllman.py
 │   ├── formatRepo.py
-│   ├── tidy.py
-│   └── convertToAllman.py
-├── test/             # Validation scripts for configuration files (Python)
-│   ├── validatePackages.py          # Unified package validation (all platforms)
-│   ├── validateLinuxCommonPackages.py  # Comprehensive Linux common validation
-│   ├── validateFonts.py
-│   ├── validateRepositories.py
-│   └── validateGitConfig.py
-└── systems/          # Platform-specific scripts (Python)
-    ├── win11/        # Python scripts for Windows
-    ├── macos/        # Python scripts for macOS
-    ├── ubuntu/       # Python scripts for Ubuntu
-    ├── raspberrypi/  # Python scripts for Raspberry Pi
-    ├── redhat/       # Python scripts for RedHat/Fedora/CentOS
-    ├── opensuse/     # Python scripts for OpenSUSE
-    └── archlinux/    # Python scripts for ArchLinux
+│   └── tidy.py
+├── systems/          # Platform-specific scripts (Python)
+│   ├── archlinux/    # Python scripts for ArchLinux
+│   ├── macos/        # Python scripts for macOS
+│   ├── opensuse/     # Python scripts for OpenSUSE
+│   ├── raspberrypi/  # Python scripts for Raspberry Pi
+│   ├── redhat/       # Python scripts for RedHat/Fedora/CentOS
+│   ├── ubuntu/       # Python scripts for Ubuntu
+│   └── win11/        # Python scripts for Windows
+└── test/             # Validation scripts for configuration files (Python)
+    ├── validateFonts.py
+    ├── validateGitConfig.py
+    ├── validateLinuxCommonPackages.py  # Comprehensive Linux common validation
+    ├── validatePackages.py          # Unified package validation (all platforms)
+    └── validateRepositories.py
 ```
 
 ## Quick Start
@@ -90,7 +90,7 @@ cd jrl_env
 python3 setup.py
 ```
 
-**macOS / Ubuntu / Raspberry Pi / RedHat / OpenSUSE / ArchLinux:**
+**ArchLinux / macOS / OpenSUSE / Raspberry Pi / RedHat / Ubuntu:**
 
 ```bash
 git clone https://github.com/jrlanglois/jrl_env.git
@@ -312,7 +312,7 @@ This repository follows DRY (Don't Repeat Yourself) and SOLID principles:
 - **Single Entry Point**:
   - `common/common.py` is the single entry point that all Python scripts import from. It exposes all common utilities and modules.
 - **Shared Logic**: Common Python functionality is centralised in `common/` (e.g., Git configuration, app installation, font installation)
-- **Thin Wrappers**: Platform-specific scripts (`systems/macos/`, `systems/ubuntu/`, `systems/raspberrypi/`, `systems/win11/`) are thin wrappers that set platform-specific variables and import from `common/common.py`
+- **Thin Wrappers**: Platform-specific scripts (`systems/archlinux/`, `systems/macos/`, `systems/opensuse/`, `systems/raspberrypi/`, `systems/redhat/`, `systems/ubuntu/`, `systems/win11/`) are thin wrappers that set platform-specific variables and import from `common/common.py`
 - **OS Detection**: `common/core/utilities.py` provides OS detection functions (`findOperatingSystem()`, `getOperatingSystem()`, `isOperatingSystem()`) to identify the current platform
 - **Shared Utilities**: Core utilities are in `common/core/`:
   - `common/core/utilities.py`: Generic Python utilities (e.g., `commandExists()`, JSON helpers, OS detection)
@@ -346,7 +346,11 @@ If it's a style debate, I have zero interest in entertaining it.
 - **Braces**: Allman style (opening brace/bracket on its own line) where possible. Applies to code blocks, objects, and arrays.
 - **Boolean functions**: Use `is/was/{verb}` prefixes for clarity (e.g., `isGitInstalled`, `isRepositoryCloned`).
 - **Spelling**: Canadian English conventions (`-ise` for verbs, `-our` for nouns like `colour`, `behaviour`).
-- **JSON formatting**: 4-space indentation, CRLF line endings.
+- **Line endings**:
+  - **Python scripts (`.py`)**: LF (Unix-style) line endings (required for shebang compatibility)
+  - **Bash scripts (`.sh`)**: LF (Unix-style) line endings
+  - **JSON files**: CRLF (Windows-style) line endings
+  - **PowerShell (`.ps1`)**: CRLF (Windows-style) line endings
 - **Timestamps**: ISO8601.
 
 These conventions apply to all Python (`.py`) and PowerShell (`.ps1`) scripts in this repository.
@@ -358,12 +362,13 @@ Note: PowerShell has some syntax quirks that may prevent Allman braces in certai
 - **Python 3**: Python 3.6 or higher
 - **Dependencies**: Automatically installed from `requirements.txt` (includes `jsonschema` for validation)
 - **Platform-specific**:
-  - **Windows**: PowerShell 5.1+, winget (Windows Package Manager)
-  - **macOS**: Homebrew, zsh
-  - **Ubuntu/Raspberry Pi**: apt, snap, zsh
-  - **RedHat/Fedora/CentOS**: dnf, zsh
-  - **OpenSUSE**: zypper, zsh
   - **ArchLinux**: pacman, zsh
+  - **macOS**: Homebrew, zsh
+  - **OpenSUSE**: zypper, zsh
+  - **Raspberry Pi**: apt, snap, zsh
+  - **RedHat/Fedora/CentOS**: dnf, zsh
+  - **Ubuntu**: apt, snap, zsh
+  - **Windows**: PowerShell 5.1+, winget (Windows Package Manager)
 
 ## CI/CD
 

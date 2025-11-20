@@ -357,12 +357,12 @@ class PackageValidator:
             self.config = json.load(f)
 
         # Detect and initialise appropriate checkers
-        self._initialiseCheckers()
+        self.initialiseCheckers()
 
-    def _initialiseCheckers(self) -> None:
+    def initialiseCheckers(self) -> None:
         """Detect which package managers are used and initialise checkers."""
         # Special handling for linuxCommon - detect available Linux package managers
-        if self._isLinuxCommon():
+        if self.isLinuxCommon():
             # For linuxCommon, detect and use all available Linux package managers
             for pmKey in self.LINUX_PACKAGE_MANAGERS:
                 if pmKey in self.CHECKERS:
@@ -377,7 +377,7 @@ class PackageValidator:
                     checker = checkerClass()
                     self.checkers[jsonKey] = checker
 
-    def _getPlatformName(self) -> str:
+    def getPlatformName(self) -> str:
         """Get platform name from config file name."""
         name = self.configPath.stem
         # Map config names to platform names
@@ -390,11 +390,11 @@ class PackageValidator:
         }
         return nameMap.get(name, name.capitalize())
 
-    def _isLinuxCommon(self) -> bool:
+    def isLinuxCommon(self) -> bool:
         """Check if this is a linuxCommon config file."""
         return self.configPath.stem == "linuxCommon" or "linuxCommon" in self.config
 
-    def _mergeLinuxCommon(self) -> List[str]:
+    def mergeLinuxCommon(self) -> List[str]:
         """Merge linuxCommon packages if enabled."""
         aptPackages = []
 
@@ -423,12 +423,12 @@ class PackageValidator:
         Returns:
             0 if all packages are valid, 1 otherwise
         """
-        platformName = self._getPlatformName()
+        platformName = self.getPlatformName()
         printSection(f"Validating {platformName} Packages")
         safePrint()
 
         # Special handling for linuxCommon.json - validate against all available Linux package managers
-        if self._isLinuxCommon():
+        if self.isLinuxCommon():
             packages = getJsonArray(str(self.configPath), ".linuxCommon[]?")
             if not packages:
                 printWarning("No packages found in linuxCommon.json")
@@ -478,7 +478,7 @@ class PackageValidator:
             for jsonKey, checker in self.checkers.items():
                 if jsonKey == "apt" and self.config.get("useLinuxCommon") is True:
                     # Special handling for apt with linuxCommon
-                    packages = self._mergeLinuxCommon()
+                    packages = self.mergeLinuxCommon()
                 else:
                     packages = getJsonArray(str(self.configPath), f".{jsonKey}[]?")
 

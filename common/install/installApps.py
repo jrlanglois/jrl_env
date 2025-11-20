@@ -91,6 +91,20 @@ def installPackages(
             else:
                 return (packageName, "failed", False)
 
+    def printPackageResult(pkgName: str, action: str, completedCount: int) -> None:
+        """Helper to print package installation result."""
+        if action == "installed":
+            printSuccess(f"Installing package {completedCount}/{totalPackages}: ✓ {pkgName} (installed)")
+            result.installedCount += 1
+            result.installedPackages.append(pkgName)
+        elif action == "updated":
+            printWarning(f"Installing package {completedCount}/{totalPackages}: ↻ {pkgName} (updated)")
+            result.updatedCount += 1
+            result.updatedPackages.append(pkgName)
+        else:  # failed
+            printError(f"Installing package {completedCount}/{totalPackages}: ✗ {pkgName} (failed)")
+            result.failedCount += 1
+
     completedCount = 0
     with ThreadPoolExecutor(max_workers=maxWorkers) as executor:
         futures = {
@@ -105,31 +119,11 @@ def installPackages(
                 pkgName, action, success = future.result()
                 if printLock:
                     with printLock:
-                        if action == "installed":
-                            printSuccess(f"Installing package {completedCount}/{totalPackages}: ✓ {pkgName} (installed)")
-                            result.installedCount += 1
-                            result.installedPackages.append(pkgName)
-                        elif action == "updated":
-                            printWarning(f"Installing package {completedCount}/{totalPackages}: ↻ {pkgName} (updated)")
-                            result.updatedCount += 1
-                            result.updatedPackages.append(pkgName)
-                        else:  # failed
-                            printError(f"Installing package {completedCount}/{totalPackages}: ✗ {pkgName} (failed)")
-                            result.failedCount += 1
+                        printPackageResult(pkgName, action, completedCount)
                 else:
-                    if action == "installed":
-                        printSuccess(f"Installing package {completedCount}/{totalPackages}: ✓ {pkgName} (installed)")
-                        result.installedCount += 1
-                        result.installedPackages.append(pkgName)
-                    elif action == "updated":
-                        printWarning(f"Installing package {completedCount}/{totalPackages}: ↻ {pkgName} (updated)")
-                        result.updatedCount += 1
-                        result.updatedPackages.append(pkgName)
-                    else:  # failed
-                        printError(f"Installing package {completedCount}/{totalPackages}: ✗ {pkgName} (failed)")
-                        result.failedCount += 1
+                    printPackageResult(pkgName, action, completedCount)
             except Exception as e:
-                completedCount += 1
+                # Note: completedCount already incremented above, don't double-count
                 if printLock:
                     with printLock:
                         printError(f"Installing package {completedCount}/{totalPackages}: ✗ {packageName} (exception: {e})")

@@ -158,16 +158,16 @@ def addToPath(
         printError(f"Failed to read {configFile.name}: {e}")
         return False
 
-    pathToAddNormalized = str(Path(pathToAdd).resolve())
-    pathPattern = rf'PATH.*{re.escape(pathToAddNormalized)}'
+    pathToAddNormalised = str(Path(pathToAdd).resolve())
+    pathPattern = rf'PATH.*{re.escape(pathToAddNormalised)}'
     if re.search(pathPattern, content, re.MULTILINE):
-        printInfo(f"{pathToAddNormalized} already in PATH in {configFile.name}, skipping")
+        printInfo(f"{pathToAddNormalised} already in PATH in {configFile.name}, skipping")
         return True
 
-    exportPathLine = f'export PATH="$PATH:{pathToAddNormalized}"\n'
+    exportPathLine = f'export PATH="$PATH:{pathToAddNormalised}"\n'
 
     if dryRun:
-        printInfo(f"[DRY RUN] Would add to PATH in {configFile.name}: {pathToAddNormalized}")
+        printInfo(f"[DRY RUN] Would add to PATH in {configFile.name}: {pathToAddNormalised}")
         return True
 
     try:
@@ -175,10 +175,10 @@ def addToPath(
             content += '\n'
         content += f'\n# Android SDK PATH (added by jrl_env)\n{exportPathLine}'
         configFile.write_text(content, encoding='utf-8')
-        printSuccess(f"Added {pathToAddNormalized} to PATH in {configFile.name}")
+        printSuccess(f"Added {pathToAddNormalised} to PATH in {configFile.name}")
         return True
     except Exception as e:
-        printError(f"Failed to add {pathToAddNormalized} to PATH: {e}")
+        printError(f"Failed to add {pathToAddNormalised} to PATH: {e}")
         return False
 
 

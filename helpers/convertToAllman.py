@@ -7,7 +7,7 @@ import re
 import sys
 from collections.abc import Iterator
 from pathlib import Path
-from typing import Any
+from typing import Any, Union
 
 # Import shared logging utilities from common
 scriptDir = os.path.dirname(os.path.abspath(__file__))
@@ -61,7 +61,7 @@ def parseArguments() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def findShellFiles(rootPath: Path | str, extensions: list[str]) -> Iterator[Path]:
+def findShellFiles(rootPath: Union[Path, str], extensions: list[str]) -> Iterator[Path]:
     for root, _, files in os.walk(rootPath):
         for name in files:
             path = Path(root) / name
@@ -199,8 +199,10 @@ def main() -> None:
     summaryHeader = "DRY RUN SUMMARY" if args.dryRun else "UPDATE SUMMARY"
     print()
     printSection(summaryHeader)
-    printInfo(f"Processed files: {len(shellFiles)}")
-    printInfo(f"Files changed : {totalChanged}")
+    extensionsList = ', '.join(args.extensions)
+    printInfo(f"File types processed: {extensionsList}")
+    printInfo(f"Files scanned: {len(shellFiles)}")
+    printInfo(f"Files changed: {totalChanged}")
     printInfo(f"Function braces updated: {totalFunctionUpdates}")
     printInfo(f"Else braces updated    : {totalElseUpdates}")
     printInfo(f"Inline if updates      : {totalIfUpdates}")

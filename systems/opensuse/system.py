@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-OpenSUSE system setup implementation.
+openSUSE system setup implementation.
 """
 
 import sys
@@ -11,60 +11,13 @@ scriptDir = Path(__file__).parent.absolute()
 projectRoot = scriptDir.parent.parent
 sys.path.insert(0, str(projectRoot))
 
-from common.systems.systemBase import SystemBase
-
-
-class OpensuseSystem(SystemBase):
-    """OpenSUSE system setup implementation."""
-
-    def getPlatformName(self) -> str:
-        return "opensuse"
-
-    def getConfigFileName(self) -> str:
-        return "opensuse.json"
-
-    def getFontInstallDir(self) -> str:
-        return str(Path.home() / ".local/share/fonts")
-
-    def getCursorSettingsPath(self) -> str:
-        return str(Path.home() / ".config/Cursor/User/settings.json")
-
-    def getRepositoryWorkPathKey(self) -> str:
-        return ".workPathUnix"
-
-    def getRequiredDependencies(self) -> list:
-        return ["git"]
-
-    def getOptionalDependencyCheckers(self) -> list:
-        return []
-
-    def installOrUpdateApps(self, configPath: str, dryRun: bool) -> bool:
-        """Install or update applications on OpenSUSE."""
-        from common.core.utilities import getJsonValue
-        from common.install.packageManagers import ZypperPackageManager
-
-        zypper = ZypperPackageManager()
-        useLinuxCommon = getJsonValue(configPath, ".useLinuxCommon", False)
-
-        return self._installAppsWithPackageManagers(
-            configPath=configPath,
-            dryRun=dryRun,
-            primaryExtractor=".zypper[]?",
-            secondaryExtractor=None,
-            primaryLabel="Zypper packages",
-            secondaryLabel=None,
-            checkPrimary=zypper.check,
-            installPrimary=zypper.install,
-            updatePrimary=zypper.update,
-            useLinuxCommon=useLinuxCommon,
-        )
+from common.systems.genericSystem import GenericSystem
+from common.systems.platform import Platform
 
 
 def main() -> int:
-    """Main entry point for OpenSUSE setup."""
-    from pathlib import Path
-    projectRoot = Path(__file__).parent.parent.parent
-    system = OpensuseSystem(projectRoot)
+    """Main entry point for openSUSE setup."""
+    system = GenericSystem(projectRoot, Platform.opensuse)
     return system.run()
 
 

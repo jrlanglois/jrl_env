@@ -70,7 +70,7 @@ class PackageManagerChecker(ABC):
         """Check if package exists in this package manager's repositories."""
         pass
 
-    def _fetchUrl(self, url: str, timeout: int = 10) -> Optional[str]:
+    def fetchUrl(self, url: str, timeout: int = 10) -> Optional[str]:
         """Fetch URL content with error handling."""
         try:
             request = Request(url, headers={'User-Agent': 'Mozilla/5.0'})
@@ -102,14 +102,14 @@ class AptChecker(PackageManagerChecker):
 
         for baseUrl in self.baseUrls:
             url = f"{baseUrl}?{queryString}"
-            content = self._fetchUrl(url)
+            content = self.fetchUrl(url)
 
-            if content and self._parseResponse(content, package):
+            if content and self.parseResponse(content, package):
                 return True
 
         return False
 
-    def _parseResponse(self, content: str, package: str) -> bool:
+    def parseResponse(self, content: str, package: str) -> bool:
         """Parse response to determine if package was found."""
         contentLower = content.lower()
         packageLower = package.lower()
@@ -137,14 +137,14 @@ class RpmChecker(PackageManagerChecker):
 
         # Try rpmfind.net
         url = f"{self.baseUrls[0]}?query={urllib.parse.quote(rpmPackage)}"
-        content = self._fetchUrl(url)
-        if content and self._parseRpmFindResponse(content, rpmPackage):
+        content = self.fetchUrl(url)
+        if content and self.parseRpmFindResponse(content, rpmPackage):
             return True
 
         # Try pkgs.org
         url = f"{self.baseUrls[1]}?q={urllib.parse.quote(rpmPackage)}"
-        content = self._fetchUrl(url)
-        if content and self._parsePkgsOrgResponse(content, rpmPackage):
+        content = self.fetchUrl(url)
+        if content and self.parsePkgsOrgResponse(content, rpmPackage):
             return True
 
         # Try Fedora packages
@@ -159,7 +159,7 @@ class RpmChecker(PackageManagerChecker):
 
         return False
 
-    def _parseRpmFindResponse(self, content: str, package: str) -> bool:
+    def parseRpmFindResponse(self, content: str, package: str) -> bool:
         """Parse rpmfind.net response."""
         packageLower = package.lower()
         contentLower = content.lower()
@@ -170,7 +170,7 @@ class RpmChecker(PackageManagerChecker):
             f"package: {package}" in contentLower
         )
 
-    def _parsePkgsOrgResponse(self, content: str, package: str) -> bool:
+    def parsePkgsOrgResponse(self, content: str, package: str) -> bool:
         """Parse pkgs.org response."""
         packageLower = package.lower()
         return (
@@ -264,7 +264,7 @@ class LinuxCommonValidator:
 
     def validate(self, configPath: str) -> int:
         """Validate all packages in linuxCommon.json. Returns exit code."""
-        packages = self._loadPackages(configPath)
+        packages = self.loadPackages(configPath)
         if not packages:
             printError(f"No packages found in {configPath}")
             return 1
@@ -276,13 +276,13 @@ class LinuxCommonValidator:
         safePrint()
 
         for package in packages:
-            result = self._validatePackage(package)
+            result = self.validatePackage(package)
             self.results.append(result)
-            self._printPackageResult(result)
+            self.printPackageResult(result)
 
-        return self._printSummary()
+        return self.printSummary()
 
-    def _loadPackages(self, configPath: str) -> List[str]:
+    def loadPackages(self, configPath: str) -> List[str]:
         """Load packages from JSON config file."""
         try:
             with open(configPath, 'r', encoding='utf-8') as f:
@@ -292,7 +292,7 @@ class LinuxCommonValidator:
             printError(f"Error loading config: {e}")
             return []
 
-    def _validatePackage(self, package: str) -> PackageValidationResult:
+    def validatePackage(self, package: str) -> PackageValidationResult:
         """Validate a single package against all package managers."""
         result = PackageValidationResult(package)
 
@@ -326,7 +326,7 @@ class LinuxCommonValidator:
 
         return result
 
-    def _printPackageResult(self, result: PackageValidationResult):
+    def printPackageResult(self, result: PackageValidationResult):
         """Print result summary for a package."""
         if result.isUniversal:
             printSuccess("  → Universal: available in all package managers")
@@ -337,7 +337,7 @@ class LinuxCommonValidator:
             printError("  → FAILED: not found in any package manager")
         safePrint()
 
-    def _printSummary(self) -> int:
+    def printSummary(self) -> int:
         """Print validation summary and return exit code."""
         printSection("Validation Summary")
         safePrint()

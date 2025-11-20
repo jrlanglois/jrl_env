@@ -148,6 +148,36 @@ from common.configure.configureShellEnv import (
     findNdkRoot,
 )
 
+# Import and expose system orchestration modules
+from common.systems.configManager import (
+    ConfigManager,
+)
+from common.systems.validationEngine import (
+    ValidationEngine,
+)
+from common.systems.setupOrchestrator import (
+    SetupOrchestrator,
+)
+from common.systems.stepDefinitions import (
+    SetupStep,
+    setupSteps,
+    getStepsToRun,
+    willAnyStepsRun,
+)
+from common.systems.systemsConfig import (
+    SystemConfig,
+    systemsConfig,
+    getSystemConfig,
+    getSupportedPlatforms,
+)
+from common.systems.genericSystem import (
+    GenericSystem,
+    createSystem,
+)
+from common.systems.platform import (
+    Platform,
+)
+
 __all__ = [
     # Logging utilities
     "Colours",
@@ -242,6 +272,23 @@ __all__ = [
     "addToPath",
     "configureAndroidEnvironmentVariables",
     "findNdkRoot",
+    # System orchestration
+    "ConfigManager",
+    "ValidationEngine",
+    "SetupOrchestrator",
+    # Step definitions
+    "SetupStep",
+    "setupSteps",
+    "getStepsToRun",
+    "willAnyStepsRun",
+    # System configuration
+    "SystemConfig",
+    "systemsConfig",
+    "getSystemConfig",
+    "getSupportedPlatforms",
+    "GenericSystem",
+    "createSystem",
+    "Platform",
 ]
 
 # Conditionally add Windows exports if available
