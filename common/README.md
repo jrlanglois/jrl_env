@@ -23,7 +23,7 @@ The single entry point for all Python scripts. Import from this module to access
 ```python
 from common.common import (
     # Logging
-    printInfo, printSuccess, printError, printWarning, printSection,
+    printInfo, printSuccess, printError, printWarning, printH2,
     # Utilities
     commandExists, requireCommand, getJsonValue, getJsonArray, getJsonObject,
     # Package managers
@@ -45,19 +45,31 @@ from common.common import (
 
 Consistent logging functions with verbosity levels and ISO8601 timestamps:
 
-- `printInfo(message)`: Print an info message in cyan (normal/verbose only)
-- `printSuccess(message)`: Print a success message in green with ✓ emoji (normal/verbose only)
-- `printError(message)`: Print an error message in red with ✗ emoji (always shown)
-- `printWarning(message)`: Print a warning message in yellow with ⚠ emoji (normal/verbose only)
-- `printVerbose(message)`: Print a verbose/debug message (verbose only)
-- `printSection(message)`: Print a section header with `===` borders
+**Core Implementation:**
+
+- `printFormatted(message, colour, emoji, minVerbosity, alwaysShow)`: Internal DRY function for all logging (always timestamps)
+
+**Public API:**
+
+- `printInfo(message)`: Print info message in cyan (normal/verbose only)
+- `printSuccess(message)`: Print success message in green with ✓ emoji (normal/verbose only)
+- `printError(message)`: Print error message in red with ✗ emoji (always shown, even in quiet mode)
+- `printWarning(message)`: Print warning message in yellow with ⚠ emoji (normal/verbose only)
+- `printVerbose(message)`: Print verbose/debug message with [VERBOSE] prefix (verbose only)
+- `printDebug(message)`: Alias for `printVerbose()`
+- `printH1(message, dryRun)`: Print top-level heading with full-width `===` separator
+- `printH2(message, dryRun)`: Print second-level heading with `===` borders
+- `printH3(message, dryRun)`: Print third-level heading with `---` style
 - `printHelpText(...)`: Format and print consistent help messages
-- `safePrint(*args, **kwargs)`: Thread-safe print function
+- `safePrint(*args, **kwargs)`: Thread-safe print function for raw output (no timestamp)
 - `colourise(text, code, enable)`: Apply ANSI colour codes to text if enabled
 - `setVerbosity(level)`: Set verbosity level (`quiet`, `normal`, `verbose`)
 - `setVerbosityFromArgs(quiet, verbose)`: Set verbosity from command-line arguments
+- `getVerbosity()`: Get current verbosity level
+- `setShowConsoleTimestamps(show)`: Control whether timestamps appear in console output
+- `getShowConsoleTimestamps()`: Check if console timestamps are enabled
 
-All messages include ISO8601 timestamps by default (e.g., `[2024-01-15T14:30:45]`).
+**Important:** All logging functions (`printInfo`, `printSuccess`, `printError`, `printWarning`, `printVerbose`) include ISO8601 timestamps in the format `[2024-01-15T14:30:45]`. Console timestamp display can be toggled with `setShowConsoleTimestamps(False)` or the `--noTimestamps` flag. **Log files always contain timestamps** regardless of this setting, ensuring auditable logs. Use `safePrint()` for raw output without timestamps (blank lines, prompts, raw data).
 
 ### `core/utilities.py`
 
@@ -93,13 +105,16 @@ Cursor editor configuration:
 
 ### `configure/configureGithubSsh.py`
 
-GitHub SSH key configuration:
+GitHub SSH key configuration with secure passphrase management:
 
-- `configureGithubSsh(configPath, dryRun)`: Generate SSH keys and help configure them for GitHub
+- `configureGithubSsh(configPath, dryRun, requirePassphrase, noPassphrase)`: Generate SSH keys and help configure them for GitHub
+- `storePassphrase(keyName, passphrase)`: Store SSH key passphrase securely in system keychain
+- `getStoredPassphrase(keyName)`: Retrieve SSH key passphrase from system keychain
+- `deleteStoredPassphrase(keyName)`: Delete SSH key passphrase from system keychain
 - `copyToClipboard(text)`: Copy text to clipboard (platform-specific)
 - `openUrl(url)`: Open URL in default browser (platform-specific)
 - `startSshAgent()`: Start SSH agent
-- `addKeyToSshAgent(keyPath)`: Add SSH key to agent
+- `addKeyToSshAgent(keyPath, passphrase)`: Add SSH key to agent (with optional passphrase)
 
 ### `configure/cloneRepositories.py`
 
@@ -149,7 +164,7 @@ Setup script argument parsing:
 
 Shared setup utilities:
 
-- `initLogging(platformName)`: Initialise logging to a file (platform-specific temp directory)
+- `initLogging(platformName, dryRun)`: Initialise logging to a file (platform-specific temp directory, skips file creation in dry-run)
 - `backupConfigs(noBackup, dryRun, cursorSettingsPath)`: Backup configuration files before setup (returns backup directory path)
 - `checkDependencies(requiredCommands, checkFunctions)`: Check if required dependencies are installed
 - `shouldCloneRepositories(configPath, workPathKey)`: Check if repositories should be cloned (only on first run)

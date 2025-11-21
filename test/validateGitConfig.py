@@ -22,7 +22,7 @@ sys.path.insert(0, str(projectRoot))
 from common.common import (
     printError,
     printInfo,
-    printSection,
+    printH2,
     printSuccess,
     printWarning,
     safePrint,
@@ -130,7 +130,7 @@ def validateGitConfig(configPath: str) -> int:
     errors = []
     warnings = []
 
-    printSection("Validating Git Config")
+    printH2("Validating Git Config")
     safePrint()
 
     # Read config file
@@ -160,7 +160,7 @@ def validateGitConfig(configPath: str) -> int:
             elif not isWebFormCompatible(name):
                 errors.append(f"user.name: Not compatible with web forms (contains invalid characters)")
             else:
-                printSuccess(f"  user.name: {name}")
+                printSuccess(f"user.name: {name}")
         else:
             warnings.append("user.name: Not specified")
 
@@ -168,7 +168,7 @@ def validateGitConfig(configPath: str) -> int:
         if 'email' in user and user['email']:
             email = user['email']
             if isValidEmail(email):
-                printSuccess(f"  user.email: {email}")
+                printSuccess(f"user.email: {email}")
             else:
                 errors.append(f"user.email: Invalid email format: {email}")
         else:
@@ -177,10 +177,10 @@ def validateGitConfig(configPath: str) -> int:
         # Validate GitHub username
         if 'usernameGitHub' in user and user['usernameGitHub']:
             username = user['usernameGitHub']
-            printInfo(f"  Checking GitHub username: {username}...")
+            printInfo(f"Checking GitHub username: {username}...")
             exists, message = githubUsernameExists(username)
             if exists:
-                printSuccess(f"  user.usernameGitHub: {username} ({message})")
+                printSuccess(f"user.usernameGitHub: {username} ({message})")
             elif exists is None:
                 warnings.append(f"user.usernameGitHub: Could not verify ({message})")
             else:
@@ -197,7 +197,7 @@ def validateGitConfig(configPath: str) -> int:
         for aliasName, aliasCommand in aliases.items():
             isValid, message = validateGitAlias(aliasCommand)
             if isValid:
-                printSuccess(f"  alias.{aliasName}")
+                printSuccess(f"alias.{aliasName}")
             else:
                 errors.append(f"alias.{aliasName}: {message}")
         safePrint()
@@ -212,7 +212,7 @@ def validateGitConfig(configPath: str) -> int:
             defaultBranch = defaults['init.defaultBranch']
             # Basic validation: should be a valid branch name
             if re.match(r'^[a-zA-Z0-9._/-]+$', defaultBranch):
-                printSuccess(f"  init.defaultBranch: {defaultBranch}")
+                printSuccess(f"init.defaultBranch: {defaultBranch}")
             else:
                 errors.append(f"init.defaultBranch: Invalid branch name: {defaultBranch}")
 
@@ -243,11 +243,11 @@ def validateGitConfig(configPath: str) -> int:
                         if not isinstance(intValue, int) or intValue < 0:
                             errors.append(f"defaults.{key}: Invalid value '{value}' (should be a non-negative integer)")
                         else:
-                            printSuccess(f"  defaults.{key}: {value}")
+                            printSuccess(f"defaults.{key}: {value}")
                     except (ValueError, TypeError):
                         errors.append(f"defaults.{key}: Invalid value '{value}' (should be a non-negative integer)")
                 else:
-                    printSuccess(f"  defaults.{key}: {value}")
+                    printSuccess(f"defaults.{key}: {value}")
             else:
                 errors.append(f"defaults.{key}: Invalid value type (should be string, number, or boolean)")
         safePrint()
@@ -256,13 +256,13 @@ def validateGitConfig(configPath: str) -> int:
     if warnings:
         printWarning("Warnings:")
         for warning in warnings:
-            printWarning(f"  {warning}")
+            printWarning(f"{warning}")
         safePrint()
 
     if errors:
         printError("Errors:")
         for error in errors:
-            printError(f"  {error}")
+            printError(f"{error}")
         safePrint()
         printError("Validation failed")
         return 1

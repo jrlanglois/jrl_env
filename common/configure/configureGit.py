@@ -14,9 +14,10 @@ from typing import Dict, Optional
 from common.core.logging import (
     printError,
     printInfo,
-    printSection,
+    printH2,
     printSuccess,
     printWarning,
+    safePrint,
 )
 from common.core.utilities import (
     commandExists,
@@ -80,7 +81,7 @@ def setGitConfig(
 
     printInfo(description)
     if dryRun:
-        printInfo(f"  [DRY RUN] Would set {configKey} = '{configValue}'")
+        printInfo(f"[DRY RUN] Would set {configKey} = '{configValue}'")
         printSuccess(successMessage)
         return True
 
@@ -128,14 +129,14 @@ def configureGitUser(dryRun: bool = False) -> bool:
         currentEmail = ""
 
     if dryRun:
-        printInfo("  [DRY RUN] Would configure Git user information interactively")
+        printInfo("[DRY RUN] Would configure Git user information interactively")
         printSuccess("Git user information configured successfully")
         return True
 
     if currentName and currentEmail:
         printInfo("Current Git user configuration:")
-        print(f"  Name:  {currentName}")
-        print(f"  Email: {currentEmail}")
+        safePrint(f"Name:  {currentName}")
+        safePrint(f"Email: {currentEmail}")
         keepExisting = input("Keep existing configuration? (Y/N): ").strip()
         if keepExisting.upper() == "Y":
             printSuccess("Keeping existing configuration")
@@ -272,7 +273,7 @@ def addGitAlias(aliasName: str, aliasCommand: str, dryRun: bool = False) -> bool
         True if alias was added, False if it already exists
     """
     if dryRun:
-        printInfo(f"  [DRY RUN] Would add alias: {aliasName} = {aliasCommand}")
+        printInfo(f"[DRY RUN] Would add alias: {aliasName} = {aliasCommand}")
         printSuccess(f"Added alias: {aliasName}")
         return True
 
@@ -361,7 +362,7 @@ def configureGitLfs(dryRun: bool = False) -> bool:
         return True
 
     if dryRun:
-        printInfo("  [DRY RUN] Would initialise Git LFS")
+        printInfo("[DRY RUN] Would initialise Git LFS")
         printSuccess("Git LFS initialised successfully")
         return True
 
@@ -406,34 +407,34 @@ def configureGit(configPath: Optional[str] = None, installHint: str = "Please in
     Returns:
         True if successful, False otherwise
     """
-    printSection("Git Configuration", dryRun=dryRun)
-    print()
+    printH2("Git Configuration", dryRun=dryRun)
+    safePrint()
 
     if not isGitInstalled():
         printError("Git is not installed.")
         printInfo("Please install Git first.")
-        print(f"  {installHint}")
+        safePrint(f"{installHint}")
         return False
 
     success = True
 
     if not configureGitUser(dryRun=dryRun):
         success = False
-    print()
+    safePrint()
 
     if not configureGitDefaults(configPath, dryRun=dryRun):
         success = False
-    print()
+    safePrint()
 
     if not configureGitAliases(configPath, dryRun=dryRun):
         success = False
-    print()
+    safePrint()
 
     if not configureGitLfs(dryRun=dryRun):
         success = False
-    print()
+    safePrint()
 
-    printSection("Configuration Complete")
+    printH2("Configuration Complete")
     if success:
         printSuccess("Git has been configured successfully!")
     else:

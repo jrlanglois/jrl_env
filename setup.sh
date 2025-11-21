@@ -68,7 +68,7 @@ if ! command -v python3 >/dev/null 2>&1; then
                 fi
             else
                 echo "Error: Homebrew not found. Please install Homebrew first:" >&2
-                echo "  /bin/bash -c \"\$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)\"" >&2
+                echo "/bin/bash -c \"\$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)\"" >&2
             fi
             ;;
         ubuntu|raspberrypi)
@@ -79,7 +79,7 @@ if ! command -v python3 >/dev/null 2>&1; then
                 fi
             else
                 echo "Error: sudo not available. Please install Python3 manually:" >&2
-                echo "  apt-get update && apt-get install -y python3 python3-pip" >&2
+                echo "apt-get update && apt-get install -y python3 python3-pip" >&2
             fi
             ;;
         redhat)
@@ -91,7 +91,7 @@ if ! command -v python3 >/dev/null 2>&1; then
                     fi
                 else
                     echo "Error: sudo not available. Please install Python3 manually:" >&2
-                    echo "  dnf install -y python3 python3-pip" >&2
+                    echo "dnf install -y python3 python3-pip" >&2
                 fi
             elif command -v yum >/dev/null 2>&1; then
                 if command -v sudo >/dev/null 2>&1; then
@@ -100,7 +100,7 @@ if ! command -v python3 >/dev/null 2>&1; then
                     fi
                 else
                     echo "Error: sudo not available. Please install Python3 manually:" >&2
-                    echo "  yum install -y python3 python3-pip" >&2
+                    echo "yum install -y python3 python3-pip" >&2
                 fi
             else
                 echo "Error: No suitable package manager found (dnf/yum)." >&2
@@ -116,7 +116,7 @@ if ! command -v python3 >/dev/null 2>&1; then
                     fi
                 else
                     echo "Error: sudo not available. Please install Python3 manually:" >&2
-                    echo "  zypper install -y python3 python3-pip" >&2
+                    echo "zypper install -y python3 python3-pip" >&2
                 fi
             else
                 echo "Error: zypper not found. Please install Python3 manually." >&2
@@ -131,7 +131,7 @@ if ! command -v python3 >/dev/null 2>&1; then
                     fi
                 else
                     echo "Error: sudo not available. Please install Python3 manually:" >&2
-                    echo "  pacman -S --noconfirm python python-pip" >&2
+                    echo "pacman -S --noconfirm python python-pip" >&2
                 fi
             else
                 echo "Error: pacman not found. Please install Python3 manually." >&2

@@ -30,6 +30,9 @@ class SetupArgs:
     noResume: bool = False
     listSteps: bool = False
     configDir: Optional[str] = None
+    requirePassphrase: bool = False
+    noPassphrase: bool = False
+    noConsoleTimestamps: bool = False
 
 
 @dataclass
@@ -91,6 +94,12 @@ def parseSetupArgs(args: Optional[list[str]] = None) -> SetupArgs:
             setupArgs.noResume = True
         elif arg == "--listSteps":
             setupArgs.listSteps = True
+        elif arg == "--requirePassphrase":
+            setupArgs.requirePassphrase = True
+        elif arg == "--noPassphrase":
+            setupArgs.noPassphrase = True
+        elif arg == "--noTimestamps":
+            setupArgs.noConsoleTimestamps = True
         elif arg.startswith("--configDir="):
             setupArgs.configDir = arg.split("=", 1)[1]
         elif arg == "--configDir":
@@ -102,7 +111,7 @@ def parseSetupArgs(args: Optional[list[str]] = None) -> SetupArgs:
                 sys.exit(1)
         elif arg == "--version" or arg == "-v":
             from common.version import __version__
-            print(f"jrl_env version {__version__}")
+            safePrint(f"jrl_env version {__version__}")
             sys.exit(0)
         else:
             printError(f"Unknown option: {arg}")
@@ -110,8 +119,12 @@ def parseSetupArgs(args: Optional[list[str]] = None) -> SetupArgs:
         i += 1
 
     # Set verbosity level based on parsed arguments
-    from common.core.logging import setVerbosityFromArgs
+    from common.core.logging import setVerbosityFromArgs, setShowConsoleTimestamps
     setVerbosityFromArgs(quiet=setupArgs.quiet, verbose=setupArgs.verbose)
+
+    # Set console timestamp display
+    if setupArgs.noConsoleTimestamps:
+        setShowConsoleTimestamps(False)
 
     return setupArgs
 

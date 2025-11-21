@@ -207,7 +207,7 @@ python3 -m common.systems.cli ubuntu rollback
 
 All platform scripts import from `common/common.py` to access:
 
-- Logging functions (`printInfo`, `printSuccess`, `printError`, `printWarning`, `printSection`)
+- Logging functions (`printInfo`, `printSuccess`, `printError`, `printWarning`, `printH2`)
 - Utility functions (`commandExists`, `requireCommand`, `getJsonValue`, etc.)
 - Configuration functions (`configureGit`, `configureCursor`, `configureGithubSsh`, `cloneRepositories`)
 - Installation functions (`installApps`, `installGoogleFonts`)

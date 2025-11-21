@@ -4,6 +4,7 @@ Shared GitHub SSH configuration logic for macOS, Ubuntu, and Windows.
 Generates SSH keys and helps configure them for GitHub.
 """
 
+import getpass
 import os
 import platform
 import subprocess
@@ -11,20 +12,26 @@ import sys
 from pathlib import Path
 from typing import Optional
 
+try:
+    import keyring
+    KEYRING_AVAILABLE = True
+except ImportError:
+    KEYRING_AVAILABLE = False
+
 # Import common utilities directly from source modules
 from common.core.logging import (
     printError,
     printInfo,
-    printSection,
+    printH2,
     printSuccess,
     printWarning,
+    safePrint,
 )
 from common.core.utilities import (
     commandExists,
     getJsonValue,
     requireCommand,
 )
-
 
 def copyToClipboard(text: str) -> bool:
     """
@@ -142,12 +149,77 @@ def startSshAgent() -> bool:
         return True  # Not critical
 
 
-def addKeyToSshAgent(keyPath: str) -> bool:
+def storePassphrase(keyName: str, passphrase: str) -> bool:
+    """
+    Store SSH key passphrase securely in system keychain.
+
+    Args:
+        keyName: Name of the SSH key
+        passphrase: Passphrase to store
+
+    Returns:
+        True if successful, False otherwise
+    """
+    if not KEYRING_AVAILABLE:
+        printWarning("keyring library not available. Passphrase will not be stored.")
+        return False
+
+    try:
+        keyring.set_password("jrl_env_ssh", keyName, passphrase)
+        return True
+    except Exception as e:
+        printWarning(f"Failed to store passphrase in keychain: {e}")
+        return False
+
+
+def getStoredPassphrase(keyName: str) -> Optional[str]:
+    """
+    Retrieve SSH key passphrase from system keychain.
+
+    Args:
+        keyName: Name of the SSH key
+
+    Returns:
+        Passphrase if found, None otherwise
+    """
+    if not KEYRING_AVAILABLE:
+        return None
+
+    try:
+        return keyring.get_password("jrl_env_ssh", keyName)
+    except Exception:
+        return None
+
+
+def deleteStoredPassphrase(keyName: str) -> bool:
+    """
+    Delete SSH key passphrase from system keychain.
+
+    Args:
+        keyName: Name of the SSH key
+
+    Returns:
+        True if successful or not found, False on error
+    """
+    if not KEYRING_AVAILABLE:
+        return True
+
+    try:
+        keyring.delete_password("jrl_env_ssh", keyName)
+        return True
+    except keyring.errors.PasswordDeleteError:
+        return True  # Password not found, that's ok
+    except Exception:
+        return False
+
+
+def addKeyToSshAgent(keyPath: str, passphrase: Optional[str] = None) -> bool:
     """
     Add SSH key to ssh-agent.
 
     Args:
         keyPath: Path to private key file
+        passphrase: Optional passphrase for the key
 
     Returns:
         True if successful, False otherwise
@@ -156,10 +228,14 @@ def addKeyToSshAgent(keyPath: str) -> bool:
         return False
 
     try:
+        # Prepare input for ssh-add (passphrase if provided)
+        inputData = f"{passphrase}\n".encode('utf-8') if passphrase else None
+
         result = subprocess.run(
             ["ssh-add", keyPath],
             check=False,
             capture_output=True,
+            input=inputData,
         )
         if result.returncode == 0:
             return True
@@ -170,6 +246,7 @@ def addKeyToSshAgent(keyPath: str) -> bool:
                 ["ssh-add", "--apple-use-keychain", keyPath],
                 check=False,
                 capture_output=True,
+                input=inputData,
             )
             if result.returncode == 0:
                 return True
@@ -182,6 +259,8 @@ def addKeyToSshAgent(keyPath: str) -> bool:
 def configureGithubSsh(
     configPath: Optional[str] = None,
     dryRun: bool = False,
+    requirePassphrase: bool = False,
+    noPassphrase: bool = False,
 ) -> bool:
     """
     Configure GitHub SSH key generation and setup.
@@ -189,6 +268,8 @@ def configureGithubSsh(
     Args:
         configPath: Path to gitConfig.json file
         dryRun: If True, don't actually generate keys or configure
+        requirePassphrase: If True, require a passphrase for the SSH key
+        noPassphrase: If True, skip passphrase prompt and use no passphrase
 
     Returns:
         True if successful, False otherwise
@@ -200,8 +281,8 @@ def configureGithubSsh(
     if not requireCommand("ssh-keygen", ""):
         return False
 
-    printSection("GitHub SSH Configuration", dryRun=dryRun)
-    print()
+    printH2("GitHub SSH Configuration", dryRun=dryRun)
+    safePrint()
 
     # Read email and username from config
     email = getJsonValue(configPath, ".user.email", "")
@@ -211,16 +292,22 @@ def configureGithubSsh(
     if dryRun:
         printInfo("[DRY RUN] Would configure GitHub SSH key generation")
         if email and email != "null":
-            printInfo(f"  Would use email: {email}")
+            printInfo(f"Would use email: {email}")
         else:
-            printInfo("  Would prompt for email")
+            printInfo("Would prompt for email")
         if username and username != "null":
-            printInfo(f"  Would use GitHub username: {username}")
+            printInfo(f"Would use GitHub username: {username}")
         else:
-            printInfo("  Would prompt for GitHub username")
-        printInfo("  Would generate SSH key: id_ed25519_github")
-        printInfo("  Would add key to ssh-agent")
-        printInfo(f"  Would open GitHub URL: {githubUrl}")
+            printInfo("Would prompt for GitHub username")
+        printInfo("Would generate SSH key: id_ed25519_github")
+        if requirePassphrase:
+            printInfo("Would require passphrase for SSH key")
+        elif noPassphrase:
+            printInfo("Would use no passphrase for SSH key")
+        else:
+            printInfo("Would optionally prompt for passphrase")
+        printInfo("Would add key to ssh-agent")
+        printInfo(f"Would open GitHub URL: {githubUrl}")
         printSuccess("GitHub SSH configuration complete!")
         return True
 
@@ -261,38 +348,81 @@ def configureGithubSsh(
             printInfo("Skipping key generation.")
             return True
 
+    # Prompt for passphrase
+    passphrase = ""
+    if not noPassphrase:
+        safePrint()
+        if requirePassphrase:
+            printInfo("A passphrase is required for this SSH key.")
+        else:
+            printInfo("You can optionally add a passphrase to protect your SSH key.")
+            printInfo("Press Enter to skip passphrase (less secure but more convenient).")
+
+        while True:
+            passphrase1 = getpass.getpass("Enter passphrase (empty for no passphrase): ")
+
+            if not passphrase1:
+                if requirePassphrase:
+                    printWarning("Passphrase is required. Please enter a passphrase.")
+                    continue
+                else:
+                    printInfo("Using no passphrase.")
+                    passphrase = ""
+                    break
+
+            passphrase2 = getpass.getpass("Enter same passphrase again: ")
+
+            if passphrase1 == passphrase2:
+                passphrase = passphrase1
+                printSuccess("Passphrase confirmed.")
+                break
+            else:
+                printWarning("Passphrases do not match. Please try again.")
+
     # Generate SSH key
     printInfo("Generating SSH key...")
     try:
         subprocess.run(
-            ["ssh-keygen", "-t", "ed25519", "-C", email, "-f", str(keyPath), "-N", ""],
+            ["ssh-keygen", "-t", "ed25519", "-C", email, "-f", str(keyPath), "-N", passphrase],
             check=True,
-            input="",  # Empty passphrase
+            input="",
             capture_output=True,
         )
     except subprocess.CalledProcessError:
         printError("Failed to generate SSH key.")
         return False
 
+    # Store passphrase securely if provided
+    if passphrase and KEYRING_AVAILABLE:
+        printInfo("Storing passphrase in system keychain...")
+        if storePassphrase(keyName, passphrase):
+            printSuccess("Passphrase stored securely in system keychain.")
+            printInfo("The passphrase will be retrieved automatically when needed.")
+        else:
+            printWarning("Failed to store passphrase. You'll need to enter it manually when using the key.")
+    elif passphrase and not KEYRING_AVAILABLE:
+        printWarning("keyring library not available. Install with: pip install keyring")
+        printWarning("Passphrase will not be stored. You'll need to enter it manually when using the key.")
+
     # Start ssh-agent
     startSshAgent()
 
     # Add key to ssh-agent
-    if addKeyToSshAgent(str(keyPath)):
+    if addKeyToSshAgent(str(keyPath), passphrase if passphrase else None):
         printSuccess("Added key to ssh-agent")
     else:
         printWarning("Unable to add key to agent automatically.")
 
     # Display public key
     publicKeyPath = keyPath.with_suffix(keyPath.suffix + ".pub")
-    print()
+    safePrint()
     printInfo("Public key:")
-    print()
+    safePrint()
     try:
         with open(publicKeyPath, 'r', encoding='utf-8') as f:
             publicKey = f.read().strip()
-            print(publicKey)
-            print()
+            safePrint(publicKey)  # Don't timestamp the actual key
+            safePrint()
     except Exception as e:
         printError(f"Failed to read public key: {e}")
         return False
@@ -313,7 +443,7 @@ def configureGithubSsh(
     else:
         printInfo(f"Visit {githubUrl} to add the key when ready.")
 
-    print()
+    safePrint()
     printSuccess("GitHub SSH configuration complete")
     return True
 
@@ -323,5 +453,8 @@ __all__ = [
     "openUrl",
     "startSshAgent",
     "addKeyToSshAgent",
+    "storePassphrase",
+    "getStoredPassphrase",
+    "deleteStoredPassphrase",
     "configureGithubSsh",
 ]

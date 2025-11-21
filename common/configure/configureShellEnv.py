@@ -233,7 +233,7 @@ def configureWindowsEnvironmentVariables(
                 success = False
         except FileNotFoundError:
             printWarning("setx command not found. Please set environment variables manually:")
-            printInfo(f"  {varName}={varValue}")
+            printInfo(f"{varName}={varValue}")
             success = False
         except Exception as e:
             printError(f"Error setting {varName}: {e}")
@@ -272,12 +272,12 @@ def configureWindowsEnvironmentVariables(
                         printWarning(f"Failed to update PATH: {result.stderr}")
                         printInfo("Please add these paths manually to PATH:")
                         for path in newPaths:
-                            printInfo(f"  {path}")
+                            printInfo(f"{path}")
                         success = False
                 except FileNotFoundError:
                     printWarning("setx command not found. Please add paths manually to PATH:")
                     for path in pathsToAddStr:
-                        printInfo(f"  {path}")
+                        printInfo(f"{path}")
                     success = False
                 except Exception as e:
                     printError(f"Error updating PATH: {e}")

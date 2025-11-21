@@ -15,6 +15,7 @@ import subprocess
 import sys
 import urllib.error
 import urllib.request
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import List, Optional, Tuple
 
@@ -36,7 +37,7 @@ from common.common import (
     getJsonValue,
     printError,
     printInfo,
-    printSection,
+    printH2,
     printSuccess,
     printWarning,
     safePrint,
@@ -558,27 +559,43 @@ def validateRepositoriesJson(filePath: Path) -> tuple[list[str], list[str]]:
         elif len(repositories) == 0:
             warnings.append("repositories: repositories array is empty")
         else:
-            # Validate repository URLs
-            for repo in repositories:
+            # Validate repository URLs in parallel for speed
+            def validateSingleRepo(repo):
+                """Validate a single repository and return warnings."""
+                repoWarnings = []
+
                 if not isinstance(repo, str) or not repo.strip():
-                    warnings.append(f"repositories: Invalid repository entry: {repo}")
-                    continue
+                    repoWarnings.append(f"repositories: Invalid repository entry: {repo}")
+                    return repoWarnings
 
                 repo = repo.strip()
                 # Check URL format
                 if not re.match(r'^(https://|git@|http://|git://)', repo):
-                    warnings.append(f"repositories: Invalid URL format: {repo}")
-                    continue
+                    repoWarnings.append(f"repositories: Invalid URL format: {repo}")
+                    return repoWarnings
 
                 # Try to validate repository existence (non-blocking)
                 repoExists, repoMessage = checkRepositoryExists(repo)
                 if repoExists is False:
                     # Repository definitely doesn't exist or is inaccessible
-                    warnings.append(f"repositories: {repoMessage}: {repo}")
+                    repoWarnings.append(f"repositories: {repoMessage}: {repo}")
                 elif repoExists is None and repoMessage:
                     # Couldn't determine (network issue, private repo, etc.) - just warn
                     # repoMessage may be None in CI to suppress 403 warnings
-                    warnings.append(f"repositories: {repoMessage}: {repo}")
+                    repoWarnings.append(f"repositories: {repoMessage}: {repo}")
+
+                return repoWarnings
+
+            # Use thread pool for parallel validation (max 10 concurrent checks)
+            maxWorkers = min(10, len(repositories))
+            with ThreadPoolExecutor(max_workers=maxWorkers) as executor:
+                futures = {executor.submit(validateSingleRepo, repo): repo for repo in repositories}
+                for future in as_completed(futures):
+                    try:
+                        repoWarnings = future.result()
+                        warnings.extend(repoWarnings)
+                    except Exception as e:
+                        warnings.append(f"repositories: Validation error - {e}")
     except Exception as e:
         errors.append(f"repositories: Validation failed - {e}")
 
@@ -651,7 +668,7 @@ def printHelp() -> None:
         sections={
             "Arguments": [
                 "platform    Optional platform name to validate (ubuntu, macos, win11, etc.)",
-                "            If not specified, validates all platform configs",
+                "          If not specified, validates all platform configs",
             ],
             "Valid Platforms": [
                 "ubuntu, macos, win11, redhat, opensuse, archlinux, raspberrypi",
@@ -674,13 +691,26 @@ def printHelp() -> None:
             ("--help, -h", "Show this help message and exit"),
             ("--quiet, -q", "Only show final success/failure message"),
             ("--configDir DIR", "Use custom configuration directory (default: ./configs)\n"
-             "                    Can also be set via JRL_ENV_CONFIG_DIR environment variable"),
+             "                  Can also be set via JRL_ENV_CONFIG_DIR environment variable"),
         ],
     )
 
 
-def main() -> int:
-    """Main validation function."""
+def main(setupSignalHandler: bool = True) -> int:
+    """
+    Main validation function.
+
+    Args:
+        setupSignalHandler: If True, set up CTRL+C handler. Set to False when called programmatically.
+
+    Returns:
+        Exit code (0=success, 1=errors, 2=unknown fields)
+    """
+    # Register signal handlers for graceful shutdown (only if running as main script)
+    if setupSignalHandler:
+        from common.core.signalHandling import setupSignalHandlers
+        setupSignalHandlers(resumeMessage=False)
+
     # Check for --help flag
     if "--help" in sys.argv or "-h" in sys.argv:
         printHelp()
@@ -709,7 +739,7 @@ def main() -> int:
     allErrors = []
     allWarnings = []
 
-    printSection("Validating Configuration Files")
+    printH2("Validating Configuration Files")
     safePrint()
 
     printInfo("Validating JSON files...")
@@ -792,7 +822,7 @@ def main() -> int:
     if isValid:
         # cursorSettings.json can have any valid Cursor/VSCode settings, so we don't restrict fields
         # Schema validation handles structure validation
-        printInfo("  ✓ cursorSettings.json structure valid")
+        printInfo("✓ cursorSettings.json structure valid")
 
     # Validate linuxCommon.json if it exists
     linuxCommonPath = configsPath / "linuxCommon.json"
@@ -822,7 +852,7 @@ def main() -> int:
     if len(otherErrors) == 0 and len(allWarnings) == 0 and len(unknownFieldErrors) == 0:
         result = 0
         if getVerbosity() == Verbosity.quiet:
-            print("Success")
+            safePrint("Success")
         else:
             printSuccess("All configuration files are valid!")
         return result
@@ -847,7 +877,7 @@ def main() -> int:
                 safePrint()
                 printError("Validation failed. Please fix errors before running setup.")
             else:
-                print("Failure")
+                safePrint("Failure")
             return 1
         elif len(unknownFieldErrors) > 0:
             # Only unknown field errors - these are non-fatal
@@ -865,7 +895,7 @@ def main() -> int:
             # Only warnings, no errors
             result = 0
             if getVerbosity() == Verbosity.quiet:
-                print("Success")
+                safePrint("Success")
             else:
                 printSuccess("Validation passed with warnings.")
             return result

@@ -238,7 +238,7 @@ def installFontFile(fontPath: str, installDir: str) -> bool:
 
     # Check if it's WOFF2
     if fontPath.endswith('.woff2'):
-        printWarning("    WOFF2 format cannot be directly installed")
+        printWarning("WOFF2 format cannot be directly installed")
         return False
 
     fontName = os.path.basename(fontPath)
@@ -290,7 +290,7 @@ def installFontFile(fontPath: str, installDir: str) -> bool:
 
             return True
         except Exception as e:
-            printError(f"    Installation failed: {e}")
+            printError(f"  Installation failed: {e}")
             return False
     else:
         # Linux/macOS: Install to user font directory
@@ -305,7 +305,7 @@ def installFontFile(fontPath: str, installDir: str) -> bool:
             shutil.copy2(fontPath, destination)
             return True
         except Exception as e:
-            printError(f"    Installation failed: {e}")
+            printError(f"  Installation failed: {e}")
             return False
 
 
@@ -328,7 +328,7 @@ def convertFontFile(fontName: str, variant: str, filePath: str, tempDir: str) ->
                 pass
             return (fontName, variant, ttfPath)
         else:
-            printWarning(f"    ⚠ {fontName} {variant}: WOFF2 conversion failed")
+            printWarning(f"  ⚠ {fontName} {variant}: WOFF2 conversion failed")
             return None
     return (fontName, variant, filePath)
 
@@ -396,8 +396,8 @@ def refreshFontCache(installDir: str) -> None:
 def main() -> None:
     """Main function"""
     if len(sys.argv) < 3:
-        print(f"Usage: {sys.argv[0]} <configPath> <installDir> [variants...] [--dryRun]")
-        print(f"  --dryRun: Show what would be downloaded/installed without actually doing it")
+        safePrint(f"Usage: {sys.argv[0]} <configPath> <installDir> [variants...] [--dryRun]")
+        safePrint(f"--dryRun: Show what would be downloaded/installed without actually doing it")
         sys.exit(1)
 
     # Parse arguments
@@ -442,7 +442,7 @@ def main() -> None:
         printWarning("No fonts specified in configuration file.")
         sys.exit(0)
 
-    printSection("Google Fonts Installation", dryRun=dryRun)
+    printH2("Google Fonts Installation", dryRun=dryRun)
     printInfo(f"Found {len(fontNames)} font(s) in configuration file.")
 
     # Show install location
@@ -458,7 +458,7 @@ def main() -> None:
             else:
                 printWarning(f"No admin access - installing to: {installDir}")
             if not dryRun:
-                printWarning("  (Run as Administrator to install system-wide)")
+                printWarning("(Run as Administrator to install system-wide)")
     else:
         if dryRun:
             printInfo(f"Would install to: {installDir}")
@@ -472,7 +472,7 @@ def main() -> None:
         safePrint("")
         printInfo("Would process:")
         for fontName in fontNames:
-            safePrint(f"  - {fontName}: {', '.join(variants)}")
+            safePrint(f"- {fontName}: {', '.join(variants)}")
         safePrint("")
         printInfo(f"Total: {len(fontNames)} font(s) × {len(variants)} variant(s) = {len(fontNames) * len(variants)} font file(s)")
         sys.exit(0)
@@ -508,13 +508,13 @@ def main() -> None:
                 downloadCount += 1
                 if result:
                     downloadedFiles.append(result)
-                    printSuccess(f"  Downloading font {downloadCount}/{totalDownloads}: ✓ {fontName} {variant}")
+                    printSuccess(f"Downloading font {downloadCount}/{totalDownloads}: ✓ {fontName} {variant}")
                 else:
                     # Don't show failures for every variant to reduce noise
                     pass
             except Exception as e:
                 downloadCount += 1
-                printError(f"  Downloading font {downloadCount}/{totalDownloads}: ✗ {fontName} {variant}: {e}")
+                printError(f"Downloading font {downloadCount}/{totalDownloads}: ✗ {fontName} {variant}: {e}")
 
     printSuccess(f"Downloaded {len(downloadedFiles)}/{totalDownloads} font file(s)")
     safePrint("")
@@ -546,12 +546,12 @@ def main() -> None:
                     if result:
                         convertedFiles.append(result)
                         if filePath.endswith('.woff2'):
-                            printSuccess(f"  [{convertCount}/{totalConverts}] ✓ Converted {fontName} {variant}")
+                            printSuccess(f"[{convertCount}/{totalConverts}] ✓ Converted {fontName} {variant}")
                     else:
                         # Non-WOFF2 files pass through
                         convertedFiles.append((fontName, variant, filePath))
                 except Exception as e:
-                    printError(f"  [{convertCount}/{totalConverts}] ✗ Error converting {fontName} {variant}: {e}")
+                    printError(f"[{convertCount}/{totalConverts}] ✗ Error converting {fontName} {variant}: {e}")
 
         printSuccess(f"Converted {len([f for f in convertedFiles if f[2].endswith('.ttf')])} font file(s)")
         safePrint("")
@@ -594,12 +594,12 @@ def main() -> None:
                 result = future.result()
                 installResults.append(result)
                 if result[0]:  # Success
-                    printSuccess(f"  Installing font {installCount}/{totalInstalls}: ✓ {fontName} {variant}")
+                    printSuccess(f"Installing font {installCount}/{totalInstalls}: ✓ {fontName} {variant}")
                 else:
-                    printError(f"  Installing font {installCount}/{totalInstalls}: ✗ {fontName} {variant}")
+                    printError(f"Installing font {installCount}/{totalInstalls}: ✗ {fontName} {variant}")
             except Exception as e:
                 installResults.append((False, fontName, variant, str(e)))
-                printError(f"  Installing font {installCount}/{totalInstalls}: ✗ {fontName} {variant}: {e}")
+                printError(f"Installing font {installCount}/{totalInstalls}: ✗ {fontName} {variant}: {e}")
 
         # Mark fonts with no successful installs as skipped
         for fontName in fontNames:
@@ -649,11 +649,11 @@ def main() -> None:
 
     # Summary
     printInfo("Summary:")
-    printSuccess(f"  Installed: {results['installed']} font file(s)")
+    printSuccess(f"Installed: {results['installed']} font file(s)")
     if results['skipped'] > 0:
-        printWarning(f"  Skipped: {results['skipped']} font(s)")
+        printWarning(f"Skipped: {results['skipped']} font(s)")
     if results['failed'] > 0:
-        printError(f"  Failed: {results['failed']} font file(s)")
+        printError(f"Failed: {results['failed']} font file(s)")
 
     # Format elapsed time
     if elapsedTime < 60:
@@ -668,7 +668,7 @@ def main() -> None:
         seconds = elapsedTime % 60
         timeStr = f"{hours} hour(s) {minutes} minute(s) {seconds:.2f} seconds"
 
-    printInfo(f"  Total time: {timeStr}")
+    printInfo(f"Total time: {timeStr}")
     safePrint("")
     printSuccess("Font installation complete!")
     printWarning("Note: You may need to restart applications for new fonts to appear.")

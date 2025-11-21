@@ -22,7 +22,7 @@ from common.common import (
     isGitInstalled,
     printError,
     printInfo,
-    printSection,
+    printH2,
     printSuccess,
     printWarning,
     safePrint,
@@ -254,7 +254,7 @@ def runVerification(system: Optional[object] = None) -> bool:
     Returns:
         True if all verifications passed, False otherwise
     """
-    printSection("Setup Verification")
+    printH2("Setup Verification")
     safePrint()
 
     # Get config directory (supports --configDir and JRL_ENV_CONFIG_DIR)
@@ -319,7 +319,7 @@ def runVerification(system: Optional[object] = None) -> bool:
             printWarning(" Some configured fonts may be missing")
             allPassed = False
     else:
-        printInfo("  ℹ No font installation directory configured")
+        printInfo("ℹ No font installation directory configured")
     safePrint()
 
     # 4. Test SSH connectivity
@@ -328,7 +328,7 @@ def runVerification(system: Optional[object] = None) -> bool:
         printSuccess(" SSH key authentication to GitHub is working")
     else:
         printWarning(" SSH key connectivity to GitHub failed or not configured")
-        printInfo("    This is not critical if you don't use SSH for Git operations")
+        printInfo("This is not critical if you don't use SSH for Git operations")
     safePrint()
 
     if allPassed:
@@ -346,21 +346,21 @@ def main() -> int:
 
     # Check for --help flag
     if "--help" in sys.argv or "-h" in sys.argv:
-        print(
+        safePrint(
             "Usage: python3 -m common.systems.verify [options]\n"
             "\n"
             "Verifies that setup completed successfully by checking critical components.\n"
             "\n"
             "Options:\n"
-            "  --help, -h        Show this help message and exit\n"
-            "  --quiet, -q       Enable quiet mode (only show errors)\n"
-            "  --configDir DIR   Use custom configuration directory (default: ./configs)\n"
-            "                    Can also be set via JRL_ENV_CONFIG_DIR environment variable\n"
+            "--help, -h        Show this help message and exit\n"
+            "--quiet, -q       Enable quiet mode (only show errors)\n"
+            "--configDir DIR   Use custom configuration directory (default: ./configs)\n"
+            "                  Can also be set via JRL_ENV_CONFIG_DIR environment variable\n"
             "\n"
             "Examples:\n"
-            "  python3 -m common.systems.verify\n"
-            "  python3 -m common.systems.verify --quiet\n"
-            "  python3 -m common.systems.verify --configDir /path/to/configs\n"
+            "python3 -m common.systems.verify\n"
+            "python3 -m common.systems.verify --quiet\n"
+            "python3 -m common.systems.verify --configDir /path/to/configs\n"
         )
         return 0
 
@@ -373,9 +373,9 @@ def main() -> int:
     # Final success/failure message (always show in quiet mode)
     if getVerbosity() == Verbosity.quiet:
         if result == 0:
-            print("Success")
+            safePrint("Success")
         else:
-            print("Failure")
+            safePrint("Failure")
 
     return result
 

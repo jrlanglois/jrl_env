@@ -15,7 +15,7 @@ from pathlib import Path
 scriptDir = Path(__file__).parent.absolute()
 commonDir = scriptDir.parent / "common"
 sys.path.insert(0, str(commonDir.parent))
-from common.core.logging import printHelpText, setVerbosityFromArgs, getVerbosity, Verbosity, printError
+from common.core.logging import printHelpText, setVerbosityFromArgs, getVerbosity, Verbosity, printError, printH1, safePrint
 
 
 def validateJsonFile(jsonPath: str, requiredField: str = None, quiet: bool = False) -> int:
@@ -34,7 +34,7 @@ def validateJsonFile(jsonPath: str, requiredField: str = None, quiet: bool = Fal
 
     if not jsonFile.exists():
         if not quiet:
-            print(f"Error: File not found: {jsonPath}", file=sys.stderr)
+            safePrint(f"Error: File not found: {jsonPath}", file=sys.stderr)
         return 1
 
     try:
@@ -49,18 +49,18 @@ def validateJsonFile(jsonPath: str, requiredField: str = None, quiet: bool = Fal
             for part in parts:
                 if part not in current:
                     if not quiet:
-                        print(f"Error: Required field '{requiredField}' not found in {jsonPath}", file=sys.stderr)
+                        safePrint(f"Error: Required field '{requiredField}' not found in {jsonPath}", file=sys.stderr)
                     return 1
                 current = current[part]
 
         return 0
     except json.JSONDecodeError as e:
         if not quiet:
-            print(f"Error: Invalid JSON syntax in {jsonPath}: {e}", file=sys.stderr)
+            safePrint(f"Error: Invalid JSON syntax in {jsonPath}: {e}", file=sys.stderr)
         return 1
     except Exception as e:
         if not quiet:
-            print(f"Error: Failed to validate {jsonPath}: {e}", file=sys.stderr)
+            safePrint(f"Error: Failed to validate {jsonPath}: {e}", file=sys.stderr)
         return 1
 
 
@@ -96,12 +96,16 @@ def main() -> int:
     quiet = "--quiet" in sys.argv or "-q" in sys.argv
     setVerbosityFromArgs(quiet=quiet, verbose=False)
 
+    # Print title when run directly (unless in quiet mode)
+    if getVerbosity() != Verbosity.quiet:
+        printH1("jrl_env validateJson.py")
+
     if len(sys.argv) < 2:
         if getVerbosity() == Verbosity.quiet:
-            print("Failure")
+            safePrint("Failure")
         else:
-            print("Usage: python3 helpers/validateJson.py <json_file> [--required-field <field>]", file=sys.stderr)
-            print("Use --help for more information.", file=sys.stderr)
+            safePrint("Usage: python3 helpers/validateJson.py <json_file> [--required-field <field>]", file=sys.stderr)
+            safePrint("Use --help for more information.", file=sys.stderr)
         return 1
 
     jsonPath = sys.argv[1]
@@ -116,9 +120,9 @@ def main() -> int:
     # Final success/failure message (always show in quiet mode)
     if getVerbosity() == Verbosity.quiet:
         if result == 0:
-            print("Success")
+            safePrint("Success")
         else:
-            print("Failure")
+            safePrint("Failure")
 
     return result
 

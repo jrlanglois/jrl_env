@@ -28,7 +28,7 @@ from common.common import (
     isWingetInstalled,
     printError,
     printInfo,
-    printSection,
+    printH2,
     printSuccess,
     printWarning,
     safePrint,
@@ -412,7 +412,8 @@ def runStatusCheck(system: Optional[object] = None) -> int:
     Returns:
         Exit code (0 for success, non-zero for failure)
     """
-    printSection("jrl_env Status Check")
+    from common.core.logging import printH1
+    printH1("jrl_env Status Check")
     safePrint()
 
     # Get config directory (supports --configDir and JRL_ENV_CONFIG_DIR)
@@ -463,28 +464,28 @@ def runStatusCheck(system: Optional[object] = None) -> int:
     # Check Cursor
     checkCursor(platformName)
 
-    printSection("Status Check Complete")
+    printH2("Status Check Complete")
     printSuccess("Status check completed!")
     return 0
 
 
 def printHelp() -> None:
     """Print help information for the status script."""
-    print(
+    safePrint(
         "Usage: python3 -m common.systems.status [options]\n"
         "\n"
         "Checks installed applications, configurations, and repositories.\n"
         "\n"
         "Options:\n"
-        "  --help, -h        Show this help message and exit\n"
-        "  --quiet, -q       Enable quiet mode (only show errors)\n"
-        "  --configDir DIR   Use custom configuration directory (default: ./configs)\n"
-        "                    Can also be set via JRL_ENV_CONFIG_DIR environment variable\n"
+        "--help, -h        Show this help message and exit\n"
+        "--quiet, -q       Enable quiet mode (only show errors)\n"
+        "--configDir DIR   Use custom configuration directory (default: ./configs)\n"
+        "                  Can also be set via JRL_ENV_CONFIG_DIR environment variable\n"
         "\n"
         "Examples:\n"
-        "  python3 -m common.systems.status\n"
-        "  python3 -m common.systems.status --quiet\n"
-        "  python3 -m common.systems.status --configDir /path/to/configs\n"
+        "python3 -m common.systems.status\n"
+        "python3 -m common.systems.status --quiet\n"
+        "python3 -m common.systems.status --configDir /path/to/configs\n"
     )
 
 
@@ -507,9 +508,9 @@ def main() -> int:
         from common.core.logging import getVerbosity, Verbosity
         if getVerbosity() == Verbosity.quiet:
             if result == 0:
-                print("Success")
+                safePrint("Success")
             else:
-                print("Failure")
+                safePrint("Failure")
 
     return result
 

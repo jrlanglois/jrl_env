@@ -4,3 +4,6 @@
 # JSON schema validation for configuration files
 jsonschema>=4.0.0
 
+# Secure password storage for SSH passphrases
+keyring>=24.0.0
+

@@ -30,15 +30,16 @@ from common.configure.cloneRepositories import expandPath
 from common.configure.configureGit import isGitInstalled
 
 
-def initLogging(platformName: str) -> str:
+def initLogging(platformName: str, dryRun: bool = False) -> str:
     """
     Initialise logging to a file.
 
     Args:
         platformName: Name of the platform (e.g., "macos", "ubuntu", "win11")
+        dryRun: If True, don't create log file
 
     Returns:
-        Path to log file
+        Path to log file (or simulated path in dry-run mode)
     """
     # Determine temp directory based on platform
     if sys.platform == "win32":
@@ -47,10 +48,15 @@ def initLogging(platformName: str) -> str:
         tmpBase = os.environ.get("TMPDIR", "/tmp")
 
     logDir = Path(tmpBase) / "jrl_env_logs"
-    logDir.mkdir(parents=True, exist_ok=True)
-
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     logFilePath = logDir / f"setup_{platformName}_{timestamp}.log"
+
+    # In dry-run mode, just return the path without creating the file
+    if dryRun:
+        return f"{str(logFilePath)} (dry-run, not created)"
+
+    # Create log directory
+    logDir.mkdir(parents=True, exist_ok=True)
 
     # Write initial log entry
     initMessage = f"=== jrl_env Setup Log - Started at {datetime.now().strftime('%Y-%m-%dT%H:%M:%S')} ===\n"

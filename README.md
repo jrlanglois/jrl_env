@@ -9,72 +9,13 @@ Helper tooling enforces Allman braces, camelCase for functions/variables, Pascal
 
 ## Overview
 
-Automated setup scripts for ArchLinux, macOS, OpenSUSE, Raspberry Pi, RedHat/Fedora/CentOS, Ubuntu, and Windows 11. Manages application installation, system configuration, Git setup, Cursor editor settings, font installation, and repository cloning.
+Automated setup and update scripts for many systems. Manages application installation, system configuration, Git setup, Cursor editor settings, font installation, and repository cloning.
 
 ### Purpose
 
-This repository is designed for configuring my own development machines. The scripts and configurations are tailored to my personal preferences and workflow.
+This system is designed for configuring my own development machines. The scripts and configurations are tailored to my personal preferences and workflow, but you can write up your own and pass them as parameters.
 
 Obviously this is a public repository to make things easier for myself. You can use it, but do so at your own risk! See the license for details.
-
-## Structure
-
-```text
-jrl_env/
-├── common/           # Shared logic (Python modules)
-│   ├── configure/    # Configuration modules
-│   │   ├── cloneRepositories.py
-│   │   ├── configureCursor.py
-│   │   ├── configureGit.py
-│   │   └── configureGithubSsh.py
-│   ├── core/         # Core utilities (colours, logging, utilities)
-│   │   ├── logging.py
-│   │   └── utilities.py  # Includes OS detection functions
-│   ├── install/      # Installation modules
-│   │   ├── installApps.py
-│   │   ├── installFonts.py
-│   │   ├── setupArgs.py
-│   │   └── setupUtils.py
-│   ├── linux/        # Linux-specific helpers (package managers, etc.)
-│   │   └── packageManager.py
-│   ├── systems/      # System base classes
-│   │   ├── cli.py         # Unified CLI for individual operations
-│   │   └── systemBase.py  # Base class for all system setups
-│   ├── windows/      # Windows-specific helpers
-│   │   └── packageManager.py
-│   └── common.py     # Single entry point for Python - imports all common utilities
-├── configs/          # JSON configuration files
-│   ├── archlinux.json
-│   ├── cursorSettings.json
-│   ├── fonts.json
-│   ├── gitConfig.json
-│   ├── linuxCommon.json
-│   ├── macos.json
-│   ├── opensuse.json
-│   ├── raspberrypi.json
-│   ├── redhat.json
-│   ├── repositories.json
-│   ├── ubuntu.json
-│   └── win11.json
-├── helpers/          # Utility scripts and shared modules
-│   ├── convertToAllman.py
-│   ├── formatRepo.py
-│   └── tidy.py
-├── systems/          # Platform-specific scripts (Python)
-│   ├── archlinux/    # Python scripts for ArchLinux
-│   ├── macos/        # Python scripts for macOS
-│   ├── opensuse/     # Python scripts for OpenSUSE
-│   ├── raspberrypi/  # Python scripts for Raspberry Pi
-│   ├── redhat/       # Python scripts for RedHat/Fedora/CentOS
-│   ├── ubuntu/       # Python scripts for Ubuntu
-│   └── win11/        # Python scripts for Windows
-└── test/             # Validation scripts for configuration files (Python)
-    ├── validateFonts.py
-    ├── validateGitConfig.py
-    ├── validateLinuxCommonPackages.py  # Comprehensive Linux common validation
-    ├── validatePackages.py          # Unified package validation (all platforms)
-    └── validateRepositories.py
-```
 
 ## Quick Start
 
@@ -82,20 +23,20 @@ jrl_env/
 
 The easiest way to get started is using the unified setup script at the root, which auto-detects your operating system:
 
-**Windows 11:**
+#### Windows 11
 
 ```powershell
 git clone https://github.com/jrlanglois/jrl_env.git
 cd jrl_env
-python3 setup.py
+./setup.ps1
 ```
 
-**ArchLinux / macOS / OpenSUSE / Raspberry Pi / RedHat / Ubuntu:**
+#### Everywhere Else
 
 ```bash
 git clone https://github.com/jrlanglois/jrl_env.git
 cd jrl_env
-python3 setup.py
+./setup.sh
 ```
 
 The unified setup script will:
@@ -113,10 +54,13 @@ The unified setup script will:
 - `--version, -v`: Show version information
 - `--quiet, -q`: Only show final success/failure message
 - `--verbose`: Enable verbose output (show debug messages)
+- `--noTimestamps`: Hide timestamps in console output (log files always include timestamps)
 - `--resume`: Automatically resume from last successful step if setup was interrupted
 - `--noResume`: Do not resume from previous setup (start fresh)
 - `--listSteps`: Preview what steps will be executed without running setup
 - `--skipFonts`, `--skipApps`, `--skipGit`, `--skipCursor`, `--skipRepos`, `--skipSsh`: Skip specific steps
+- `--requirePassphrase`: Require a passphrase for SSH keys (recommended for security)
+- `--noPassphrase`: Skip passphrase for SSH keys (not recommended, less secure)
 - `--appsOnly`: Only install/update applications
 - `--dryRun`: Preview changes without making them
 - `--noBackup`: Skip backing up existing configuration files
@@ -131,46 +75,8 @@ pip install -r requirements.txt
 
 Alternatively, you can run the platform-specific setup scripts directly:
 
-**Windows 11:**
-
 ```powershell
-python3 systems/win11/setup.py
-```
-
-**macOS:**
-
-```bash
-python3 systems/macos/setup.py
-```
-
-**Ubuntu:**
-
-```bash
-python3 systems/ubuntu/setup.py
-```
-
-**Raspberry Pi:**
-
-```bash
-python3 systems/raspberrypi/setup.py
-```
-
-**RedHat/Fedora/CentOS:**
-
-```bash
-python3 systems/redhat/setup.py
-```
-
-**OpenSUSE:**
-
-```bash
-python3 systems/opensuse/setup.py
-```
-
-**ArchLinux:**
-
-```bash
-python3 systems/archlinux/setup.py
+python3 systems/{os}/setup.py
 ```
 
 ### Individual Operations
@@ -183,15 +89,15 @@ python3 -m common.systems.cli <platform> <operation> [options]
 
 **Available operations:**
 
-- `status`: Check environment status (installed packages, Git config, fonts, repos)
-- `fonts`: Install Google Fonts
 - `apps`: Install/update applications
-- `git`: Configure Git
-- `ssh`: Configure GitHub SSH
 - `cursor`: Configure Cursor editor
+- `fonts`: Install Google Fonts
+- `git`: Configure Git
 - `repos`: Clone repositories
-- `verify`: Run post-setup verification checks
 - `rollback`: Rollback a failed setup session
+- `ssh`: Configure GitHub SSH
+- `status`: Check environment status (installed packages, Git config, fonts, repos)
+- `verify`: Run post-setup verification checks
 
 **Examples:**
 
@@ -265,6 +171,47 @@ python3 test/validateGitConfig.py configs/gitConfig.json
 
 All validation scripts support `--help` and `--quiet` flags. See [`test/README.md`](test/README.md) for details.
 
+## Security
+
+### SSH Key Passphrases
+
+jrl_env supports secure SSH key generation with optional passphrases:
+
+**Default Behavior (Recommended):**
+```bash
+python3 setup.py
+```
+You'll be prompted to optionally add a passphrase. Press Enter to skip or enter a strong passphrase.
+
+**Require Passphrase (Most Secure):**
+```bash
+python3 setup.py --requirePassphrase
+```
+Forces passphrase creation. Recommended for production environments.
+
+**No Passphrase (Least Secure):**
+```bash
+python3 setup.py --noPassphrase
+```
+Skips passphrase prompt. Only use for testing/development. **Not recommended for production.**
+
+### Passphrase Storage
+
+When you provide a passphrase, it's stored securely in your system keychain:
+- **macOS:** Keychain
+- **Linux:** Secret Service API (GNOME Keyring, KWallet)
+- **Windows:** Credential Manager
+
+Passphrases are encrypted by the OS and retrieved automatically when needed.
+
+**Security Benefits:**
+- No plaintext password storage
+- OS-level encryption
+- Per-user access control
+- Automatic retrieval for ssh-agent
+
+For comprehensive security information, see [`SECURITY.md`](SECURITY.md).
+
 ## Using This Repository
 
 To adapt this setup for your own machines:
@@ -316,7 +263,7 @@ This repository follows DRY (Don't Repeat Yourself) and SOLID principles:
 - **OS Detection**: `common/core/utilities.py` provides OS detection functions (`findOperatingSystem()`, `getOperatingSystem()`, `isOperatingSystem()`) to identify the current platform
 - **Shared Utilities**: Core utilities are in `common/core/`:
   - `common/core/utilities.py`: Generic Python utilities (e.g., `commandExists()`, JSON helpers, OS detection)
-  - `common/core/logging.py`: Consistent logging functions with verbosity levels (`printInfo`, `printSuccess`, `printError`, `printWarning`, `printSection`, `printVerbose`, `safePrint`, `colourise`)
+  - `common/core/logging.py`: Consistent logging functions with verbosity levels (`printInfo`, `printSuccess`, `printError`, `printWarning`, `printH2`, `printVerbose`, `safePrint`, `colourise`)
   - `common/core/logging.py`: Verbosity levels (`quiet`, `normal`, `verbose`) and ISO8601 timestamps
 - **Linux Package Helpers**: `common/linux/packageManager.py` provides distro-agnostic OOP abstractions so any Linux system can use its package manager (`apt`, `yum`, `dnf`, `rpm`) and reuse install/update logic
 - **Windows Package Helpers**: `common/windows/packageManager.py` provides Windows-specific package management utilities for winget and Microsoft Store
@@ -342,6 +289,7 @@ If it's a style debate, I have zero interest in entertaining it.
 - **Naming**:
   - **Classes/Structs**: PascalCase (e.g., `PackageManager`, `TidyStats`, `Colours`)
   - **Functions/Variables/Macros**: camelCase (e.g., `printInfo`, `backupConfigs`, `isWingetInstalled`, `packageMappings`)
+  - **Underscores**: Absolutely no underscores at any time.
 - **Indentation**: 4 spaces, no tabs.
 - **Braces**: Allman style (opening brace/bracket on its own line) where possible. Applies to code blocks, objects, and arrays.
 - **Boolean functions**: Use `is/was/{verb}` prefixes for clarity (e.g., `isGitInstalled`, `isRepositoryCloned`).

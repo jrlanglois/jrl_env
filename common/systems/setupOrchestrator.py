@@ -20,7 +20,7 @@ from common.common import (
     isAndroidStudioInstalled,
     printError,
     printInfo,
-    printSection,
+    printH2,
     printSuccess,
     printWarning,
     safePrint,
@@ -80,11 +80,12 @@ class SetupOrchestrator:
         platformName = self.system.getPlatformName()
 
         # Print header
-        printSection(f"jrl_env Setup for {platformName.capitalize()}")
+        from common.core.logging import printH1
+        printH1(f"jrl_env Setup for {platformName.capitalize()}")
         printInfo(f"Log file: {self.logFile}")
 
         if self.setupArgs.dryRun:
-            printSection("DRY RUN MODE")
+            printH2("DRY RUN MODE")
             printWarning("No changes will be made. This is a preview.")
 
         # Handle resume logic
@@ -97,7 +98,7 @@ class SetupOrchestrator:
         self.validationEngine.validateAll(platformConfigPath)
 
         # Run pre-install commands
-        runConfigCommands("preInstall", paths["platformConfigPath"])
+        runConfigCommands("preInstall", paths["platformConfigPath"], dryRun=self.setupArgs.dryRun)
         safePrint()
 
         # Check dependencies and backup configs
@@ -117,7 +118,7 @@ class SetupOrchestrator:
             return 1
 
         # Run post-install commands
-        runConfigCommands("postInstall", paths["platformConfigPath"])
+        runConfigCommands("postInstall", paths["platformConfigPath"], dryRun=self.setupArgs.dryRun)
         safePrint()
 
         # Save rollback session
@@ -161,7 +162,7 @@ class SetupOrchestrator:
                 shouldResume = self.promptResume(existingState)
 
         if shouldResume and existingState:
-            printSection("Resuming Setup")
+            printH2("Resuming Setup")
             printInfo(
                 f"Resuming from session: {existingState.sessionId}\n"
                 f"Skipping completed steps: {', '.join(sorted(existingState.completedSteps)) or 'None'}"
@@ -185,13 +186,13 @@ class SetupOrchestrator:
         Returns:
             True if user wants to resume, False otherwise
         """
-        printSection("Previous Setup Detected")
+        printH2("Previous Setup Detected")
         printInfo(f"Found incomplete setup from {existingState.timestamp}")
         if existingState.failedAtStep:
             printInfo(f"Setup failed at: {existingState.failedAtStep}")
         printInfo(f"Completed steps: {', '.join(sorted(existingState.completedSteps)) or 'None'}\n")
         safePrint()
-        print("Would you like to resume from the last successful step? (y/n): ", end="", flush=True)
+        safePrint("Would you like to resume from the last successful step? (y/n): ", end="", flush=True)
         try:
             response = input().strip().lower()
             return response in ('y', 'yes')
@@ -316,7 +317,7 @@ class SetupOrchestrator:
             True if step succeeded, False otherwise
         """
         if isStepComplete(self.setupState, stepName):
-            printSection(
+            printH2(
                 f"Step {stepNumber}: {description} (SKIPPED - already completed)",
                 dryRun=self.setupArgs.dryRun
             )
@@ -324,7 +325,7 @@ class SetupOrchestrator:
             safePrint()
             return True
 
-        printSection(f"Step {stepNumber}: {description}", dryRun=self.setupArgs.dryRun)
+        printH2(f"Step {stepNumber}: {description}", dryRun=self.setupArgs.dryRun)
         try:
             result = action()
             if not result:
@@ -348,7 +349,7 @@ class SetupOrchestrator:
         """Execute application installation step."""
         stepName = "apps"
         if isStepComplete(self.setupState, stepName):
-            printSection(
+            printH2(
                 "Step 3: Installing applications (SKIPPED - already completed)",
                 dryRun=self.setupArgs.dryRun
             )
@@ -356,7 +357,7 @@ class SetupOrchestrator:
             safePrint()
             return
 
-        printSection("Step 3: Installing applications", dryRun=self.setupArgs.dryRun)
+        printH2("Step 3: Installing applications", dryRun=self.setupArgs.dryRun)
         try:
             installResult = self.system.installOrUpdateApps(
                 paths["platformConfigPath"],
@@ -394,7 +395,7 @@ class SetupOrchestrator:
             return
 
         if isStepComplete(self.setupState, stepName):
-            printSection(
+            printH2(
                 "Step 3.5: Configuring Android SDK (SKIPPED - already completed)",
                 dryRun=self.setupArgs.dryRun
             )
@@ -402,7 +403,7 @@ class SetupOrchestrator:
             safePrint()
             return
 
-        printSection("Step 3.5: Configuring Android SDK", dryRun=self.setupArgs.dryRun)
+        printH2("Step 3.5: Configuring Android SDK", dryRun=self.setupArgs.dryRun)
         try:
             platformAndroidConfig = None
             platformAndroid = getJsonObject(paths["platformConfigPath"], ".android")
@@ -448,12 +449,12 @@ class SetupOrchestrator:
             printInfo("[DRY RUN] Would check Android Studio installation and prompt for Android configuration")
             return True
 
-        printSection("Android Configuration Check")
+        printH2("Android Configuration Check")
         printInfo("Android Studio is not installed and not in your platform config.")
         printInfo("Would you like to configure Android SDK components?")
         printInfo("(Note: You'll need to install Android Studio separately if not already installed)")
         safePrint()
-        print("Configure Android SDK? (y/n): ", end="", flush=True)
+        safePrint("Configure Android SDK? (y/n): ", end="", flush=True)
         try:
             response = input().strip().lower()
             return response in ('y', 'yes')
@@ -466,7 +467,7 @@ class SetupOrchestrator:
         """Execute Git configuration step."""
         stepName = "git"
         if isStepComplete(self.setupState, stepName):
-            printSection(
+            printH2(
                 "Step 4: Configuring Git (SKIPPED - already completed)",
                 dryRun=self.setupArgs.dryRun
             )
@@ -474,7 +475,7 @@ class SetupOrchestrator:
             safePrint()
             return
 
-        printSection("Step 4: Configuring Git", dryRun=self.setupArgs.dryRun)
+        printH2("Step 4: Configuring Git", dryRun=self.setupArgs.dryRun)
         try:
             gitSuccess = configureGit(paths["gitConfigPath"], dryRun=self.setupArgs.dryRun)
             if not gitSuccess:
@@ -496,7 +497,7 @@ class SetupOrchestrator:
         """Execute GitHub SSH configuration step."""
         stepName = "ssh"
         if isStepComplete(self.setupState, stepName):
-            printSection(
+            printH2(
                 "Step 5: Configuring GitHub SSH (SKIPPED - already completed)",
                 dryRun=self.setupArgs.dryRun
             )
@@ -504,9 +505,14 @@ class SetupOrchestrator:
             safePrint()
             return
 
-        printSection("Step 5: Configuring GitHub SSH", dryRun=self.setupArgs.dryRun)
+        printH2("Step 5: Configuring GitHub SSH", dryRun=self.setupArgs.dryRun)
         try:
-            sshSuccess = configureGithubSsh(paths["gitConfigPath"], dryRun=self.setupArgs.dryRun)
+            sshSuccess = configureGithubSsh(
+                paths["gitConfigPath"],
+                dryRun=self.setupArgs.dryRun,
+                requirePassphrase=self.setupArgs.requirePassphrase,
+                noPassphrase=self.setupArgs.noPassphrase
+            )
             if not sshSuccess:
                 printWarning("GitHub SSH configuration had some issues, continuing...")
             else:
@@ -526,7 +532,7 @@ class SetupOrchestrator:
         """Execute Cursor editor configuration step."""
         stepName = "cursor"
         if isStepComplete(self.setupState, stepName):
-            printSection(
+            printH2(
                 "Step 6: Configuring Cursor (SKIPPED - already completed)",
                 dryRun=self.setupArgs.dryRun
             )
@@ -534,7 +540,7 @@ class SetupOrchestrator:
             safePrint()
             return
 
-        printSection("Step 6: Configuring Cursor", dryRun=self.setupArgs.dryRun)
+        printH2("Step 6: Configuring Cursor", dryRun=self.setupArgs.dryRun)
         try:
             cursorSuccess = configureCursor(
                 paths["cursorConfigPath"],
@@ -560,7 +566,7 @@ class SetupOrchestrator:
         """Execute repository cloning step."""
         stepName = "repos"
         if isStepComplete(self.setupState, stepName):
-            printSection(
+            printH2(
                 "Step 7: Cloning repositories (SKIPPED - already completed)",
                 dryRun=self.setupArgs.dryRun
             )
@@ -568,7 +574,7 @@ class SetupOrchestrator:
             safePrint()
             return
 
-        printSection("Step 7: Cloning repositories", dryRun=self.setupArgs.dryRun)
+        printH2("Step 7: Cloning repositories", dryRun=self.setupArgs.dryRun)
         try:
             if self.setupArgs.dryRun or shouldCloneRepositories(
                 paths["reposConfigPath"],
@@ -597,7 +603,7 @@ class SetupOrchestrator:
 
     def printCompletionMessage(self) -> None:
         """Print setup completion message."""
-        printSection("Setup Complete")
+        printH2("Setup Complete")
         printInfo("All setup tasks have been executed.")
         printInfo(f"Log file saved to: {self.logFile}")
         if self.rollbackSession and not self.setupArgs.dryRun:

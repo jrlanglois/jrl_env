@@ -21,7 +21,7 @@ from common.common import (
     isOperatingSystem,
     printError,
     printInfo,
-    printSection,
+    printH2,
     printWarning,
     safePrint,
 )
@@ -81,8 +81,8 @@ def main() -> int:
     """Main update function."""
     dryRun = "--dryRun" in sys.argv or "--dry-run" in sys.argv
 
-    printSection("jrl_env Update", dryRun=dryRun)
-    safePrint()
+    from common.core.logging import printH1
+    printH1("jrl_env Update", dryRun=dryRun)
 
     # Check if we're in a git repository
     gitDir = scriptDir / ".git"

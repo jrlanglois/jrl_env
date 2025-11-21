@@ -3,6 +3,7 @@
 Shared logging utilities for consistent output formatting across Python scripts
 """
 
+import shutil
 import sys
 import os
 from datetime import datetime
@@ -27,6 +28,14 @@ class Verbosity(IntEnum):
 
 # Global verbosity level (default to normal)
 _verbosity: Verbosity = Verbosity.normal
+
+# Global timestamp display toggle (default to show timestamps)
+# Logs ALWAYS have timestamps - this only controls console display
+showConsoleTimestamps: bool = True
+
+# Global heading depth for hierarchical output
+# 0 = H1 (top-level), 1 = H2 (subprocess), 2 = H3 (nested subprocess), etc.
+headingDepth: int = 0
 
 # Thread-safe print lock (for scripts that use threading)
 printLock = Lock()
@@ -94,25 +103,141 @@ def setVerbosityFromArgs(quiet: bool = False, verbose: bool = False) -> None:
     else:
         setVerbosity(Verbosity.normal)
 
-def safePrint(*args, **kwargs):
-    """Thread-safe print function with encoding error handling."""
-    with printLock:
+
+def setShowConsoleTimestamps(show: bool) -> None:
+    """
+    Set whether to show timestamps in console output.
+    Note: Log files ALWAYS contain timestamps regardless of this setting.
+
+    Args:
+        show: If True, show timestamps in console output. If False, hide them.
+    """
+    global showConsoleTimestamps
+    showConsoleTimestamps = show
+
+
+def getShowConsoleTimestamps() -> bool:
+    """Get whether timestamps are shown in console output."""
+    return showConsoleTimestamps
+
+
+def setHeadingDepth(depth: int) -> None:
+    """
+    Set the current heading depth for hierarchical output.
+
+    Args:
+        depth: Heading depth (0=H1, 1=H2, 2=H3, etc.)
+    """
+    global headingDepth
+    headingDepth = max(0, min(depth, 3))  # Clamp between 0-3
+
+
+def getHeadingDepth() -> int:
+    """
+    Get the current heading depth.
+    Checks JRL_ENV_HEADING_DEPTH environment variable first, then global.
+    """
+    import os
+    envDepth = os.environ.get('JRL_ENV_HEADING_DEPTH')
+    if envDepth is not None:
         try:
-            print(*args, **kwargs, flush=True)
-        except (UnicodeEncodeError, UnicodeError):
-            # Fallback: encode to ASCII with error replacement
-            encodedArgs = []
-            for arg in args:
-                if isinstance(arg, str):
-                    # Replace Unicode characters that can't be encoded
-                    encodedArgs.append(arg.encode('ascii', errors='replace').decode('ascii'))
-                else:
-                    encodedArgs.append(str(arg).encode('ascii', errors='replace').decode('ascii'))
+            return max(0, min(int(envDepth), 3))
+        except (ValueError, TypeError):
+            pass
+    return headingDepth
+
+
+def incrementHeadingDepth() -> None:
+    """Increment heading depth (for subprocess calls)."""
+    global headingDepth
+    headingDepth = min(headingDepth + 1, 3)  # Max depth of 3
+
+
+def decrementHeadingDepth() -> None:
+    """Decrement heading depth (after subprocess returns)."""
+    global headingDepth
+    headingDepth = max(headingDepth - 1, 0)  # Min depth of 0
+
+
+def getSubprocessEnv() -> dict:
+    """
+    Get environment dict for subprocess with incremented heading depth.
+
+    Returns:
+        Environment dict with JRL_ENV_HEADING_DEPTH set
+    """
+    import os
+    env = os.environ.copy()
+    currentDepth = getHeadingDepth()
+    env['JRL_ENV_HEADING_DEPTH'] = str(currentDepth + 1)
+    return env
+
+def safePrint(*args, end: str = '\n', flush: bool = True, **kwargs):
+    """
+    Thread-safe print function with automatic timestamp handling.
+    This is the ONLY function that calls Python's print() - all other functions use this.
+
+    Timestamp behavior:
+    - If showConsoleTimestamps is True, prepends timestamp to each line
+    - If False, prints without timestamps
+    - Handles multiline strings by timestamping each line
+    - Blank lines get just the timestamp
+
+    Args:
+        *args: Arguments to print
+        end: String appended after the last value (default: '\\n')
+        flush: Whether to forcibly flush the stream (default: True)
+        **kwargs: Additional keyword arguments passed to print()
+    """
+    with printLock:
+        # Handle blank lines
+        if len(args) == 0:
+            if showConsoleTimestamps:
+                args = (f"[{getTimestamp()}]",)
             try:
-                print(*encodedArgs, **kwargs, flush=True)
+                print(*args, end=end, flush=flush, **kwargs)
             except Exception:
-                # Last resort: print without any formatting
-                print(*[str(arg).encode('ascii', errors='replace').decode('ascii') for arg in args], **kwargs, flush=True)
+                pass
+            return
+
+        # Handle timestamped output
+        if showConsoleTimestamps:
+            timestamp = getTimestamp()
+            outputArgs = []
+            for arg in args:
+                argStr = str(arg)
+                # Split by newlines and timestamp each line
+                lines = argStr.split('\n')
+                timestampedLines = [f"[{timestamp}] {line}" for line in lines]
+                outputArgs.append('\n'.join(timestampedLines))
+
+            try:
+                print(*outputArgs, end=end, flush=flush, **kwargs)
+            except (UnicodeEncodeError, UnicodeError):
+                # Fallback: encode to ASCII
+                encodedArgs = []
+                for arg in outputArgs:
+                    encodedArgs.append(arg.encode('ascii', errors='replace').decode('ascii'))
+                try:
+                    print(*encodedArgs, end=end, flush=flush, **kwargs)
+                except Exception:
+                    print(*[str(arg).encode('ascii', errors='replace').decode('ascii') for arg in outputArgs], end=end, flush=flush, **kwargs)
+        else:
+            # Without timestamps, print as-is
+            try:
+                print(*args, end=end, flush=flush, **kwargs)
+            except (UnicodeEncodeError, UnicodeError):
+                # Fallback: encode to ASCII
+                encodedArgs = []
+                for arg in args:
+                    if isinstance(arg, str):
+                        encodedArgs.append(arg.encode('ascii', errors='replace').decode('ascii'))
+                    else:
+                        encodedArgs.append(str(arg).encode('ascii', errors='replace').decode('ascii'))
+                try:
+                    print(*encodedArgs, end=end, flush=flush, **kwargs)
+                except Exception:
+                    print(*[str(arg).encode('ascii', errors='replace').decode('ascii') for arg in args], end=end, flush=flush, **kwargs)
 
 
 def getTimestamp() -> str:
@@ -120,58 +245,131 @@ def getTimestamp() -> str:
     return datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
 
 
-def formatWithTimestamp(message: str) -> str:
-    """Format a message with a timestamp prefix."""
-    return f"[{getTimestamp()}] {message}"
+def printFormatted(
+    message: str,
+    colour: str = Colours.NC,
+    emoji: str = "",
+    minVerbosity: Verbosity = Verbosity.normal,
+    alwaysShow: bool = False,
+) -> None:
+    """
+    Common formatted printing function.
+    Adds emoji and colour, then delegates to safePrint() for timestamp handling.
 
-def printInfo(message: str, includeTimestamp: bool = True) -> None:
-    """Print an info message in cyan. Only shown at normal or verbose verbosity."""
-    if _verbosity >= Verbosity.normal:
-        formatted = formatWithTimestamp(message) if includeTimestamp else message
-        safePrint(f"{Colours.CYAN}{formatted}{Colours.NC}")
+    Args:
+        message: Message to print (can contain \\n for multiple lines)
+        colour: ANSI colour code
+        emoji: Emoji/symbol to prepend (✓, ✗, ⚠, etc.)
+        minVerbosity: Minimum verbosity level required to show this message
+        alwaysShow: If True, show even in quiet mode (for errors)
+    """
+    # Check verbosity
+    if not alwaysShow and _verbosity < minVerbosity:
+        return
 
-def printWarning(message: str, includeTimestamp: bool = True) -> None:
-    """Print a warning message in yellow with ⚠ emoji. Only shown at normal or verbose verbosity."""
-    if _verbosity >= Verbosity.normal:
-        # Prepend emoji if not already present anywhere in the message
-        if emojiWarning not in message and "⚠" not in message and "[WARNING]" not in message:
-            message = f"{emojiWarning} {message.lstrip()}"
-        formatted = formatWithTimestamp(message) if includeTimestamp else message
-        safePrint(f"{Colours.YELLOW}{formatted}{Colours.NC}")
+    # Prepend emoji if provided and not already in message
+    if emoji and emoji not in message:
+        # Check for both Unicode and ASCII versions
+        emojiVariants = [emojiError, emojiSuccess, emojiWarning, "✗", "✓", "⚠", "[ERROR]", "[SUCCESS]", "[WARNING]"]
+        hasEmoji = any(variant in message for variant in emojiVariants)
+        if not hasEmoji:
+            message = f"{emoji} {message.lstrip()}"
 
-def printError(message: str, includeTimestamp: bool = True) -> None:
-    """Print an error message in red with ✗ emoji. Always shown (even in quiet mode)."""
-    # Prepend emoji if not already present anywhere in the message
-    if emojiError not in message and "✗" not in message and "[ERROR]" not in message:
-        message = f"{emojiError} {message.lstrip()}"
-    formatted = formatWithTimestamp(message) if includeTimestamp else message
-    safePrint(f"{Colours.RED}{formatted}{Colours.NC}")
+    # Apply colour and delegate to safePrint() for timestamp handling
+    safePrint(f"{colour}{message}{Colours.NC}")
 
-def printSuccess(message: str, includeTimestamp: bool = True) -> None:
-    """Print a success message in green with ✓ emoji. Only shown at normal or verbose verbosity."""
-    if _verbosity >= Verbosity.normal:
-        # Prepend emoji if not already present anywhere in the message
-        if emojiSuccess not in message and "✓" not in message and "[SUCCESS]" not in message:
-            message = f"{emojiSuccess} {message.lstrip()}"
-        formatted = formatWithTimestamp(message) if includeTimestamp else message
-        safePrint(f"{Colours.GREEN}{formatted}{Colours.NC}")
+
+def printInfo(message: str) -> None:
+    """Print an info message in cyan with timestamp. Only shown at normal or verbose verbosity."""
+    printFormatted(message, colour=Colours.CYAN, minVerbosity=Verbosity.normal)
+
+
+def printWarning(message: str) -> None:
+    """Print a warning message in yellow with ⚠ emoji and timestamp. Only shown at normal or verbose verbosity."""
+    printFormatted(message, colour=Colours.YELLOW, emoji=emojiWarning, minVerbosity=Verbosity.normal)
+
+
+def printError(message: str) -> None:
+    """Print an error message in red with ✗ emoji and timestamp. Always shown (even in quiet mode)."""
+    printFormatted(message, colour=Colours.RED, emoji=emojiError, minVerbosity=Verbosity.normal, alwaysShow=True)
+
+
+def printSuccess(message: str) -> None:
+    """Print a success message in green with ✓ emoji and timestamp. Only shown at normal or verbose verbosity."""
+    printFormatted(message, colour=Colours.GREEN, emoji=emojiSuccess, minVerbosity=Verbosity.normal)
+
 
 def printVerbose(message: str) -> None:
-    """Print a verbose/debug message in cyan. Only shown at verbose verbosity."""
-    if _verbosity >= Verbosity.verbose:
-        safePrint(f"{Colours.CYAN}[VERBOSE] {message}{Colours.NC}")
+    """Print a verbose/debug message in cyan with timestamp. Only shown at verbose verbosity."""
+    printFormatted(f"[VERBOSE] {message}", colour=Colours.CYAN, minVerbosity=Verbosity.verbose)
+
 
 def printDebug(message: str) -> None:
-    """Print a debug message (alias for printVerbose). Only shown at verbose verbosity."""
+    """Print a debug message (alias for printVerbose) with timestamp. Only shown at verbose verbosity."""
     printVerbose(message)
 
-def printSection(message: str, dryRun: bool = False, includeTimestamp: bool = False) -> None:
-    """Print a section header with === borders in cyan. Only shown at normal or verbose verbosity."""
+
+def printH1(message: str, dryRun: bool = False) -> None:
+    """Print a top-level heading (H1) with === borders, centered text, and extra spacing."""
     if _verbosity >= Verbosity.normal:
         if dryRun:
             message = f"{message} (DRY RUN)"
-        formatted = formatWithTimestamp(message) if includeTimestamp else message
-        safePrint(f"{Colours.CYAN}=== {formatted} ==={Colours.NC}")
+
+        # Get terminal width (default to 80 if unavailable)
+        try:
+            terminalWidth = shutil.get_terminal_size().columns
+        except (AttributeError, ValueError, OSError):
+            terminalWidth = 80
+
+        # Calculate centering (accounting for "=== " prefix)
+        messageWithPrefix = f"=== {message}"
+        padding = (terminalWidth - len(messageWithPrefix)) // 2
+        centeredMessage = " " * max(0, padding) + messageWithPrefix
+
+        safePrint()
+        safePrint(f"{Colours.CYAN}{'=' * terminalWidth}{Colours.NC}")
+        safePrint(f"{Colours.CYAN}{centeredMessage}{Colours.NC}")
+        safePrint(f"{Colours.CYAN}{'=' * terminalWidth}{Colours.NC}")
+        safePrint()
+
+
+def printH2(message: str, dryRun: bool = False) -> None:
+    """Print a second-level heading (H2) with === borders."""
+    if _verbosity >= Verbosity.normal:
+        if dryRun:
+            message = f"{message} (DRY RUN)"
+        safePrint(f"{Colours.CYAN}=== {message} ==={Colours.NC}")
+
+
+def printH3(message: str, dryRun: bool = False) -> None:
+    """Print a third-level heading (H3) with --- style."""
+    if _verbosity >= Verbosity.normal:
+        if dryRun:
+            message = f"{message} (DRY RUN)"
+        safePrint(f"{Colours.CYAN}--- {message}{Colours.NC}")
+
+
+def printHeading(message: str, dryRun: bool = False) -> None:
+    """
+    Print a heading at the current depth level.
+    Uses global headingDepth to determine H1/H2/H3 automatically.
+
+    Args:
+        message: Heading message
+        dryRun: If True, append (DRY RUN) to message
+    """
+    depth = getHeadingDepth()
+    if depth == 0:
+        printH1(message, dryRun=dryRun)
+    elif depth == 1:
+        printH2(message, dryRun=dryRun)
+    else:
+        printH3(message, dryRun=dryRun)
+
+
+def printSection(message: str, dryRun: bool = False) -> None:
+    """Alias for printH2()."""
+    printH2(message, dryRun=dryRun)
 
 def printHelpText(
     title: str,
@@ -186,47 +384,47 @@ def printHelpText(
     if not title.startswith("jrl_env "):
         title = f"jrl_env {title}"
 
-    print(title)
-    print("")
+    safePrint(title)
+    safePrint("")
 
     # Intent section
-    print("Intent:")
+    safePrint("Intent:")
     if isinstance(intent, str):
-        print(f"  {intent}")
+        safePrint(f"{intent}")
     else:
         for line in intent:
-            print(f"  {line}")
-    print("")
+            safePrint(f"{line}")
+    safePrint("")
 
     # Usage section
-    print("Usage:")
+    safePrint("Usage:")
     if isinstance(usage, str):
-        print(f"  {usage}")
+        safePrint(f"{usage}")
     else:
         for line in usage:
-            print(f"  {line}")
-    print("")
+            safePrint(f"{line}")
+    safePrint("")
 
     # Additional sections (Platforms, Operations, etc.)
     if sections:
         for sectionName, items in sections.items():
-            print(f"{sectionName}:")
+            safePrint(f"{sectionName}:")
             for item in items:
-                print(f"  {item}")
-            print("")
+                safePrint(f"{item}")
+            safePrint("")
 
     # Options section
     if options:
-        print("Options:")
+        safePrint("Options:")
         for option, description in options:
-            print(f"  {option:<20} {description}")
-        print("")
+            safePrint(f"{option:<20} {description}")
+        safePrint("")
 
     # Examples section
     if examples:
-        print("Examples:")
+        safePrint("Examples:")
         for example in examples:
-            print(f"  {example}")
+            safePrint(f"{example}")
 
 
 def colourise(text, code, enable=None):

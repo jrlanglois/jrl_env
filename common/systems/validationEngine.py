@@ -7,7 +7,7 @@ Centralises all validation logic and user prompts.
 from pathlib import Path
 from typing import Optional
 
-from common.common import printError, printInfo, printSection, printSuccess, printWarning, safePrint
+from common.common import printError, printInfo, printH2, printSuccess, printWarning, safePrint
 from common.install.setupArgs import SetupArgs
 
 
@@ -41,7 +41,7 @@ class ValidationEngine:
         Raises:
             SystemExit: If validation fails with errors
         """
-        printSection("Validating Configuration Files")
+        printH2("Validating Configuration Files")
         safePrint()
 
         # Validate config directory exists and is accessible
@@ -76,7 +76,7 @@ class ValidationEngine:
             try:
                 # Call validation with just the platform name
                 sys.argv = ['validate', self.platformName]
-                result = validateMain()
+                result = validateMain(setupSignalHandler=False)  # Don't set up signal handlers when called programmatically
             finally:
                 # Restore original sys.argv
                 sys.argv = originalArgv
@@ -96,7 +96,7 @@ class ValidationEngine:
 
                 printWarning("Unknown fields detected in your configuration files:")
                 for error in unknownFieldErrors:
-                    printWarning(f"  - {error}")
+                    printWarning(f"- {error}")
                 safePrint()
                 printWarning("These fields are not recognised by jrl_env and will be ignored.")
                 printInfo(
@@ -170,7 +170,7 @@ class ValidationEngine:
         Returns:
             True if user wants to continue, False otherwise
         """
-        print("Do you want to continue anyway? (y/n): ", end="", flush=True)
+        safePrint("Do you want to continue anyway? (y/n): ", end="", flush=True)
         try:
             response = input().strip().lower()
             return response in ('y', 'yes')

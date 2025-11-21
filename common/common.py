@@ -16,12 +16,21 @@ from common.core.logging import (
     printSuccess,
     printVerbose,
     printDebug,
+    printH1,
+    printH2,
+    printH3,
     printSection,
     printHelpText,
     colourise,
     setVerbosity,
     getVerbosity,
     setVerbosityFromArgs,
+    setShowConsoleTimestamps,
+    getShowConsoleTimestamps,
+    setHeadingDepth,
+    getHeadingDepth,
+    printHeading,
+    getSubprocessEnv,
 )
 
 # Import and expose all utility functions
@@ -36,6 +45,9 @@ from common.core.utilities import (
     isOperatingSystem,
     getConfigDirectory,
     hasInternetConnectivity,
+)
+from common.core.signalHandling import (
+    setupSignalHandlers,
 )
 
 # Import and expose Linux package manager
@@ -170,10 +182,8 @@ from common.systems.systemsConfig import (
     getSystemConfig,
     getSupportedPlatforms,
 )
-from common.systems.genericSystem import (
-    GenericSystem,
-    createSystem,
-)
+# Note: GenericSystem and createSystem are not imported here to avoid circular imports
+# Import them directly from common.systems.genericSystem when needed
 from common.systems.platform import (
     Platform,
 )
@@ -187,6 +197,9 @@ __all__ = [
     "printWarning",
     "printError",
     "printSuccess",
+    "printH1",
+    "printH2",
+    "printH3",
     "printSection",
     "colourise",
     # Utility functions

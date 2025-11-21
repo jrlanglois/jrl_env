@@ -92,7 +92,7 @@ class AptPackageManager(PackageManager):
             stderr = e.stderr.strip() if e.stderr else "No error output"
             printError(f"Failed to install '{package}': Command '{cmdStr}' returned exit code {e.returncode}")
             if stderr:
-                printError(f"  Error output: {stderr}")
+                printError(f"Error output: {stderr}")
             return False
         except Exception as e:
             cmdStr = " ".join(cmd)
@@ -114,7 +114,7 @@ class AptPackageManager(PackageManager):
             stderr = e.stderr.strip() if e.stderr else "No error output"
             printError(f"Failed to update '{package}': Command '{cmdStr}' returned exit code {e.returncode}")
             if stderr:
-                printError(f"  Error output: {stderr}")
+                printError(f"Error output: {stderr}")
             return False
         except Exception as e:
             cmdStr = " ".join(cmd)
@@ -151,7 +151,7 @@ class SnapPackageManager(PackageManager):
             stderr = e.stderr.strip() if e.stderr else "No error output"
             printError(f"Failed to install '{package}': Command '{cmdStr}' returned exit code {e.returncode}")
             if stderr:
-                printError(f"  Error output: {stderr}")
+                printError(f"Error output: {stderr}")
             return False
         except Exception as e:
             cmdStr = " ".join(cmd)
@@ -173,7 +173,7 @@ class SnapPackageManager(PackageManager):
             stderr = e.stderr.strip() if e.stderr else "No error output"
             printError(f"Failed to update '{package}': Command '{cmdStr}' returned exit code {e.returncode}")
             if stderr:
-                printError(f"  Error output: {stderr}")
+                printError(f"Error output: {stderr}")
             return False
         except Exception as e:
             cmdStr = " ".join(cmd)
@@ -210,7 +210,7 @@ class BrewPackageManager(PackageManager):
             stderr = e.stderr.strip() if e.stderr else "No error output"
             printError(f"Failed to install '{package}': Command '{cmdStr}' returned exit code {e.returncode}")
             if stderr:
-                printError(f"  Error output: {stderr}")
+                printError(f"Error output: {stderr}")
             return False
         except Exception as e:
             cmdStr = " ".join(cmd)
@@ -232,7 +232,7 @@ class BrewPackageManager(PackageManager):
             stderr = e.stderr.strip() if e.stderr else "No error output"
             printError(f"Failed to update '{package}': Command '{cmdStr}' returned exit code {e.returncode}")
             if stderr:
-                printError(f"  Error output: {stderr}")
+                printError(f"Error output: {stderr}")
             return False
         except Exception as e:
             cmdStr = " ".join(cmd)
@@ -269,7 +269,7 @@ class BrewCaskPackageManager(PackageManager):
             stderr = e.stderr.strip() if e.stderr else "No error output"
             printError(f"Failed to install '{package}': Command '{cmdStr}' returned exit code {e.returncode}")
             if stderr:
-                printError(f"  Error output: {stderr}")
+                printError(f"Error output: {stderr}")
             return False
         except Exception as e:
             cmdStr = " ".join(cmd)
@@ -291,7 +291,7 @@ class BrewCaskPackageManager(PackageManager):
             stderr = e.stderr.strip() if e.stderr else "No error output"
             printError(f"Failed to update '{package}': Command '{cmdStr}' returned exit code {e.returncode}")
             if stderr:
-                printError(f"  Error output: {stderr}")
+                printError(f"Error output: {stderr}")
             return False
         except Exception as e:
             cmdStr = " ".join(cmd)
@@ -332,7 +332,7 @@ class WingetPackageManager(PackageManager):
                 stderr = result.stderr.strip() if result.stderr else "No error output"
                 printError(f"Failed to install '{package}': Command '{cmdStr}' returned exit code {result.returncode}")
                 if stderr:
-                    printError(f"  Error output: {stderr}")
+                    printError(f"Error output: {stderr}")
                 return False
         except Exception as e:
             cmdStr = " ".join(cmd)
@@ -362,7 +362,7 @@ class WingetPackageManager(PackageManager):
                 stderr = result.stderr.strip() if result.stderr else "No error output"
                 printError(f"Failed to update '{package}': Command '{cmdStr}' returned exit code {result.returncode}")
                 if stderr:
-                    printError(f"  Error output: {stderr}")
+                    printError(f"Error output: {stderr}")
                 return False
         except Exception as e:
             cmdStr = " ".join(cmd)
@@ -402,7 +402,7 @@ class StorePackageManager(PackageManager):
                 stderr = result.stderr.strip() if result.stderr else "No error output"
                 printError(f"Failed to install '{package}': Command '{cmdStr}' returned exit code {result.returncode}")
                 if stderr:
-                    printError(f"  Error output: {stderr}")
+                    printError(f"Error output: {stderr}")
                 return False
         except Exception as e:
             cmdStr = " ".join(cmd)
@@ -433,7 +433,7 @@ class StorePackageManager(PackageManager):
                 stderr = result.stderr.strip() if result.stderr else "No error output"
                 printError(f"Failed to update '{package}': Command '{cmdStr}' returned exit code {result.returncode}")
                 if stderr:
-                    printError(f"  Error output: {stderr}")
+                    printError(f"Error output: {stderr}")
                 return False
         except Exception as e:
             cmdStr = " ".join(cmd)
@@ -470,7 +470,7 @@ class DnfPackageManager(PackageManager):
             stderr = e.stderr.strip() if e.stderr else "No error output"
             printError(f"Failed to install '{package}': Command '{cmdStr}' returned exit code {e.returncode}")
             if stderr:
-                printError(f"  Error output: {stderr}")
+                printError(f"Error output: {stderr}")
             return False
         except Exception as e:
             cmdStr = " ".join(cmd)
@@ -492,7 +492,7 @@ class DnfPackageManager(PackageManager):
             stderr = e.stderr.strip() if e.stderr else "No error output"
             printError(f"Failed to update '{package}': Command '{cmdStr}' returned exit code {e.returncode}")
             if stderr:
-                printError(f"  Error output: {stderr}")
+                printError(f"Error output: {stderr}")
             return False
         except Exception as e:
             cmdStr = " ".join(cmd)
@@ -529,7 +529,7 @@ class ZypperPackageManager(PackageManager):
             stderr = e.stderr.strip() if e.stderr else "No error output"
             printError(f"Failed to install '{package}': Command '{cmdStr}' returned exit code {e.returncode}")
             if stderr:
-                printError(f"  Error output: {stderr}")
+                printError(f"Error output: {stderr}")
             return False
         except Exception as e:
             cmdStr = " ".join(cmd)
@@ -551,7 +551,7 @@ class ZypperPackageManager(PackageManager):
             stderr = e.stderr.strip() if e.stderr else "No error output"
             printError(f"Failed to update '{package}': Command '{cmdStr}' returned exit code {e.returncode}")
             if stderr:
-                printError(f"  Error output: {stderr}")
+                printError(f"Error output: {stderr}")
             return False
         except Exception as e:
             cmdStr = " ".join(cmd)
@@ -588,7 +588,7 @@ class PacmanPackageManager(PackageManager):
             stderr = e.stderr.strip() if e.stderr else "No error output"
             printError(f"Failed to install '{package}': Command '{cmdStr}' returned exit code {e.returncode}")
             if stderr:
-                printError(f"  Error output: {stderr}")
+                printError(f"Error output: {stderr}")
             return False
         except Exception as e:
             cmdStr = " ".join(cmd)
@@ -610,7 +610,7 @@ class PacmanPackageManager(PackageManager):
             stderr = e.stderr.strip() if e.stderr else "No error output"
             printError(f"Failed to update '{package}': Command '{cmdStr}' returned exit code {e.returncode}")
             if stderr:
-                printError(f"  Error output: {stderr}")
+                printError(f"Error output: {stderr}")
             return False
         except Exception as e:
             cmdStr = " ".join(cmd)

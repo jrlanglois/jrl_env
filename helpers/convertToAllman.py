@@ -13,8 +13,8 @@ from typing import Any, Union
 scriptDir = os.path.dirname(os.path.abspath(__file__))
 commonDir = os.path.join(os.path.dirname(scriptDir), "common")
 sys.path.insert(0, os.path.dirname(commonDir))
-from common.common import printSection, printInfo, printSuccess, printWarning
-from common.core.logging import setVerbosityFromArgs, getVerbosity, Verbosity
+from common.common import printHeading, printH2, printInfo, printSuccess, printWarning
+from common.core.logging import setVerbosityFromArgs, getVerbosity, Verbosity, safePrint
 
 
 def parseArguments() -> argparse.Namespace:
@@ -24,9 +24,9 @@ def parseArguments() -> argparse.Namespace:
             "Intent: Enforce Allman brace style in Bash scripts by converting function braces\n"
             "and else blocks to separate lines, and enforcing inline control keywords.\n\n"
             "Examples:\n"
-            "  python3 helpers/convertToAllman.py\n"
-            "  python3 helpers/convertToAllman.py --path scripts/ --extensions .sh .bash\n"
-            "  python3 helpers/convertToAllman.py --dryRun"
+            "python3 helpers/convertToAllman.py\n"
+            "python3 helpers/convertToAllman.py --path scripts/ --extensions .sh .bash\n"
+            "python3 helpers/convertToAllman.py --dryRun"
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
@@ -57,6 +57,11 @@ def parseArguments() -> argparse.Namespace:
         "-q",
         action="store_true",
         help="Only show final success/failure message.",
+    )
+    parser.add_argument(
+        "--subprocess",
+        action="store_true",
+        help=argparse.SUPPRESS,  # Hidden flag for internal use
     )
     return parser.parse_args()
 
@@ -155,14 +160,18 @@ def main() -> None:
     args = parseArguments()
     setVerbosityFromArgs(quiet=args.quiet, verbose=False)
 
+    # Print title (automatically uses correct heading level based on depth)
+    if getVerbosity() != Verbosity.quiet:
+        printHeading("jrl_env convertToAllman.py", dryRun=args.dryRun)
+
     rootPath = Path(args.path).resolve()
     shellFiles = list(findShellFiles(rootPath, args.extensions))
 
     if not shellFiles:
         if getVerbosity() == Verbosity.quiet:
-            print("Failure")
+            safePrint("Failure")
         else:
-            print("No matching files found.")
+            safePrint("No matching files found.")
         return
 
     totalChanged = 0
@@ -182,7 +191,7 @@ def main() -> None:
             totalWhileUpdates += stats["inlineWhileUpdates"]
             totalForUpdates += stats["inlineForUpdates"]
             status = "[DRY RUN]" if args.dryRun else "[UPDATED]"
-            print(
+            safePrint(
                 f"{status} {filePath} "
                 f"(functions: {stats['functionBraceUpdates']}, "
                 f"else: {stats['elseBraceUpdates']}, "
@@ -193,12 +202,12 @@ def main() -> None:
 
     # Final success/failure message (always show in quiet mode)
     if getVerbosity() == Verbosity.quiet:
-        print("Success")
+        safePrint("Success")
         return
 
     summaryHeader = "DRY RUN SUMMARY" if args.dryRun else "UPDATE SUMMARY"
-    print()
-    printSection(summaryHeader)
+    safePrint()
+    printH2(summaryHeader)
     extensionsList = ', '.join(args.extensions)
     printInfo(f"File types processed: {extensionsList}")
     printInfo(f"Files scanned: {len(shellFiles)}")

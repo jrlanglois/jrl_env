@@ -19,7 +19,7 @@ from common.common import (
     determineRunFlags,
     parseSetupArgs,
     printInfo,
-    printSection,
+    printH2,
     printSuccess,
     printWarning,
     safePrint,
@@ -183,7 +183,7 @@ class SystemBase(ABC):
         from common.install.installApps import installApps, installFromConfigWithLinuxCommon
 
         # Run preInstall commands
-        runConfigCommands("preInstall", configPath)
+        runConfigCommands("preInstall", configPath, dryRun=dryRun)
 
         # Install apps
         if useLinuxCommon:
@@ -240,7 +240,7 @@ class SystemBase(ABC):
             )
 
         # Run postInstall commands
-        runConfigCommands("postInstall", configPath)
+        runConfigCommands("postInstall", configPath, dryRun=dryRun)
 
         return result.failedCount == 0
 
@@ -282,7 +282,7 @@ class SystemBase(ABC):
         platformName = self.getPlatformName()
         existingState = loadState(platformName) if not self.setupArgs.dryRun else None
 
-        printSection("Setup Steps Preview")
+        printH2("Setup Steps Preview")
         printInfo(f"Platform: {platformName.capitalize()}")
         safePrint()
 
@@ -303,11 +303,11 @@ class SystemBase(ABC):
             # Format step display
             if step.stepName in ("preSetup", "postSetup"):
                 # Pre/post setup steps don't show completion status
-                printInfo(f"  {step.stepNumber}: {step.description}")
+                printInfo(f"{step.stepNumber}: {step.description}")
             else:
                 # Regular steps show completion status
                 status = "✓ (already completed, will skip)" if isComplete else "→ (will run)"
-                printInfo(f"  {step.stepNumber}: {step.description} - {status}")
+                printInfo(f"{step.stepNumber}: {step.description} - {status}")
 
         safePrint()
         if existingState:
@@ -338,8 +338,8 @@ class SystemBase(ABC):
         if self.setupArgs.listSteps:
             return self.listSteps()
 
-        # Initialise logging
-        self.logFile = initLogging(self.getPlatformName())
+        # Initialise logging (skip file creation in dry-run mode)
+        self.logFile = initLogging(self.getPlatformName(), dryRun=self.setupArgs.dryRun)
 
         # Create config manager
         self.configManager = ConfigManager(

@@ -23,7 +23,7 @@ from common.common import (
     getJsonArray,
     printError,
     printInfo,
-    printSection,
+    printH2,
     printSuccess,
     printWarning,
     requireCommand,
@@ -91,7 +91,7 @@ def validateFonts(configPath: str) -> int:
         printError(f"Config file not found: {configPath}")
         return 1
 
-    printSection("Validating Google Fonts")
+    printH2("Validating Google Fonts")
     safePrint()
 
     # Check if curl is available (optional, we use urllib)
@@ -123,13 +123,13 @@ def validateFonts(configPath: str) -> int:
 
             font = font.strip()
             if font.lower() in fontListLower:
-                printSuccess(f"  {font}")
+                printSuccess(f"{font}")
             else:
                 # Fallback: check via CSS API
                 if checkFontViaCssApi(font):
-                    printSuccess(f"  {font} (verified via CSS API)")
+                    printSuccess(f"{font} (verified via CSS API)")
                 else:
-                    printError(f"  {font} (not found in Google Fonts)")
+                    printError(f"{font} (not found in Google Fonts)")
                     errors += 1
     else:
         # Fallback: check each font individually via CSS API
@@ -140,9 +140,9 @@ def validateFonts(configPath: str) -> int:
 
             font = font.strip()
             if checkFontViaCssApi(font):
-                printSuccess(f"  {font}")
+                printSuccess(f"{font}")
             else:
-                printError(f"  {font} (not found in Google Fonts)")
+                printError(f"{font} (not found in Google Fonts)")
                 errors += 1
 
     safePrint()

@@ -14,7 +14,7 @@ from typing import List, Optional
 from common.core.logging import (
     printError,
     printInfo,
-    printSection,
+    printH2,
     printSuccess,
     printWarning,
     safePrint,
@@ -172,9 +172,9 @@ def installSdkComponents(sdkManager: Path, components: List[str], dryRun: bool =
         True if successful, False otherwise
     """
     if dryRun:
-        printInfo("  [DRY RUN] Would install SDK components:")
+        printInfo("[DRY RUN] Would install SDK components:")
         for component in components:
-            printInfo(f"    - {component}")
+            printInfo(f"  - {component}")
         return True
 
     if not components:
@@ -219,7 +219,7 @@ def configureAndroid(configPath: Optional[str] = None, platformConfigPath: Optio
     Returns:
         True if successful, False otherwise
     """
-    printSection("Android Configuration", dryRun=dryRun)
+    printH2("Android Configuration", dryRun=dryRun)
     safePrint()
 
     sdkRoot = findAndroidSdkRoot()
@@ -272,7 +272,7 @@ def configureAndroid(configPath: Optional[str] = None, platformConfigPath: Optio
 
     printInfo(f"Found {len(sdkComponents)} SDK component(s) to install:")
     for component in sdkComponents:
-        printInfo(f"  - {component}")
+        printInfo(f"- {component}")
     safePrint()
 
     success = installSdkComponents(sdkManager, sdkComponents, dryRun=dryRun)

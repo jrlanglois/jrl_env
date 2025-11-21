@@ -35,7 +35,7 @@ def requireCommand(cmd: str, installHint: str = "") -> bool:
     # Use logging functions if available, otherwise use print
     printError(f"Required command '{cmd}' not found.")
     if installHint:
-        printInfo(f"  {installHint}")
+        printInfo(f"{installHint}")
 
     return False
 

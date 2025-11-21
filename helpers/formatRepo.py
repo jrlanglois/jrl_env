@@ -15,7 +15,7 @@ from pathlib import Path
 scriptDir = Path(__file__).parent.absolute()
 commonDir = scriptDir.parent / "common"
 sys.path.insert(0, str(commonDir.parent))
-from common.common import printInfo, printSection, printSuccess, printError, safePrint
+from common.common import printInfo, printHeading, printSuccess, printError, safePrint, getSubprocessEnv
 from common.core.logging import setVerbosityFromArgs, getVerbosity, Verbosity
 
 
@@ -61,12 +61,14 @@ def main() -> int:
     # Set PAGER to cat to avoid interactive pagers
     os.environ["PAGER"] = "cat"
 
+    # Print title (automatically uses correct heading level)
+    printHeading("jrl_env formatRepo.py", dryRun=dryRun)
+
     success = True
 
-    printSection("Running convertToAllman.py (Bash .sh files)", dryRun=dryRun)
     convertScript = scriptDir / "convertToAllman.py"
     try:
-        convertArgs = [sys.executable, str(convertScript)]
+        convertArgs = [sys.executable, str(convertScript), "--subprocess"]
         if dryRun:
             convertArgs.append("--dryRun")
         if quiet:
@@ -75,6 +77,7 @@ def main() -> int:
             convertArgs,
             check=False,
             capture_output=quiet,
+            env=getSubprocessEnv(),
         )
         if result.returncode != 0:
             success = False
@@ -90,10 +93,9 @@ def main() -> int:
     if not quiet:
         safePrint()
 
-    printSection("Running tidy.py (All text files: .ps1, .sh, .json, .md, .py, .yml, .yaml)", dryRun=dryRun)
     tidyScript = scriptDir / "tidy.py"
     try:
-        tidyArgs = [sys.executable, str(tidyScript), "--path", str(repoRoot)]
+        tidyArgs = [sys.executable, str(tidyScript), "--subprocess", "--path", str(repoRoot)]
         if dryRun:
             tidyArgs.append("--dryRun")
         if quiet:
@@ -102,6 +104,7 @@ def main() -> int:
             tidyArgs,
             check=False,
             capture_output=quiet,
+            env=getSubprocessEnv(),
         )
         if result.returncode != 0:
             success = False
@@ -123,9 +126,9 @@ def main() -> int:
     else:
         # Final success/failure message (always show in quiet mode)
         if success:
-            print("Success")
+            safePrint("Success")
         else:
-            print("Failure")
+            safePrint("Failure")
 
     return 0 if success else 1
 

@@ -26,7 +26,7 @@ from common.common import (
     getJsonValue,
     printError,
     printInfo,
-    printSection,
+    printH2,
     printSuccess,
     printWarning,
     safePrint,
@@ -424,7 +424,7 @@ class PackageValidator:
             0 if all packages are valid, 1 otherwise
         """
         platformName = self.getPlatformName()
-        printSection(f"Validating {platformName} Packages")
+        printH2(f"Validating {platformName} Packages")
         safePrint()
 
         # Special handling for linuxCommon.json - validate against all available Linux package managers
@@ -441,7 +441,7 @@ class PackageValidator:
 
             printInfo(f"Detected {len(self.checkers)} available Linux package manager(s) on this system:")
             for pmKey in self.checkers.keys():
-                printInfo(f"  - {self.checkers[pmKey].name}")
+                printInfo(f"- {self.checkers[pmKey].name}")
             safePrint()
 
             # Validate each package against all available package managers
@@ -464,14 +464,14 @@ class PackageValidator:
                 if foundIn:
                     if len(foundIn) == len(self.checkers):
                         # Found in all package managers - universal package
-                        printSuccess(f"  {package} (found in all: {', '.join(foundIn)})")
+                        printSuccess(f"{package} (found in all: {', '.join(foundIn)})")
                     else:
                         # Found in some but not all
-                        printWarning(f"  {package} (found in: {', '.join(foundIn)}, missing in: {', '.join(notFoundIn)})")
+                        printWarning(f"{package} (found in: {', '.join(foundIn)}, missing in: {', '.join(notFoundIn)})")
                         self.errors += 1
                 else:
                     # Not found in any package manager
-                    printError(f"  {package} (not found in any package manager: {', '.join(notFoundIn)})")
+                    printError(f"{package} (not found in any package manager: {', '.join(notFoundIn)})")
                     self.errors += 1
         else:
             # Normal validation for platform-specific configs
@@ -488,7 +488,7 @@ class PackageValidator:
                 # Check if package manager is available
                 if not checker.isAvailable():
                     printWarning(f"{checker.name} is not available, skipping {jsonKey} package validation")
-                    printInfo(f"  {checker.getInstallHint()}")
+                    printInfo(f"{checker.getInstallHint()}")
                     safePrint()
                     continue
 
@@ -500,9 +500,9 @@ class PackageValidator:
 
                     package = package.strip()
                     if checker.checkPackage(package):
-                        printSuccess(f"  {package}")
+                        printSuccess(f"{package}")
                     else:
-                        printError(f"  {package} (not found in {checker.name.lower()})")
+                        printError(f"{package} (not found in {checker.name.lower()})")
                         self.errors += 1
 
                 safePrint()

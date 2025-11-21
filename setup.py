@@ -17,19 +17,24 @@ Options:
     --skipCursor      Skip Cursor configuration
     --skipRepos       Skip repository cloning
     --skipSsh         Skip GitHub SSH setup
+    --requirePassphrase  Require a passphrase for SSH keys (most secure)
+    --noPassphrase    Skip passphrase for SSH keys (least secure, not recommended)
     --appsOnly        Only install/update applications (skip fonts, Git, Cursor, repos, SSH)
     --dryRun          Preview changes without making them
     --noBackup        Skip backing up existing configuration files
     --verbose         Enable verbose output (show debug messages)
     --quiet, -q       Enable quiet mode (only show errors)
+    --noTimestamps    Hide timestamps in console output (logs always have timestamps)
     --resume          Automatically resume from last successful step if setup was interrupted
     --noResume        Do not resume from previous setup (start fresh)
     --listSteps       Preview what steps will be executed without running setup
 """
 
+import signal
 import subprocess
 import sys
 from pathlib import Path
+from typing import Optional
 
 # Add project root to path so we can import from common
 projectRoot = Path(__file__).parent.absolute()
@@ -41,7 +46,8 @@ from common.common import (
     isOperatingSystem,
     printError,
     printInfo,
-    printSection,
+    printH1,
+    printH2,
     printSuccess,
     printWarning,
     safePrint,
@@ -56,39 +62,38 @@ def getSystemClass(platformName: str):
         platformName: Platform name (e.g., "ubuntu", "macos", "win11")
 
     Returns:
-        System class if available, None otherwise
+        GenericSystem configured for the platform
     """
     try:
-        moduleName = f"systems.{platformName}.system"
-        systemModule = __import__(moduleName, fromlist=[f"{platformName.capitalize()}System"])
-        className = f"{platformName.capitalize()}System"
-        if platformName == "win11":
-            className = "Win11System"
-        elif platformName == "raspberrypi":
-            className = "RaspberrypiSystem"
-        elif platformName == "archlinux":
-            className = "ArchlinuxSystem"
-        elif platformName == "opensuse":
-            className = "OpensuseSystem"
-        elif platformName == "redhat":
-            className = "RedhatSystem"
-        return getattr(systemModule, className, None)
-    except (ImportError, AttributeError):
+        from common.systems.genericSystem import GenericSystem
+        from common.systems.platform import Platform
+
+        # Convert platform name to Platform enum
+        try:
+            platform = Platform[platformName]
+            # Return a lambda that creates GenericSystem with the platform
+            return lambda projectRoot: GenericSystem(projectRoot, platform)
+        except KeyError:
+            printError(f"Unsupported platform: {platformName}")
+            return None
+    except (ImportError, AttributeError) as e:
+        printError(f"Failed to import GenericSystem: {e}")
         return None
 
 
-def detectPlatform() -> tuple[str, Path]:
+def detectPlatform() -> tuple[str, Optional[Path]]:
     """
-    Detect the operating system and return the platform name and setup script path.
+    Detect the operating system and return the platform name.
 
     Returns:
-        Tuple of (platform_name, setup_script_path)
+        Tuple of (platform_name, None)
         Platform name will be one of: "macos", "ubuntu", "raspberrypi", "redhat", "opensuse", "archlinux", "win11", or "unknown"
+        Second value is None (kept for backwards compatibility)
     """
     osType = findOperatingSystem()
 
     if isOperatingSystem("macos"):
-        return ("macos", projectRoot / "systems" / "macos" / "setup.py")
+        return ("macos", None)
     elif isOperatingSystem("linux"):
         # Try to detect specific Linux distribution
         osRelease = Path("/etc/os-release")
@@ -106,31 +111,30 @@ def detectPlatform() -> tuple[str, Path]:
                 # Check ID first
                 if distroId:
                     if distroId in ("ubuntu", "debian"):
-                        return ("ubuntu", projectRoot / "systems" / "ubuntu" / "setup.py")
+                        return ("ubuntu", None)
                     elif distroId == "raspbian":
-                        return ("raspberrypi", projectRoot / "systems" / "raspberrypi" / "setup.py")
+                        return ("raspberrypi", None)
                     elif distroId in ("rhel", "fedora", "centos"):
-                        return ("redhat", projectRoot / "systems" / "redhat" / "setup.py")
+                        return ("redhat", None)
                     elif distroId in ("opensuse-leap", "opensuse-tumbleweed", "sles"):
-                        return ("opensuse", projectRoot / "systems" / "opensuse" / "setup.py")
+                        return ("opensuse", None)
                     elif distroId == "arch":
-                        return ("archlinux", projectRoot / "systems" / "archlinux" / "setup.py")
+                        return ("archlinux", None)
 
                 # Check ID_LIKE as fallback
                 if distroIdLike:
                     if "rhel" in distroIdLike or "fedora" in distroIdLike or "centos" in distroIdLike:
-                        return ("redhat", projectRoot / "systems" / "redhat" / "setup.py")
+                        return ("redhat", None)
                     elif "suse" in distroIdLike or "opensuse" in distroIdLike:
-                        return ("opensuse", projectRoot / "systems" / "opensuse" / "setup.py")
+                        return ("opensuse", None)
                     elif "arch" in distroIdLike:
-                        return ("archlinux", projectRoot / "systems" / "archlinux" / "setup.py")
+                        return ("archlinux", None)
             except (OSError, IOError):
                 pass
         # Default to ubuntu for generic Linux
-        return ("ubuntu", projectRoot / "systems" / "ubuntu" / "setup.py")
+        return ("ubuntu", None)
     elif isOperatingSystem("windows"):
-        # Windows now uses Python setup script
-        return ("win11", projectRoot / "systems" / "win11" / "setup.py")
+        return ("win11", None)
     else:
         return ("unknown", None)
 
@@ -323,11 +327,14 @@ def printHelp() -> None:
             ("--skipCursor", "Skip Cursor configuration"),
             ("--skipRepos", "Skip repository cloning"),
             ("--skipSsh", "Skip GitHub SSH setup"),
+            ("--requirePassphrase", "Require a passphrase for SSH keys (most secure)"),
+            ("--noPassphrase", "Skip passphrase for SSH keys (least secure, not recommended)"),
             ("--appsOnly", "Only install/update applications (skip fonts, Git, Cursor, repos, SSH)"),
             ("--dryRun", "Preview changes without making them"),
             ("--noBackup", "Skip backing up existing configuration files"),
             ("--verbose", "Enable verbose output (show debug messages)"),
             ("--quiet, -q", "Enable quiet mode (only show errors)"),
+            ("--noTimestamps", "Hide timestamps in console output (logs always have timestamps)"),
             ("--resume", "Automatically resume from last successful step if setup was interrupted"),
             ("--noResume", "Do not resume from previous setup (start fresh)"),
             ("--listSteps", "Preview what steps will be executed without running setup"),
@@ -337,6 +344,10 @@ def printHelp() -> None:
 
 def main() -> int:
     """Main entry point for unified setup."""
+    # Register signal handlers for graceful shutdown
+    from common.core.signalHandling import setupSignalHandlers
+    setupSignalHandlers(resumeMessage=True)
+
     # Check for --help flag
     if "--help" in sys.argv or "-h" in sys.argv:
         printHelp()
@@ -345,42 +356,49 @@ def main() -> int:
     # Check for --version flag (before verbosity setup)
     if "--version" in sys.argv or "-v" in sys.argv:
         from common.version import __version__
-        print(f"jrl_env version {__version__}")
+        safePrint(f"jrl_env version {__version__}")
         return 0
 
-    # Parse verbosity flags early
+    # Parse verbosity and timestamp flags early
     quiet = "--quiet" in sys.argv or "-q" in sys.argv
     verbose = "--verbose" in sys.argv
-    from common.core.logging import setVerbosityFromArgs
+    noTimestamps = "--noTimestamps" in sys.argv
+    from common.core.logging import setVerbosityFromArgs, setShowConsoleTimestamps
     setVerbosityFromArgs(quiet=quiet, verbose=verbose)
+    if noTimestamps:
+        setShowConsoleTimestamps(False)
 
-    printSection("jrl_env Unified Setup")
-    safePrint()
+    printH1("jrl_env Unified Setup")
 
     # Check internet connectivity (required for package installation, repository cloning, etc.)
+    # Skip in dry-run or listSteps mode since we're not making actual changes
     from common.common import hasInternetConnectivity
     from common.core.logging import getVerbosity, Verbosity, printSuccess
 
-    if getVerbosity() >= Verbosity.verbose:
-        printInfo("Checking internet connectivity...")
+    dryRun = "--dryRun" in sys.argv
+    listSteps = "--listSteps" in sys.argv
 
-    if not hasInternetConnectivity():
-        printError(
-            "No internet connectivity detected!\n"
-            "Setup requires internet access for:\n"
-            "  - Installing Python dependencies\n"
-            "  - Installing packages via package managers\n"
-            "  - Cloning repositories\n"
-            "  - Downloading fonts\n"
-            "\n"
-            "Please check your network connection and try again."
-        )
+    if not dryRun and not listSteps:
+        if getVerbosity() >= Verbosity.verbose:
+            printInfo("Checking internet connectivity...")
+
+        if not hasInternetConnectivity():
+            printError(
+                "No internet connectivity detected!\n"
+                "Setup requires internet access for:\n"
+                "- Installing Python dependencies\n"
+                "- Installing packages via package managers\n"
+                "- Cloning repositories\n"
+                "- Downloading fonts\n"
+                "\n"
+                "Please check your network connection and try again."
+            )
+            safePrint()
+            return 1
+
+        if getVerbosity() >= Verbosity.verbose:
+            printSuccess("Internet connectivity verified")
         safePrint()
-        return 1
-
-    if getVerbosity() >= Verbosity.verbose:
-        printSuccess("Internet connectivity verified")
-    safePrint()
 
     # Install Python dependencies first
     installRequirements()
@@ -388,17 +406,13 @@ def main() -> int:
 
     # Detect platform
     printInfo("Detecting operating system...")
-    platformName, setupScript = detectPlatform()
+    platformName, _ = detectPlatform()
 
-    if platformName == "unknown" or setupScript is None:
+    if platformName == "unknown":
         printError(
             f"Unsupported operating system: {getOperatingSystem()}\n"
-            "Supported platforms: macOS, Ubuntu, Raspberry Pi, Windows 11"
+            "Supported platforms: macOS, Ubuntu, Raspberry Pi, RedHat, OpenSUSE, ArchLinux, Windows 11"
         )
-        return 1
-
-    if not setupScript.exists():
-        printError(f"Setup script not found: {setupScript}")
         return 1
 
     printSuccess(f"Detected platform: {platformName}")
@@ -412,8 +426,8 @@ def main() -> int:
         printWarning("Setup appears to have been run before.")
         printInfo(
             "Running UPDATE mode:\n"
-            "  - Pulling latest changes from repository\n"
-            "  - Re-running setup to update configuration"
+            "- Pulling latest changes from repository\n"
+            "- Re-running setup to update configuration"
         )
         safePrint()
 
@@ -426,25 +440,35 @@ def main() -> int:
             return 1
 
     # First-time setup
-    printInfo(
-        "Running in FIRST-TIME SETUP mode.\n"
-        "This will configure your development environment from scratch."
-    )
+    listSteps = "--listSteps" in sys.argv
+    if listSteps:
+        printInfo("Preview for FIRST-TIME SETUP mode.")
+    else:
+        printInfo(
+            "Running in FIRST-TIME SETUP mode.\n"
+            "This will configure your development environment from scratch."
+        )
     safePrint()
 
-    # Try to use system class if available, otherwise fall back to script
+    # Use GenericSystem for setup
     systemClass = getSystemClass(platformName)
-    if systemClass:
-        printInfo(f"Using system class: {systemClass.__name__}")
-        safePrint()
-        try:
-            system = systemClass(projectRoot)
-            result = system.run()
-            if result == 0:
+    if not systemClass:
+        printError(f"Failed to get system class for platform: {platformName}")
+        return 1
+
+    # Start setup
+    try:
+        system = systemClass(projectRoot)
+        result = system.run()
+        if result == 0:
+            # Only mark as run and update if not in dry-run or listSteps mode
+            dryRun = "--dryRun" in sys.argv
+            listSteps = "--listSteps" in sys.argv
+            if not dryRun and not listSteps:
                 markSetupAsRun()
                 # After first-time setup, automatically run update
                 safePrint()
-                printSection("Running Update After First-Time Setup")
+                printH2("Running Update After First-Time Setup")
                 printInfo("Automatically running update to ensure everything is current...")
                 safePrint()
                 # Use unified update script
@@ -455,45 +479,10 @@ def main() -> int:
                 except Exception as e:
                     printWarning(f"Update script had issues: {e}")
                     return 0  # Don't fail if update has issues
-            return result
-        except Exception as e:
-            printError(f"Failed to run system setup: {e}")
-            return 1
-    else:
-        # Fall back to calling setup script
-        printInfo(f"Using setup script: {setupScript}")
-        safePrint()
-
-        if not setupScript.exists():
-            printError(f"Setup script not found: {setupScript}")
-            return 1
-
-        import subprocess
-        try:
-            # Pass through all command-line arguments
-            result = subprocess.run(
-                [sys.executable, str(setupScript)] + sys.argv[1:],
-                check=False,
-            )
-            if result.returncode == 0:
-                markSetupAsRun()
-                # After first-time setup, automatically run update
-                safePrint()
-                printSection("Running Update After First-Time Setup")
-                printInfo("Automatically running update to ensure everything is current...")
-                safePrint()
-                # Use unified update script
-                try:
-                    from common.systems.update import main as updateMain
-                    updateResult = updateMain()
-                    return updateResult
-                except Exception as e:
-                    printWarning(f"Update script had issues: {e}")
-                    return 0  # Don't fail if update has issues
-            return result.returncode
-        except Exception as e:
-            printError(f"Failed to run Python setup: {e}")
-            return 1
+        return result
+    except Exception as e:
+        printError(f"Failed to run system setup: {e}")
+        return 1
 
 
 if __name__ == "__main__":

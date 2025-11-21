@@ -23,8 +23,8 @@ from typing import Iterable, List
 scriptDir = os.path.dirname(os.path.abspath(__file__))
 commonDir = os.path.join(os.path.dirname(scriptDir), "common")
 sys.path.insert(0, os.path.dirname(commonDir))
-from common.common import Colours, colourise
-from common.core.logging import setVerbosityFromArgs, getVerbosity, Verbosity
+from common.common import Colours, colourise, printHeading
+from common.core.logging import setVerbosityFromArgs, getVerbosity, Verbosity, safePrint
 
 
 defaultExtensions = [".ps1", ".sh", ".json", ".md", ".py", ".yml", ".yaml"]
@@ -38,9 +38,9 @@ def parseArguments() -> argparse.Namespace:
             "Intent: Clean up files by converting tabs to spaces, trimming whitespace,\n"
             "and enforcing proper line endings (CRLF for .ps1/.json/.md, LF for .sh/.py/.yml/.yaml).\n\n"
             "Examples:\n"
-            "  python3 helpers/tidy.py --file script.sh\n"
-            "  python3 helpers/tidy.py --path src/ --extensions .py .sh\n"
-            "  python3 helpers/tidy.py --dryRun"
+            "python3 helpers/tidy.py --file script.sh\n"
+            "python3 helpers/tidy.py --path src/ --extensions .py .sh\n"
+            "python3 helpers/tidy.py --dryRun"
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
@@ -89,6 +89,12 @@ def parseArguments() -> argparse.Namespace:
         dest="verbose",
         action="store_true",
         help="Show verbose output including per-file status messages.",
+    )
+    parser.add_argument(
+        "--subprocess",
+        dest="subprocess",
+        action="store_true",
+        help=argparse.SUPPRESS,  # Hidden flag for internal use
     )
 
     parser.set_defaults(defaultRoot=str(defaultRoot))
@@ -247,6 +253,11 @@ def determineTargets(args: argparse.Namespace, extensionsLower: set[str]) -> tup
 def main() -> int:
     args = parseArguments()
     setVerbosityFromArgs(quiet=args.quiet, verbose=args.verbose)
+
+    # Print title (automatically uses correct heading level based on depth)
+    if getVerbosity() != Verbosity.quiet:
+        printHeading("jrl_env tidy.py", dryRun=args.dryRun)
+
     enableColour = sys.stdout.isatty()
     extensionsLower = {ext.lower() for ext in args.extensions}
 
@@ -254,16 +265,16 @@ def main() -> int:
         targets, _ = determineTargets(args, extensionsLower)
     except FileNotFoundError as exc:
         if getVerbosity() == Verbosity.quiet:
-            print("Failure")
+            safePrint("Failure")
         else:
             sys.stderr.write(f"{exc}\n")
         return 1
 
     if not targets:
         if getVerbosity() == Verbosity.quiet:
-            print("Success")
+            safePrint("Success")
         else:
-            print(colourise("No files found to process.", Colours.YELLOW, enableColour))
+            safePrint(colourise("No files found to process.", Colours.YELLOW, enableColour))
         return 0
 
     fileCount = 0
@@ -293,75 +304,75 @@ def main() -> int:
                 or stats.whitespaceLineCount
                 or stats.removedTrailingBlanks
             ):
-                print(colourise(f"Would tidy: {filePath}", Colours.CYAN, enableColour))
+                safePrint(colourise(f"Would tidy: {filePath}", Colours.CYAN, enableColour))
                 if stats.tabCount:
-                    print(
+                    safePrint(
                         colourise(
-                            f"  Would convert {stats.tabCount} tab(s) to spaces",
+                            f"Would convert {stats.tabCount} tab(s) to spaces",
                             Colours.YELLOW,
                             enableColour,
                         )
                     )
                 if stats.whitespaceLineCount:
-                    print(
+                    safePrint(
                         colourise(
-                            f"  Would trim trailing whitespace from {stats.whitespaceLineCount} line(s)",
+                            f"Would trim trailing whitespace from {stats.whitespaceLineCount} line(s)",
                             Colours.YELLOW,
                             enableColour,
                         )
                     )
                 if stats.removedTrailingBlanks:
-                    print(
+                    safePrint(
                         colourise(
-                            "  Would remove trailing blank lines",
+                            "Would remove trailing blank lines",
                             Colours.YELLOW,
                             enableColour,
                         )
                     )
             else:
                 if getVerbosity() == Verbosity.verbose:
-                    print(colourise(f"File is already tidy: {filePath}", Colours.GREEN, enableColour))
+                    safePrint(colourise(f"File is already tidy: {filePath}", Colours.GREEN, enableColour))
         else:
             if stats.modified:
                 modifiedCount += 1
-                print(colourise(f"Tidied: {filePath}", Colours.GREEN, enableColour))
+                safePrint(colourise(f"Tidied: {filePath}", Colours.GREEN, enableColour))
                 if stats.tabCount:
-                    print(
+                    safePrint(
                         colourise(
-                            f"  Converted {stats.tabCount} tab(s) to spaces",
+                            f"Converted {stats.tabCount} tab(s) to spaces",
                             Colours.GREEN,
                             enableColour,
                         )
                     )
                 if stats.whitespaceLineCount:
-                    print(
+                    safePrint(
                         colourise(
-                            f"  Trimmed trailing whitespace from {stats.whitespaceLineCount} line(s)",
+                            f"Trimmed trailing whitespace from {stats.whitespaceLineCount} line(s)",
                             Colours.GREEN,
                             enableColour,
                         )
                     )
                 if stats.removedTrailingBlanks:
-                    print(
+                    safePrint(
                         colourise(
-                            "  Removed trailing blank lines",
+                            "Removed trailing blank lines",
                             Colours.GREEN,
                             enableColour,
                         )
                     )
             else:
                 if getVerbosity() == Verbosity.verbose:
-                    print(colourise(f"File is already tidy: {filePath}", Colours.GREEN, enableColour))
+                    safePrint(colourise(f"File is already tidy: {filePath}", Colours.GREEN, enableColour))
 
         totalTabCount += stats.tabCount
         totalWhitespaceCount += stats.whitespaceLineCount
 
     if getVerbosity() != Verbosity.quiet:
-        print()
+        safePrint()
 
     if getVerbosity() != Verbosity.quiet:
         if args.dryRun:
-            print(
+            safePrint(
                 colourise(
                     f"DRY RUN: Would process {fileCount} file(s)",
                     Colours.YELLOW,
@@ -369,24 +380,24 @@ def main() -> int:
                 )
             )
             if totalTabCount:
-                print(
+                safePrint(
                     colourise(
-                        f"  Would convert {totalTabCount} tab(s) to spaces",
+                        f"Would convert {totalTabCount} tab(s) to spaces",
                         Colours.YELLOW,
                         enableColour,
                     )
                 )
             if totalWhitespaceCount:
-                print(
+                safePrint(
                     colourise(
-                        f"  Would trim trailing whitespace from {totalWhitespaceCount} line(s)",
+                        f"Would trim trailing whitespace from {totalWhitespaceCount} line(s)",
                         Colours.YELLOW,
                         enableColour,
                     )
                 )
         else:
             extensionsList = ', '.join(args.extensions)
-            print(
+            safePrint(
                 colourise(
                     f"Processed {fileCount} file(s) ({extensionsList})",
                     Colours.CYAN,
@@ -394,7 +405,7 @@ def main() -> int:
                 )
             )
             if modifiedCount:
-                print(
+                safePrint(
                     colourise(
                         f"Modified {modifiedCount} file(s)",
                         Colours.GREEN,
@@ -402,27 +413,27 @@ def main() -> int:
                     )
                 )
                 if totalTabCount:
-                    print(
+                    safePrint(
                         colourise(
-                            f"  Converted {totalTabCount} tab(s) to spaces",
+                            f"Converted {totalTabCount} tab(s) to spaces",
                             Colours.GREEN,
                             enableColour,
                         )
                     )
                 if totalWhitespaceCount:
-                    print(
+                    safePrint(
                         colourise(
-                            f"  Trimmed trailing whitespace from {totalWhitespaceCount} line(s)",
+                            f"Trimmed trailing whitespace from {totalWhitespaceCount} line(s)",
                             Colours.GREEN,
                             enableColour,
                         )
                     )
             else:
-                print(colourise("No files needed tidying. All files are clean!", Colours.GREEN, enableColour))
+                safePrint(colourise("No files needed tidying. All files are clean!", Colours.GREEN, enableColour))
 
     # Final success/failure message (always show in quiet mode)
     if getVerbosity() == Verbosity.quiet:
-        print("Success")
+        safePrint("Success")
         return 0
 
     return 0

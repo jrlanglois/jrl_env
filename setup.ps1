@@ -48,7 +48,7 @@ if (-not $pythonCmd)
         else
         {
             Write-Host "Error: winget not found. Please install Python3 manually:" -ForegroundColor Red
-            Write-Host "  winget install Python.Python.3" -ForegroundColor Yellow
+            Write-Host "winget install Python.Python.3" -ForegroundColor Yellow
             Write-Host "Or download from: https://www.python.org/downloads/" -ForegroundColor Yellow
         }
 

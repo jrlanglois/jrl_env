@@ -17,9 +17,10 @@ from common.core.logging import (
     printError,
     printInfo,
     printLock,
-    printSection,
+    printH2,
     printSuccess,
     printWarning,
+    safePrint,
 )
 from common.core.utilities import (
     commandExists,
@@ -59,8 +60,8 @@ def installPackages(
     if not packageList:
         return result
 
-    printSection(f"Processing {label}", dryRun=dryRun)
-    print()
+    printH2(f"Processing {label}", dryRun=dryRun)
+    safePrint()
 
     # Filter out empty packages
     validPackages = [p.strip() for p in packageList if p and p.strip()]
@@ -69,14 +70,14 @@ def installPackages(
     if dryRun:
         printInfo("[DRY RUN] Would process the following packages:")
         for idx, packageName in enumerate(validPackages, 1):
-            printInfo(f"  [{idx}/{totalPackages}] {packageName}")
+            printInfo(f"[{idx}/{totalPackages}] {packageName}")
         result.installedCount = totalPackages
         return result
 
     # Process packages in parallel
     maxWorkers = min(8, totalPackages)  # Limit concurrent installations to avoid overwhelming the system
     printInfo(f"Processing {totalPackages} package(s) in parallel (max {maxWorkers} workers)...")
-    print()
+    safePrint()
 
     def processPackage(packageName: str) -> tuple[str, str, bool]:
         """Process a single package (check, install, or update). Returns (packageName, action, success)."""
@@ -132,7 +133,7 @@ def installPackages(
                     printError(f"Installing package {completedCount}/{totalPackages}: ✗ {packageName} (exception: {e})")
                     result.failedCount += 1
 
-    print()
+    safePrint()
     return result
 
 
@@ -250,7 +251,7 @@ def markCommandAsRun(flagFile: Path) -> None:
     flagFile.touch()
 
 
-def executeConfigCommand(phase: str, cmdJson: dict, configPath: Optional[str] = None) -> bool:
+def executeConfigCommand(phase: str, cmdJson: dict, configPath: Optional[str] = None, dryRun: bool = False) -> bool:
     """Execute a single command from the config."""
     if not cmdJson:
         return True
@@ -258,6 +259,10 @@ def executeConfigCommand(phase: str, cmdJson: dict, configPath: Optional[str] = 
     cmdConfig = parseCommandJson(cmdJson)
 
     if not cmdConfig.command or cmdConfig.command == "null":
+        return True
+
+    if dryRun:
+        printInfo(f"[DRY RUN] Would run {cmdConfig.name}: {cmdConfig.command}")
         return True
 
     flagFile = getCommandFlagFile(phase, cmdConfig.name)
@@ -286,14 +291,14 @@ def executeConfigCommand(phase: str, cmdJson: dict, configPath: Optional[str] = 
         else:
             printError(f"{cmdConfig.name} failed")
             if result.stderr:
-                printError(f"  Error: {result.stderr.decode('utf-8', errors='ignore')}")
+                printError(f"Error: {result.stderr.decode('utf-8', errors='ignore')}")
             return False
     except Exception as e:
         printError(f"{cmdConfig.name} failed: {e}")
         return False
 
 
-def runConfigCommands(phase: str, configPath: str) -> None:
+def runConfigCommands(phase: str, configPath: str, dryRun: bool = False) -> None:
     """Run commands from a specific phase (preInstall/postInstall)."""
     configFile = Path(configPath)
 
@@ -308,7 +313,7 @@ def runConfigCommands(phase: str, configPath: str) -> None:
 
     for cmdJson in commands:
         if isinstance(cmdJson, dict):
-            executeConfigCommand(phase, cmdJson, configPath)
+            executeConfigCommand(phase, cmdJson, configPath, dryRun)
 
 
 def installApps(
@@ -332,8 +337,8 @@ def installApps(
         printError(f"Configuration file not found: {configPath}")
         return InstallResult()
 
-    printSection("Application Installation", dryRun=dryRun)
-    print()
+    printH2("Application Installation", dryRun=dryRun)
+    safePrint()
 
     totalResult = InstallResult()
 
@@ -369,14 +374,14 @@ def installApps(
 
     printInfo("Summary:")
     if dryRun:
-        printInfo(f"  Would install: {totalResult.installedCount}")
+        printInfo(f"Would install: {totalResult.installedCount}")
     else:
         if totalResult.installedCount > 0:
-            printSuccess(f"  Installed: {totalResult.installedCount}")
+            printSuccess(f"Installed: {totalResult.installedCount}")
         if totalResult.updatedCount > 0:
-            printWarning(f"  Updated: {totalResult.updatedCount}")
+            printWarning(f"Updated: {totalResult.updatedCount}")
         if totalResult.failedCount > 0:
-            printError(f"  Failed: {totalResult.failedCount}")
+            printError(f"Failed: {totalResult.failedCount}")
 
     return totalResult
 

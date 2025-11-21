@@ -24,7 +24,7 @@ sys.path.insert(0, str(projectRoot))
 from common.common import (
     printError,
     printInfo,
-    printSection,
+    printH2,
     printSuccess,
     printWarning,
     safePrint,
@@ -269,7 +269,7 @@ class LinuxCommonValidator:
             printError(f"No packages found in {configPath}")
             return 1
 
-        printSection("Validating Linux Common Packages Across ALL Package Managers")
+        printH2("Validating Linux Common Packages Across ALL Package Managers")
         safePrint()
         printInfo("Checking each package against: apt, yum, dnf, rpm")
         printInfo("Using repository APIs (not local system state)")
@@ -306,40 +306,40 @@ class LinuxCommonValidator:
 
         # Print individual results
         if result.aptFound:
-            printSuccess("  ✓ apt: found")
+            printSuccess("✓ apt: found")
         else:
-            printError("  ✗ apt: not found")
+            printError("✗ apt: not found")
 
         if result.yumFound or result.dnfFound:
             rpmPackage = PackageMapper.mapForRpm(package)
             if rpmPackage != package:
-                printSuccess(f"  ✓ yum/dnf: found (as {rpmPackage})")
+                printSuccess(f"✓ yum/dnf: found (as {rpmPackage})")
             else:
-                printSuccess("  ✓ yum/dnf: found")
+                printSuccess("✓ yum/dnf: found")
         else:
-            printError("  ✗ yum/dnf: not found")
+            printError("✗ yum/dnf: not found")
 
         if result.rpmFound:
-            printSuccess("  ✓ rpm: found")
+            printSuccess("✓ rpm: found")
         else:
-            printError("  ✗ rpm: not found")
+            printError("✗ rpm: not found")
 
         return result
 
     def printPackageResult(self, result: PackageValidationResult):
         """Print result summary for a package."""
         if result.isUniversal:
-            printSuccess("  → Universal: available in all package managers")
+            printSuccess("→ Universal: available in all package managers")
         elif result.isFoundAnywhere:
             foundList = ", ".join(result.foundIn)
-            printWarning(f"  → Partial: available in {foundList} only")
+            printWarning(f"→ Partial: available in {foundList} only")
         else:
-            printError("  → FAILED: not found in any package manager")
+            printError("→ FAILED: not found in any package manager")
         safePrint()
 
     def printSummary(self) -> int:
         """Print validation summary and return exit code."""
-        printSection("Validation Summary")
+        printH2("Validation Summary")
         safePrint()
 
         totalPackages = len(self.results)
@@ -358,11 +358,11 @@ class LinuxCommonValidator:
             for result in packagesToMove:
                 action, target = result.recommendation
                 if target == "ubuntu,raspberrypi":
-                    printInfo(f"  - {result.package} → Move to ubuntu.json and raspberrypi.json")
+                    printInfo(f"- {result.package} → Move to ubuntu.json and raspberrypi.json")
                 elif target == "rpm-based":
-                    printInfo(f"  - {result.package} → Move to RPM-based OS configs (when created)")
+                    printInfo(f"- {result.package} → Move to RPM-based OS configs (when created)")
                 else:
-                    printInfo(f"  - {result.package} → Review and move to appropriate OS config")
+                    printInfo(f"- {result.package} → Review and move to appropriate OS config")
 
         if packagesToRemove:
             safePrint()
@@ -371,7 +371,7 @@ class LinuxCommonValidator:
             printInfo("They should be removed from linuxCommon.json")
             safePrint()
             for result in packagesToRemove:
-                printError(f"  - {result.package}")
+                printError(f"- {result.package}")
 
         safePrint()
         if packagesToRemove:

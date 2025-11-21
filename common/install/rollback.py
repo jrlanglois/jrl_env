@@ -20,9 +20,10 @@ sys.path.insert(0, str(scriptDir))
 from common.core.logging import (
     printError,
     printInfo,
-    printSection,
+    printH2,
     printSuccess,
     printWarning,
+    safePrint,
 )
 
 
@@ -217,7 +218,7 @@ def uninstallPackages(
         printWarning("No uninstall function provided. Cannot uninstall packages.")
         printInfo("You may need to manually uninstall:")
         for pkg in packages:
-            printInfo(f"  - {pkg}")
+            printInfo(f"- {pkg}")
         return False
 
     failed = []
@@ -251,10 +252,10 @@ def rollback(session: RollbackSession, uninstallFunction: Optional[Callable[[str
     Returns:
         True if rollback succeeded, False otherwise
     """
-    printSection("Rollback")
+    printH2("Rollback")
     printInfo(f"Rolling back session: {session.sessionId}")
     printInfo(f"Session timestamp: {session.timestamp}")
-    print()
+    safePrint()
 
     success = True
 
@@ -262,13 +263,13 @@ def rollback(session: RollbackSession, uninstallFunction: Optional[Callable[[str
     if session.backupDir:
         if not restoreConfigs(session.backupDir):
             success = False
-        print()
+        safePrint()
 
     # Uninstall packages
     if session.installedPackages:
         if not uninstallPackages(session.installedPackages, uninstallFunction):
             success = False
-        print()
+        safePrint()
 
     if success:
         printSuccess("Rollback completed successfully")

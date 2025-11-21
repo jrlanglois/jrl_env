@@ -15,9 +15,10 @@ from typing import List, Optional, Tuple
 from common.core.logging import (
     printError,
     printInfo,
-    printSection,
+    printH2,
     printSuccess,
     printWarning,
+    safePrint,
 )
 from common.core.utilities import (
     commandExists,
@@ -110,7 +111,7 @@ def cloneRepository(repoUrl: str, workPath: str) -> bool:
     repoName = getRepositoryName(repoUrl)
 
     if not owner or not repoName:
-        printError("  Failed to extract owner or repository name from URL")
+        printError("Failed to extract owner or repository name from URL")
         return False
 
     workPathObj = Path(workPath)
@@ -120,11 +121,11 @@ def cloneRepository(repoUrl: str, workPath: str) -> bool:
     repoPath = ownerPath / repoName
 
     if isRepositoryCloned(repoUrl, workPath):
-        printWarning(f"  Repository already exists: {owner}/{repoName}")
-        print("    Skipping clone. Use 'git pull' to update if needed.")
+        printWarning(f"Repository already exists: {owner}/{repoName}")
+        safePrint("Skipping clone. Use 'git pull' to update if needed.")
         return True
 
-    printInfo(f"  Cloning {owner}/{repoName}...")
+    printInfo(f"Cloning {owner}/{repoName}...")
 
     try:
         subprocess.run(
@@ -132,16 +133,16 @@ def cloneRepository(repoUrl: str, workPath: str) -> bool:
             check=True,
             capture_output=True,
         )
-        printSuccess("    Cloned successfully")
+        printSuccess("Cloned successfully")
 
         # Check if submodules were initialised
         gitmodulesPath = repoPath / ".gitmodules"
         if gitmodulesPath.exists():
-            printSuccess("    Submodules initialised")
+            printSuccess("Submodules initialised")
 
         return True
     except subprocess.CalledProcessError:
-        printError("    Clone failed")
+        printError("Clone failed")
         return False
 
 
@@ -172,8 +173,8 @@ def cloneRepositories(
     Returns:
         True if successful, False otherwise
     """
-    printSection("Repository Cloning", dryRun=dryRun)
-    print()
+    printH2("Repository Cloning", dryRun=dryRun)
+    safePrint()
 
     if not isGitInstalled():
         printError("Git is not installed.")
@@ -207,7 +208,7 @@ def cloneRepositories(
     repoCount = len(repositories)
     printInfo(f"Work directory: {workPath}")
     printInfo(f"Found {repoCount} repository/repositories in configuration file.")
-    print()
+    safePrint()
 
     # Create work directory if it doesn't exist
     workPathObj = Path(workPath)
@@ -218,7 +219,7 @@ def cloneRepositories(
             printInfo(f"Creating work directory: {workPath}")
             workPathObj.mkdir(parents=True, exist_ok=True)
             printSuccess("Work directory created")
-        print()
+        safePrint()
 
     clonedCount = 0
     skippedCount = 0
@@ -230,7 +231,7 @@ def cloneRepositories(
             if not repoUrl or not repoUrl.strip():
                 continue
             repoUrl = repoUrl.strip()
-            printInfo(f"  - {repoUrl}")
+            printInfo(f"- {repoUrl}")
         clonedCount = len([r for r in repositories if r and r.strip()])
     else:
         for repoUrl in repositories:
@@ -247,19 +248,19 @@ def cloneRepositories(
             else:
                 failedCount += 1
 
-            print()
+            safePrint()
 
     printInfo("Summary:")
     if dryRun:
-        printInfo(f"  Would clone: {clonedCount} repository/repositories")
+        printInfo(f"Would clone: {clonedCount} repository/repositories")
     else:
-        printSuccess(f"  Cloned: {clonedCount} repository/repositories")
+        printSuccess(f"Cloned: {clonedCount} repository/repositories")
         if skippedCount > 0:
-            printInfo(f"  Skipped: {skippedCount} repository/repositories (already exist)")
+            printInfo(f"Skipped: {skippedCount} repository/repositories (already exist)")
         if failedCount > 0:
-            printError(f"  Failed: {failedCount} repository/repositories")
+            printError(f"Failed: {failedCount} repository/repositories")
 
-    print()
+    safePrint()
     printSuccess("Repository cloning complete!")
 
     return True

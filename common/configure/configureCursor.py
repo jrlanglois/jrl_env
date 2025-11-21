@@ -13,9 +13,10 @@ from typing import Dict, Optional
 from common.core.logging import (
     printError,
     printInfo,
-    printSection,
+    printH2,
     printSuccess,
     printWarning,
+    safePrint,
 )
 
 
@@ -60,8 +61,8 @@ def configureCursor(
     Returns:
         True if successful, False otherwise
     """
-    printSection("Cursor Configuration", dryRun=dryRun)
-    print()
+    printH2("Cursor Configuration", dryRun=dryRun)
+    safePrint()
 
     if not configPath:
         printError("Configuration file path not provided")
@@ -118,12 +119,12 @@ def configureCursor(
         mergedFontFamily = mergedSettings.get("editor.fontFamily")
         if mergedFontFamily != configFontFamily:
             printWarning(f"Font family merge may have failed. Expected: {configFontFamily}")
-            printInfo(f"  Got: {mergedFontFamily}")
+            printInfo(f"Got: {mergedFontFamily}")
 
     # Write merged settings
     printInfo(f"Writing settings to: {cursorSettingsPath}")
     if dryRun:
-        printInfo("  [DRY RUN] Would write merged settings to file")
+        printInfo("[DRY RUN] Would write merged settings to file")
         printSuccess("Cursor settings configured successfully!")
         return True
 
@@ -135,7 +136,7 @@ def configureCursor(
         printError(f"Failed to write settings: {e}")
         return False
 
-    print()
+    safePrint()
 
     # Check for workspace settings that might override user settings
     workspaceSettingsPath = Path(".vscode/settings.json")
@@ -143,7 +144,7 @@ def configureCursor(
 
     if workspaceSettingsPath.exists() or cursorWorkspaceSettingsPath.exists():
         printWarning("Note: Workspace settings files (.vscode/settings.json or .cursor/settings.json)")
-        printInfo("  may override user settings. Check these files if settings don't match.")
+        printInfo("may override user settings. Check these files if settings don't match.")
 
     printInfo("Note: You may need to restart Cursor for all changes to take effect.")
 

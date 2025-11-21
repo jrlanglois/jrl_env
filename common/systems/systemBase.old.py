@@ -25,7 +25,7 @@ from common.common import (
     parseSetupArgs,
     printError,
     printInfo,
-    printSection,
+    printH2,
     printSuccess,
     printWarning,
     safePrint,
@@ -270,7 +270,7 @@ class SystemBase(ABC):
         """
         from common.systems.validate import validateConfigDirectory, validatePlatformConfig
 
-        printSection("Validating Configuration Files")
+        printH2("Validating Configuration Files")
         safePrint()
 
         # Validate config directory exists and is accessible
@@ -319,7 +319,7 @@ class SystemBase(ABC):
 
                 printWarning("Unknown fields detected in your configuration files:")
                 for error in unknownFieldErrors:
-                    printWarning(f"  - {error}")
+                    printWarning(f"- {error}")
                 safePrint()
                 printWarning("These fields are not recognised by jrl_env and will be ignored.")
                 printInfo(
@@ -334,7 +334,7 @@ class SystemBase(ABC):
                         "Proceeding with dry-run..."
                     )
                 else:
-                    print("Do you want to continue anyway? (y/n): ", end="", flush=True)
+                    safePrint("Do you want to continue anyway? (y/n): ", end="", flush=True)
                     try:
                         response = input().strip().lower()
                         if response not in ('y', 'yes'):
@@ -376,7 +376,7 @@ class SystemBase(ABC):
         platformName = self.getPlatformName()
         existingState = loadState(platformName) if not self.setupArgs.dryRun else None
 
-        printSection("Setup Steps Preview")
+        printH2("Setup Steps Preview")
         printInfo(f"Platform: {platformName.capitalize()}")
         safePrint()
 
@@ -438,10 +438,10 @@ class SystemBase(ABC):
             if len(step) == 4:
                 stepNum, description, willRun, isComplete = step
                 status = "✓ (already completed, will skip)" if isComplete else "→ (will run)"
-                printInfo(f"  {stepNum}: {description} - {status}")
+                printInfo(f"{stepNum}: {description} - {status}")
             else:
                 stepNum, description, willRun = step
-                printInfo(f"  {stepNum}: {description}")
+                printInfo(f"{stepNum}: {description}")
 
         safePrint()
         if existingState:
@@ -504,11 +504,11 @@ class SystemBase(ABC):
 
         # Initialise logging
         self.logFile = initLogging(self.getPlatformName())
-        printSection(f"jrl_env Setup for {self.getPlatformName().capitalize()}")
+        printH2(f"jrl_env Setup for {self.getPlatformName().capitalize()}")
         printInfo(f"Log file: {self.logFile}")
 
         if self.setupArgs.dryRun:
-            printSection("DRY RUN MODE")
+            printH2("DRY RUN MODE")
             printWarning("No changes will be made. This is a preview.")
 
         # Check for existing setup state (resume capability)
@@ -529,13 +529,13 @@ class SystemBase(ABC):
                 shouldResume = True
             else:
                 # Prompt user if they want to resume
-                printSection("Previous Setup Detected")
+                printH2("Previous Setup Detected")
                 printInfo(f"Found incomplete setup from {existingState.timestamp}")
                 if existingState.failedAtStep:
                     printInfo(f"Setup failed at: {existingState.failedAtStep}")
                 printInfo(f"Completed steps: {', '.join(sorted(existingState.completedSteps)) or 'None'}\n")
                 safePrint()
-                print("Would you like to resume from the last successful step? (y/n): ", end="", flush=True)
+                safePrint("Would you like to resume from the last successful step? (y/n): ", end="", flush=True)
                 try:
                     response = input().strip().lower()
                     shouldResume = response in ('y', 'yes')
@@ -544,7 +544,7 @@ class SystemBase(ABC):
                 safePrint()
 
         if shouldResume and existingState:
-            printSection("Resuming Setup")
+            printH2("Resuming Setup")
             printInfo(
                 f"Resuming from session: {existingState.sessionId}\n"
                 f"Skipping completed steps: {', '.join(sorted(existingState.completedSteps)) or 'None'}"
@@ -590,10 +590,10 @@ class SystemBase(ABC):
         # Step 1: Setup development environment
         stepName = "devEnv"
         if isStepComplete(self.setupState, stepName):
-            printSection("Step 1: Setting up development environment (SKIPPED - already completed)")
+            printH2("Step 1: Setting up development environment (SKIPPED - already completed)")
             printInfo("Development environment setup was already completed in a previous run.")
         else:
-            printSection("Step 1: Setting up development environment")
+            printH2("Step 1: Setting up development environment")
             try:
                 if not self.setupDevEnv():
                     printWarning("Development environment setup had some issues, continuing...")
@@ -611,10 +611,10 @@ class SystemBase(ABC):
         if self.runFlags.runFonts:
             stepName = "fonts"
             if isStepComplete(self.setupState, stepName):
-                printSection("Step 2: Installing fonts (SKIPPED - already completed)", dryRun=self.setupArgs.dryRun)
+                printH2("Step 2: Installing fonts (SKIPPED - already completed)", dryRun=self.setupArgs.dryRun)
                 printInfo("Font installation was already completed in a previous run.")
             else:
-                printSection("Step 2: Installing fonts", dryRun=self.setupArgs.dryRun)
+                printH2("Step 2: Installing fonts", dryRun=self.setupArgs.dryRun)
                 try:
                     if not self.installGoogleFonts(paths["fontsConfigPath"], paths["fontInstallDir"], self.setupArgs.dryRun):
                         printWarning("Font installation had some issues, continuing...")
@@ -632,10 +632,10 @@ class SystemBase(ABC):
         if self.runFlags.runApps:
             stepName = "apps"
             if isStepComplete(self.setupState, stepName):
-                printSection("Step 3: Installing applications (SKIPPED - already completed)", dryRun=self.setupArgs.dryRun)
+                printH2("Step 3: Installing applications (SKIPPED - already completed)", dryRun=self.setupArgs.dryRun)
                 printInfo("Application installation was already completed in a previous run.")
             else:
-                printSection("Step 3: Installing applications", dryRun=self.setupArgs.dryRun)
+                printH2("Step 3: Installing applications", dryRun=self.setupArgs.dryRun)
                 try:
                     installResult = self.installOrUpdateApps(paths["platformConfigPath"], self.setupArgs.dryRun)
                     if not installResult or (hasattr(installResult, 'failedCount') and installResult.failedCount > 0):
@@ -666,12 +666,12 @@ class SystemBase(ABC):
             if androidInConfig or androidInstalled:
                 shouldConfigureAndroid = True
             elif not self.setupArgs.dryRun:
-                printSection("Android Configuration Check")
+                printH2("Android Configuration Check")
                 printInfo("Android Studio is not installed and not in your platform config.")
                 printInfo("Would you like to configure Android SDK components?")
                 printInfo("(Note: You'll need to install Android Studio separately if not already installed)")
                 safePrint()
-                print("Configure Android SDK? (y/n): ", end="", flush=True)
+                safePrint("Configure Android SDK? (y/n): ", end="", flush=True)
                 try:
                     response = input().strip().lower()
                     shouldConfigureAndroid = response in ('y', 'yes')
@@ -684,10 +684,10 @@ class SystemBase(ABC):
 
         if shouldConfigureAndroid:
             if isStepComplete(self.setupState, stepName):
-                printSection("Step 3.5: Configuring Android SDK (SKIPPED - already completed)", dryRun=self.setupArgs.dryRun)
+                printH2("Step 3.5: Configuring Android SDK (SKIPPED - already completed)", dryRun=self.setupArgs.dryRun)
                 printInfo("Android SDK configuration was already completed in a previous run.")
             else:
-                printSection("Step 3.5: Configuring Android SDK", dryRun=self.setupArgs.dryRun)
+                printH2("Step 3.5: Configuring Android SDK", dryRun=self.setupArgs.dryRun)
                 try:
                     platformAndroidConfig = None
                     from common.core.utilities import getJsonObject
@@ -716,10 +716,10 @@ class SystemBase(ABC):
         if self.runFlags.runGit:
             stepName = "git"
             if isStepComplete(self.setupState, stepName):
-                printSection("Step 4: Configuring Git (SKIPPED - already completed)", dryRun=self.setupArgs.dryRun)
+                printH2("Step 4: Configuring Git (SKIPPED - already completed)", dryRun=self.setupArgs.dryRun)
                 printInfo("Git configuration was already completed in a previous run.")
             else:
-                printSection("Step 4: Configuring Git", dryRun=self.setupArgs.dryRun)
+                printH2("Step 4: Configuring Git", dryRun=self.setupArgs.dryRun)
                 try:
                     gitSuccess = configureGit(paths["gitConfigPath"], dryRun=self.setupArgs.dryRun)
                     if not gitSuccess:
@@ -740,10 +740,10 @@ class SystemBase(ABC):
         if self.runFlags.runSsh:
             stepName = "ssh"
             if isStepComplete(self.setupState, stepName):
-                printSection("Step 5: Configuring GitHub SSH (SKIPPED - already completed)", dryRun=self.setupArgs.dryRun)
+                printH2("Step 5: Configuring GitHub SSH (SKIPPED - already completed)", dryRun=self.setupArgs.dryRun)
                 printInfo("GitHub SSH configuration was already completed in a previous run.")
             else:
-                printSection("Step 5: Configuring GitHub SSH", dryRun=self.setupArgs.dryRun)
+                printH2("Step 5: Configuring GitHub SSH", dryRun=self.setupArgs.dryRun)
                 try:
                     sshSuccess = configureGithubSsh(paths["gitConfigPath"], dryRun=self.setupArgs.dryRun)
                     if not sshSuccess:
@@ -764,10 +764,10 @@ class SystemBase(ABC):
         if self.runFlags.runCursor:
             stepName = "cursor"
             if isStepComplete(self.setupState, stepName):
-                printSection("Step 6: Configuring Cursor (SKIPPED - already completed)", dryRun=self.setupArgs.dryRun)
+                printH2("Step 6: Configuring Cursor (SKIPPED - already completed)", dryRun=self.setupArgs.dryRun)
                 printInfo("Cursor configuration was already completed in a previous run.")
             else:
-                printSection("Step 6: Configuring Cursor", dryRun=self.setupArgs.dryRun)
+                printH2("Step 6: Configuring Cursor", dryRun=self.setupArgs.dryRun)
                 try:
                     cursorSuccess = configureCursor(paths["cursorConfigPath"], paths["cursorSettingsPath"], dryRun=self.setupArgs.dryRun)
                     if not cursorSuccess:
@@ -788,10 +788,10 @@ class SystemBase(ABC):
         if self.runFlags.runRepos:
             stepName = "repos"
             if isStepComplete(self.setupState, stepName):
-                printSection("Step 7: Cloning repositories (SKIPPED - already completed)", dryRun=self.setupArgs.dryRun)
+                printH2("Step 7: Cloning repositories (SKIPPED - already completed)", dryRun=self.setupArgs.dryRun)
                 printInfo("Repository cloning was already completed in a previous run.")
             else:
-                printSection("Step 7: Cloning repositories", dryRun=self.setupArgs.dryRun)
+                printH2("Step 7: Cloning repositories", dryRun=self.setupArgs.dryRun)
                 try:
                     if self.setupArgs.dryRun or shouldCloneRepositories(paths["reposConfigPath"], self.getRepositoryWorkPathKey()):
                         if not cloneRepositories(paths["reposConfigPath"], dryRun=self.setupArgs.dryRun):
@@ -838,7 +838,7 @@ class SystemBase(ABC):
             clearState(platformName)
             printInfo("Setup state cleared (setup completed successfully)")
 
-        printSection("Setup Complete")
+        printH2("Setup Complete")
         printInfo("All setup tasks have been executed.")
         printInfo(f"Log file saved to: {self.logFile}")
         if self.rollbackSession and not self.setupArgs.dryRun:

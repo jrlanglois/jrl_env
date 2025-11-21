@@ -39,6 +39,7 @@ from common.systems.validate import (
     validateJsonFile,
 )
 from common.core.utilities import getConfigDirectory
+from common.core.logging import safePrint
 
 
 class TestSetupValidation(unittest.TestCase):
@@ -401,7 +402,7 @@ class TestSetupValidation(unittest.TestCase):
         configFile = self.createValidConfig("repositories.json", {
             "workPathUnix": "~/work",
             "repositories": [
-                "https://github.com/microsoft/vscode"  # Known to exist
+                "https://github.com/microsoft/vscode"# Known to exist
             ]
         })
 
@@ -496,9 +497,9 @@ if __name__ == "__main__":
     unittest.main(verbosity=2, exit=False)
 
     # Print summary
-    print("\n" + "=" * 70)
-    print("Test Summary")
-    print("=" * 70)
-    print("All validation tests completed.")
-    print("These tests verify that setup validation fails early and clearly")
-    print("when configuration files are missing or invalid.")
+    safePrint("\n" + "=" * 70)
+    safePrint("Test Summary")
+    safePrint("=" * 70)
+    safePrint("All validation tests completed.")
+    safePrint("These tests verify that setup validation fails early and clearly")
+    safePrint("when configuration files are missing or invalid.")

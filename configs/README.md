@@ -127,7 +127,7 @@ This is useful for:
     "brew": ["string"],              // Homebrew packages (formula names)
     "brewCask": ["string"],          // Homebrew Cask applications (cask names)
     "shell": {
-        "ohMyZshTheme": "string"     // Oh My Zsh theme name
+        "ohMyZshTheme": "string"   // Oh My Zsh theme name
     },
     "commands": {
         "preInstall": [Command],     // Commands to run before installation
@@ -150,7 +150,7 @@ This is useful for:
     "snap": ["string"],               // Snap packages (snap package names)
     "cruft": ["string"],              // Packages to uninstall (supports wildcards: `"package*"`)
     "shell": {
-        "ohMyZshTheme": "string"      // Oh My Zsh theme name
+        "ohMyZshTheme": "string"    // Oh My Zsh theme name
     },
     "commands": {
         "preInstall": [Command],
@@ -340,7 +340,7 @@ apt, yum, dnf, rpm, zypper, pacman
     "user": {
         "name": "string",             // Git user name (UTF-8, web-compatible)
         "email": "string",            // Git user email (valid email format)
-        "usernameGitHub": "string"    // GitHub username (for SSH key generation)
+        "usernameGitHub": "string"  // GitHub username (for SSH key generation)
     },
     "defaults": {
         "init.defaultBranch": "string",
@@ -349,7 +349,7 @@ apt, yum, dnf, rpm, zypper, pacman
         // ... any other Git config keys
     },
     "aliases": {
-        "aliasName": "string"         // Key-value pairs: alias name → Git command
+        "aliasName": "string"       // Key-value pairs: alias name → Git command
     },
     "lfs": {
         "enabled": boolean            // Enable/disable Git LFS

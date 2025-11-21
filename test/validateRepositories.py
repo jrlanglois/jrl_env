@@ -12,6 +12,7 @@ import time
 import urllib.error
 import urllib.request
 from pathlib import Path
+from typing import Optional, Tuple
 
 # Add project root to path so we can import from common
 scriptDir = Path(__file__).parent.absolute()
@@ -24,7 +25,7 @@ from common.common import (
     getJsonValue,
     printError,
     printInfo,
-    printSection,
+    printH2,
     printSuccess,
     printWarning,
     safePrint,
@@ -63,7 +64,7 @@ def validateWindowsPath(path: str) -> bool:
     return bool(re.match(pattern, path))
 
 
-def convertSshToHttps(repoUrl: str) -> str | None:
+def convertSshToHttps(repoUrl: str) -> Optional[str]:
     """
     Convert GitHub SSH URL to HTTPS URL for validation.
 
@@ -82,7 +83,7 @@ def convertSshToHttps(repoUrl: str) -> str | None:
     return None
 
 
-def checkGitHubRepository(ownerRepo: str) -> tuple[bool | None, str]:
+def checkGitHubRepository(ownerRepo: str) -> Tuple[Optional[bool], str]:
     """
     Check if a GitHub repository exists via API.
 
@@ -158,7 +159,7 @@ def validateRepositories(configPath: str) -> int:
         printError(f"Config file not found: {configPath}")
         return 1
 
-    printSection("Validating Repositories Config")
+    printH2("Validating Repositories Config")
     safePrint()
 
     # Validate JSON syntax
@@ -186,17 +187,17 @@ def validateRepositories(configPath: str) -> int:
         # Validate Unix path syntax
         if workPathUnix and workPathUnix != "null":
             if validateUnixPath(workPathUnix):
-                printSuccess(f"  workPathUnix: {workPathUnix}")
+                printSuccess(f"workPathUnix: {workPathUnix}")
             else:
-                printError(f"  workPathUnix: {workPathUnix} (should start with ~, /, $HOME, or $USER)")
+                printError(f"workPathUnix: {workPathUnix} (should start with ~, /, $HOME, or $USER)")
                 errors += 1
 
         # Validate Windows path syntax
         if workPathWindows and workPathWindows != "null":
             if validateWindowsPath(workPathWindows):
-                printSuccess(f"  workPathWindows: {workPathWindows}")
+                printSuccess(f"workPathWindows: {workPathWindows}")
             else:
-                printError(f"  workPathWindows: {workPathWindows} (should start with drive letter, \\\\, $USERPROFILE, or $HOME)")
+                printError(f"workPathWindows: {workPathWindows} (should start with drive letter, \\\\, $USERPROFILE, or $HOME)")
                 errors += 1
 
     safePrint()
@@ -223,7 +224,7 @@ def validateRepositories(configPath: str) -> int:
 
         repoUrl = repoUrl.strip()
         repoCount += 1
-        printInfo(f"  Checking: {repoUrl}")
+        printInfo(f"Checking: {repoUrl}")
 
         # Validate URL format
         if re.match(r'^(https?|git)://|^git@', repoUrl):
@@ -236,34 +237,34 @@ def validateRepositories(configPath: str) -> int:
                 exists, message = checkGitHubRepository(ownerRepo)
 
                 if exists:
-                    printSuccess(f"    Repository exists")
+                    printSuccess(f"  Repository exists")
                 elif exists is None:
-                    printWarning(f"    {message} - will be validated at clone time")
+                    printWarning(f"  {message} - will be validated at clone time")
                 else:
-                    printWarning(f"    {message} - will be validated at clone time")
+                    printWarning(f"  {message} - will be validated at clone time")
             elif repoUrl.startswith("git@"):
                 # Other SSH URLs - can't easily validate without SSH keys
-                printWarning("    SSH URL detected - cannot validate without SSH keys (format is valid)")
+                printWarning("SSH URL detected - cannot validate without SSH keys (format is valid)")
             elif repoUrl.startswith("https://github.com/"):
                 # Direct GitHub HTTPS URL
                 ownerRepo = repoUrl.replace("https://github.com/", "").replace(".git", "")
                 exists, message = checkGitHubRepository(ownerRepo)
 
                 if exists:
-                    printSuccess(f"    Repository exists")
+                    printSuccess(f"  Repository exists")
                 elif exists is None:
-                    printWarning(f"    {message} - will be validated at clone time")
+                    printWarning(f"  {message} - will be validated at clone time")
                 else:
-                    printWarning(f"    {message} - will be validated at clone time")
+                    printWarning(f"  {message} - will be validated at clone time")
             else:
                 # Other HTTPS/Git URLs - try git ls-remote
                 if checkGitRepository(repoUrl):
-                    printSuccess(f"    Repository exists")
+                    printSuccess(f"  Repository exists")
                 else:
-                    printError(f"    Repository not accessible or does not exist")
+                    printError(f"  Repository not accessible or does not exist")
                     errors += 1
         else:
-            printError(f"    Invalid repository URL format")
+            printError(f"  Invalid repository URL format")
             errors += 1
 
     safePrint()

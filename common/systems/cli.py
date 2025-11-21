@@ -14,6 +14,7 @@ scriptDir = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(scriptDir))
 
 from common.systems.systemBase import SystemBase
+from common.core.logging import safePrint
 
 
 def getSystemClass(platformName: str):
@@ -24,23 +25,19 @@ def getSystemClass(platformName: str):
         platformName: Platform name (e.g., "ubuntu", "macos", "win11")
 
     Returns:
-        System class if available, None otherwise
+        GenericSystem configured for the platform
     """
     try:
-        moduleName = f"systems.{platformName}.system"
-        systemModule = __import__(moduleName, fromlist=[f"{platformName.capitalize()}System"])
-        className = f"{platformName.capitalize()}System"
-        if platformName == "win11":
-            className = "Win11System"
-        elif platformName == "raspberrypi":
-            className = "RaspberrypiSystem"
-        elif platformName == "archlinux":
-            className = "ArchlinuxSystem"
-        elif platformName == "opensuse":
-            className = "OpensuseSystem"
-        elif platformName == "redhat":
-            className = "RedhatSystem"
-        return getattr(systemModule, className, None)
+        from common.systems.genericSystem import GenericSystem
+        from common.systems.platform import Platform
+
+        # Convert platform name to Platform enum
+        try:
+            platform = Platform[platformName]
+            # Return a lambda that creates GenericSystem with the platform
+            return lambda projectRoot: GenericSystem(projectRoot, platform)
+        except KeyError:
+            return None
     except (ImportError, AttributeError):
         return None
 
@@ -64,7 +61,7 @@ def runOperation(system: SystemBase, operation: str, dryRun: bool = False) -> in
         cloneRepositories,
         printError,
         printInfo,
-        printSection,
+        printH2,
         printSuccess,
         printWarning,
         safePrint,
@@ -73,7 +70,7 @@ def runOperation(system: SystemBase, operation: str, dryRun: bool = False) -> in
     paths = system.setupPaths()
 
     if operation == "fonts":
-        printSection("Installing fonts", dryRun=dryRun)
+        printH2("Installing fonts", dryRun=dryRun)
         if system.installGoogleFonts(paths["fontsConfigPath"], paths["fontInstallDir"], dryRun):
             printSuccess("Font installation completed")
             return 0
@@ -82,7 +79,7 @@ def runOperation(system: SystemBase, operation: str, dryRun: bool = False) -> in
             return 1
 
     elif operation == "apps":
-        printSection("Installing applications", dryRun=dryRun)
+        printH2("Installing applications", dryRun=dryRun)
         if system.installOrUpdateApps(paths["platformConfigPath"], dryRun):
             printSuccess("Application installation completed")
             return 0
@@ -91,7 +88,7 @@ def runOperation(system: SystemBase, operation: str, dryRun: bool = False) -> in
             return 1
 
     elif operation == "git":
-        printSection("Configuring Git", dryRun=dryRun)
+        printH2("Configuring Git", dryRun=dryRun)
         if configureGit(paths["gitConfigPath"], dryRun=dryRun):
             printSuccess("Git configuration completed")
             return 0
@@ -100,7 +97,7 @@ def runOperation(system: SystemBase, operation: str, dryRun: bool = False) -> in
             return 1
 
     elif operation == "ssh":
-        printSection("Configuring GitHub SSH", dryRun=dryRun)
+        printH2("Configuring GitHub SSH", dryRun=dryRun)
         if configureGithubSsh(paths["gitConfigPath"], dryRun=dryRun):
             printSuccess("GitHub SSH configuration completed")
             return 0
@@ -109,7 +106,7 @@ def runOperation(system: SystemBase, operation: str, dryRun: bool = False) -> in
             return 1
 
     elif operation == "cursor":
-        printSection("Configuring Cursor", dryRun=dryRun)
+        printH2("Configuring Cursor", dryRun=dryRun)
         if configureCursor(paths["cursorConfigPath"], paths["cursorSettingsPath"], dryRun=dryRun):
             printSuccess("Cursor configuration completed")
             return 0
@@ -118,7 +115,7 @@ def runOperation(system: SystemBase, operation: str, dryRun: bool = False) -> in
             return 1
 
     elif operation == "repos":
-        printSection("Cloning repositories", dryRun=dryRun)
+        printH2("Cloning repositories", dryRun=dryRun)
         from common.install.setupUtils import shouldCloneRepositories
         if dryRun or shouldCloneRepositories(paths["reposConfigPath"], system.getRepositoryWorkPathKey()):
             if cloneRepositories(paths["reposConfigPath"], dryRun=dryRun):
@@ -227,7 +224,7 @@ def printHelp() -> None:
             ("--quiet, -q", "Enable quiet mode (only show errors)"),
             ("--dryRun", "Preview changes without making them"),
             ("--configDir DIR", "Use custom configuration directory (default: ./configs)\n"
-             "                    Can also be set via JRL_ENV_CONFIG_DIR environment variable"),
+             "                  Can also be set via JRL_ENV_CONFIG_DIR environment variable"),
         ],
         examples=[
             "python3 -m common.systems.cli ubuntu fonts",
@@ -255,7 +252,7 @@ def main() -> int:
     # Check for --version flag
     if "--version" in sys.argv or "-v" in sys.argv:
         from common.version import __version__
-        print(f"jrl_env version {__version__}")
+        safePrint(f"jrl_env version {__version__}")
         return 0
 
     # Filter out configDir args for platform/operation parsing
@@ -271,7 +268,7 @@ def main() -> int:
 
     systemClass = getSystemClass(platformName)
     if not systemClass:
-        print(f"Error: Unknown or unsupported platform: {platformName}", file=sys.stderr)
+        safePrint(f"Error: Unknown or unsupported platform: {platformName}", file=sys.stderr)
         return 1
 
     projectRoot = scriptDir
