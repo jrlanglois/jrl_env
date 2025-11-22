@@ -314,7 +314,10 @@ If it's a style debate, I have zero interest in entertaining it.
 - **Indentation**: 4 spaces, no tabs.
 - **Braces**: Allman style (opening brace/bracket on its own line) where possible. Applies to code blocks, objects, and arrays.
 - **Boolean functions**: Use `is/was/{verb}` prefixes for clarity (e.g., `isGitInstalled`, `isRepositoryCloned`).
-- **Spelling**: Canadian English conventions (`-ise` for verbs, `-our` for nouns like `colour`, `behaviour`).
+- **Spelling**: Canadian English conventions:
+  - Verbs: `-ise` (initialise, normalise, recognise, organise)
+  - Nouns: `-our` (colour, behaviour, flavour, honour)
+  - Other: `centre` (not center), `defence` (not defense), `licence` (not license)
 - **Line endings**:
   - **Python scripts (`.py`)**: LF (Unix-style) line endings (required for shebang compatibility)
   - **Bash scripts (`.sh`)**: LF (Unix-style) line endings

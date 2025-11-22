@@ -36,7 +36,7 @@ def printHelp() -> None:
         usage="python3 docs/generateDocs.py [options]",
         options=[
             ("--help, -h", "Show this help message and exit"),
-            ("--clean", "Clean existing documentation before building"),
+            ("--clean", "Clean existing documentation (remove _build directory)"),
             ("--open", "Open documentation in browser after building (no prompt)"),
             ("--no-open", "Skip opening browser (no prompt)"),
             ("--quiet, -q", "Only show final success/failure message"),
@@ -132,8 +132,16 @@ templates_path = ['_templates']
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
 # HTML output options
-html_theme = 'sphinx_rtd_theme'
+html_theme = 'furo'
 # html_static_path = ['_static']  # Uncomment if you add custom CSS/JS
+
+# Furo theme options
+html_theme_options = {
+    "light_css_variables": {
+        "color-brand-primary": "#2980b9",
+        "color-brand-content": "#2980b9",
+    },
+}
 
 # Napoleon settings (for Google/NumPy style docstrings)
 napoleon_google_docstring = True
@@ -264,19 +272,30 @@ def generateModuleDocs() -> bool:
         return False
 
 
-def buildDocs(clean: bool = False) -> bool:
+def cleanDocs() -> bool:
+    """Clean existing documentation build."""
+    docsDir = projectRoot / "docs"
+    buildDir = docsDir / "_build"
+    
+    if not buildDir.exists():
+        printInfo("No build directory to clean")
+        return True
+    
+    printInfo("Cleaning documentation build...")
+    import shutil
+    try:
+        shutil.rmtree(buildDir)
+        printSuccess("Documentation build cleaned")
+        return True
+    except Exception as e:
+        printError(f"Failed to clean build directory: {e}")
+        return False
+
+
+def buildDocs() -> bool:
     """Build HTML documentation."""
     docsDir = projectRoot / "docs"
     buildDir = docsDir / "_build"
-
-    if clean and buildDir.exists():
-        printInfo("Cleaning previous build...")
-        import shutil
-        try:
-            shutil.rmtree(buildDir)
-            printSuccess("Cleaned previous build")
-        except Exception as e:
-            printWarning(f"Failed to clean build directory: {e}")
 
     printInfo("Building HTML documentation...")
     safePrint()
@@ -349,7 +368,7 @@ def main() -> int:
         return 0
 
     # Parse arguments
-    clean = "--clean" in sys.argv
+    cleanOnly = "--clean" in sys.argv
     openBrowser = "--open" in sys.argv
     noOpen = "--no-open" in sys.argv
     quiet = "--quiet" in sys.argv or "-q" in sys.argv
@@ -358,6 +377,14 @@ def main() -> int:
     # Print title
     if getVerbosity() != Verbosity.quiet:
         printHeading("jrl_env generateDocs.py")
+
+    # Handle --clean flag (clean only, don't build)
+    if cleanOnly:
+        if not cleanDocs():
+            return 1
+        if getVerbosity() == Verbosity.quiet:
+            safePrint("Success")
+        return 0
 
     # Check if Sphinx is installed
     if not checkSphinxInstalled():
@@ -382,18 +409,21 @@ def main() -> int:
     safePrint()
 
     # Build documentation
-    if not buildDocs(clean=clean):
+    buildSuccess = buildDocs()
+    if not buildSuccess:
         return 1
 
     safePrint()
 
-    # Handle browser opening
+    # Prompt for browser opening after successful build
+    shouldPrompt = buildSuccess and not noOpen and getVerbosity() != Verbosity.quiet
+    
     if openBrowser:
         # --open flag: open directly without prompt
         if not openDocs():
             return 1
-    elif not noOpen and getVerbosity() != Verbosity.quiet:
-        # Default: prompt user
+    elif shouldPrompt:
+        # Default: prompt user (only for regular builds, not --clean)
         safePrint("Open documentation in browser? (Y/n): ", end="", flush=True)
         try:
             response = input().strip().lower()

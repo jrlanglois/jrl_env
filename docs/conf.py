@@ -12,8 +12,9 @@ release = '1.0.0'
 
 # Language and spelling
 # Note: This project uses Canadian English spelling conventions:
-# - Verbs: -ise (initialise, normalise, customise, organise)
-# - Nouns: -our (colour, behaviour, flavour)
+# - Verbs: -ise (initialise, normalise, customise, organise, recognise)
+# - Nouns: -our (colour, behaviour, flavour, honour, neighbour)
+# - Other: centre (not center), defence (not defense), licence (not license)
 # Documentation is generated from docstrings which follow this convention
 language = 'en'
 
@@ -31,8 +32,16 @@ templates_path = ['_templates']
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
 # HTML output options
-html_theme = 'sphinx_rtd_theme'
+html_theme = 'furo'
 # html_static_path = ['_static']  # Uncomment if you add custom CSS/JS
+
+# Furo theme options
+html_theme_options = {
+    "light_css_variables": {
+        "color-brand-primary": "#2980b9",
+        "color-brand-content": "#2980b9",
+    },
+}
 
 # Napoleon settings (for Google/NumPy style docstrings)
 napoleon_google_docstring = True
