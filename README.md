@@ -71,14 +71,6 @@ The unified setup script will:
 pip install -r requirements.txt
 ```
 
-### Platform-Specific Setup
-
-Alternatively, you can run the platform-specific setup scripts directly:
-
-```powershell
-python3 systems/{os}/setup.py
-```
-
 ### Individual Operations
 
 Run specific operations without running the full setup:
@@ -258,8 +250,12 @@ This repository follows DRY (Don't Repeat Yourself) and SOLID principles:
 
 - **Single Entry Point**:
   - `common/common.py` is the single entry point that all Python scripts import from. It exposes all common utilities and modules.
+- **Data-Driven Platform Support**: All platform-specific behaviour is configured via data rather than code:
+  - `common/systems/genericSystem.py`: Unified system implementation that works for all platforms
+  - `common/systems/systemsConfig.py`: Platform configuration data (package managers, paths, dependencies)
+  - `common/systems/systemBase.py`: Base class with shared setup orchestration logic
+  - `common/systems/setupOrchestrator.py`: Orchestrates setup process across all platforms
 - **Shared Logic**: Common Python functionality is centralised in `common/` (e.g., Git configuration, app installation, font installation)
-- **Thin Wrappers**: Platform-specific scripts (`systems/archlinux/`, `systems/macos/`, `systems/opensuse/`, `systems/raspberrypi/`, `systems/redhat/`, `systems/ubuntu/`, `systems/win11/`) are thin wrappers that set platform-specific variables and import from `common/common.py`
 - **OS Detection**: `common/core/utilities.py` provides OS detection functions (`findOperatingSystem()`, `getOperatingSystem()`, `isOperatingSystem()`) to identify the current platform
 - **Shared Utilities**: Core utilities are in `common/core/`:
   - `common/core/utilities.py`: Generic Python utilities (e.g., `commandExists()`, JSON helpers, OS detection)
