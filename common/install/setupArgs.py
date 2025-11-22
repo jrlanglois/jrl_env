@@ -33,6 +33,7 @@ class SetupArgs:
     requirePassphrase: bool = False
     noPassphrase: bool = False
     noConsoleTimestamps: bool = False
+    clearRepoCache: bool = False
 
 
 @dataclass
@@ -100,6 +101,8 @@ def parseSetupArgs(args: Optional[list[str]] = None) -> SetupArgs:
             setupArgs.noPassphrase = True
         elif arg == "--noTimestamps":
             setupArgs.noConsoleTimestamps = True
+        elif arg == "--clearRepoCache":
+            setupArgs.clearRepoCache = True
         elif arg.startswith("--configDir="):
             setupArgs.configDir = arg.split("=", 1)[1]
         elif arg == "--configDir":

@@ -115,7 +115,7 @@ Edit JSON files in `configs/` to customise:
 
 - **Apps**: Application packages to install via winget/brew/apt/snap
 - **Fonts**: Google Fonts to download and install
-- **Repositories**: Git repositories to clone (organised by owner)
+- **Repositories**: Git repositories to clone (organised by owner, supports wildcards for auto-discovery)
 - **Git**: User info, defaults, aliases, and GitHub username/email for SSH
 - **Cursor**: Editor settings and preferences
 - **Shell**: Per-OS shell preferences (e.g., `ohMyZshTheme`)
@@ -124,6 +124,58 @@ Edit JSON files in `configs/` to customise:
 - **Linux Common**: Shared packages for all Linux distributions (merged with distro-specific packages)
 
 See [`configs/README.md`](configs/README.md) for detailed configuration documentation.
+
+### Wildcard Repository Support
+
+Automatically discover and clone all repositories from a GitHub user or organization using wildcard patterns:
+
+**Basic syntax:**
+```json
+{
+  "repositories": [
+    {
+      "pattern": "git@github.com:jrlanglois/*",
+      "visibility": "all"
+    }
+  ]
+}
+```
+
+**Visibility options:**
+- `"all"` (default) - All repositories
+- `"public"` - Public repositories only
+- `"private"` - Private repositories only
+
+**Examples:**
+```json
+{
+  "repositories": [
+    {
+      "pattern": "git@github.com:jrlanglois/*",
+      "visibility": "all"
+    },
+    "git@github.com:specific/manual-repo",
+    {
+      "pattern": "git@github.com:SquarePine/*",
+      "visibility": "public"
+    }
+  ]
+}
+```
+
+**Features:**
+- HTTP caching with ETags (RFC 7232) - minimal API calls
+- Respects GitHub rate limits
+- Falls back to cache on API failures
+- Backward compatible (plain strings still work)
+
+**Cache management:**
+```bash
+# Clear cache and refetch
+python3 setup.py --clearRepoCache
+
+# Cache location: ~/.cache/jrl_env/repo_cache.json
+```
 
 ### Validation
 

@@ -319,13 +319,33 @@ apt, yum, dnf, rpm, zypper, pacman
 
 ```json
 {
-    "workPathUnix": "string",         // Unix-style work directory (supports $HOME, ~)
-    "workPathWindows": "string",      // Windows-style work directory (supports C:\\)
-    "repositories": ["string"]       // Git repository URLs (SSH or HTTPS)
+    "workPathUnix": "$HOME/work",
+    "workPathWindows": "D:\\work",
+    "repositories": [
+        "git@github.com:someOwner/repo.git",
+        {
+            "pattern": "git@github.com:otherOwner/*",
+            "visibility": "all"
+        }
+    ]
 }
 ```
 
-**Format:**
+**Format:** Array of repository entries (strings or objects)
+
+**String format (backward compatible):**
+- Direct repository URLs: `"git@github.com:owner/repo.git"`
+
+**Object format (wildcard support):**
+- `pattern`: Wildcard pattern (`"git@github.com:owner/*"`)
+- `visibility`: `"all"` (default), `"public"`, or `"private"`
+
+**Wildcard features:**
+- Auto-discovers all repos from GitHub user/org
+- HTTP caching with ETags (RFC 7232) for performance
+- Clear cache: `python3 setup.py --clearRepoCache`
+
+**Example:**
 
 - `workPathUnix`: Path like `"$HOME/work"` or `"~/Projects"`
 - `workPathWindows`: Path like `"D:\\work"` or `"C:\\Projects"`

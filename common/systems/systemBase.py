@@ -338,6 +338,14 @@ class SystemBase(ABC):
         if self.setupArgs.listSteps:
             return self.listSteps()
 
+        # Handle --clearRepoCache flag
+        if self.setupArgs.clearRepoCache:
+            from common.configure.repoCache import clearCache
+            printInfo("Clearing repository wildcard cache...")
+            clearCache()
+            printSuccess("Repository cache cleared")
+            safePrint()
+
         # Initialise logging (skip file creation in dry-run mode)
         self.logFile = initLogging(self.getPlatformName(), dryRun=self.setupArgs.dryRun)
 
