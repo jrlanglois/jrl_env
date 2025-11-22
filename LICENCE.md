@@ -1,4 +1,4 @@
-# ISC License
+# ISC Licence
 
 Copyright (c) 2025 Joël R. Langlois
 

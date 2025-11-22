@@ -303,9 +303,9 @@ jrl_env uses minimal dependencies:
 - Dependencies are from PyPI (official Python package index)
 - Review `requirements.txt` before installing
 
-## License and Liability
+## Licence and Liability
 
-jrl_env is provided under the ISC License. See LICENSE.md for details.
+jrl_env is provided under the ISC Licence. See LICENCE.md for details.
 
 **Important:** This software is provided "as is" without warranty. Use at your own risk, especially:
 - On production systems

@@ -11,11 +11,7 @@ author = 'Joël R. Langlois'
 release = '1.0.0'
 
 # Language and spelling
-# Note: This project uses Canadian English spelling conventions:
-# - Verbs: -ise (initialise, normalise, customise, organise, recognise)
-# - Nouns: -our (colour, behaviour, flavour, honour, neighbour)
-# - Other: centre (not center), defence (not defense), licence (not license)
-# Documentation is generated from docstrings which follow this convention
+# Note: This project uses Canadian English spelling conventions. See README.md for details.
 language = 'en'
 
 # General configuration

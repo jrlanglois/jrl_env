@@ -15,7 +15,7 @@ Automated setup and update scripts for many systems. Manages application install
 
 This system is designed for configuring my own development machines. The scripts and configurations are tailored to my personal preferences and workflow, but you can write up your own and pass them as parameters.
 
-Obviously this is a public repository to make things easier for myself. You can use it, but do so at your own risk! See the license for details.
+Obviously this is a public repository to make things easier for myself. You can use it, but do so at your own risk! See the licence for details.
 
 ## Quick Start
 
@@ -319,10 +319,9 @@ If it's a style debate, I have zero interest in entertaining it.
   - Nouns: `-our` (colour, behaviour, flavour, honour)
   - Other: `centre` (not center), `defence` (not defense), `licence` (not license)
 - **Line endings**:
-  - **Python scripts (`.py`)**: LF (Unix-style) line endings (required for shebang compatibility)
-  - **Bash scripts (`.sh`)**: LF (Unix-style) line endings
   - **JSON files**: CRLF (Windows-style) line endings
   - **PowerShell (`.ps1`)**: CRLF (Windows-style) line endings
+  - **Everything Else**: LF (Unix-style) line endings
 - **Timestamps**: ISO8601.
 
 These conventions apply to all Python (`.py`) and PowerShell (`.ps1`) scripts in this repository.
@@ -351,6 +350,6 @@ This repository uses GitHub Actions for continuous integration:
 
 Both workflows run automatically on pushes and pull requests to the `main` branch.
 
-## License
+## Licence
 
-ISC License. See LICENSE.md for details.
+ISC Licence. See LICENCE.md for details.
