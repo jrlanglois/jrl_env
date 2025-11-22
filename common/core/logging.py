@@ -13,11 +13,11 @@ from typing import Optional, Union
 
 # ANSI colour codes
 class Colours:
-    RED = '\033[0;31m'
-    GREEN = '\033[0;32m'
-    YELLOW = '\033[1;33m'
-    CYAN = '\033[0;36m'
-    NC = '\033[0m'  # No Colour
+    red = '\033[0;31m'
+    green = '\033[0;32m'
+    yellow = '\033[1;33m'
+    cyan = '\033[0;36m'
+    nc = '\033[0m'  # No Colour
 
 # Verbosity levels
 class Verbosity(IntEnum):
@@ -247,7 +247,7 @@ def getTimestamp() -> str:
 
 def printFormatted(
     message: str,
-    colour: str = Colours.NC,
+    colour: str = Colours.nc,
     emoji: str = "",
     minVerbosity: Verbosity = Verbosity.normal,
     alwaysShow: bool = False,
@@ -276,32 +276,32 @@ def printFormatted(
             message = f"{emoji} {message.lstrip()}"
 
     # Apply colour and delegate to safePrint() for timestamp handling
-    safePrint(f"{colour}{message}{Colours.NC}")
+    safePrint(f"{colour}{message}{Colours.nc}")
 
 
 def printInfo(message: str) -> None:
     """Print an info message in cyan with timestamp. Only shown at normal or verbose verbosity."""
-    printFormatted(message, colour=Colours.CYAN, minVerbosity=Verbosity.normal)
+    printFormatted(message, colour=Colours.cyan, minVerbosity=Verbosity.normal)
 
 
 def printWarning(message: str) -> None:
     """Print a warning message in yellow with ⚠ emoji and timestamp. Only shown at normal or verbose verbosity."""
-    printFormatted(message, colour=Colours.YELLOW, emoji=emojiWarning, minVerbosity=Verbosity.normal)
+    printFormatted(message, colour=Colours.yellow, emoji=emojiWarning, minVerbosity=Verbosity.normal)
 
 
 def printError(message: str) -> None:
     """Print an error message in red with ✗ emoji and timestamp. Always shown (even in quiet mode)."""
-    printFormatted(message, colour=Colours.RED, emoji=emojiError, minVerbosity=Verbosity.normal, alwaysShow=True)
+    printFormatted(message, colour=Colours.red, emoji=emojiError, minVerbosity=Verbosity.normal, alwaysShow=True)
 
 
 def printSuccess(message: str) -> None:
     """Print a success message in green with ✓ emoji and timestamp. Only shown at normal or verbose verbosity."""
-    printFormatted(message, colour=Colours.GREEN, emoji=emojiSuccess, minVerbosity=Verbosity.normal)
+    printFormatted(message, colour=Colours.green, emoji=emojiSuccess, minVerbosity=Verbosity.normal)
 
 
 def printVerbose(message: str) -> None:
     """Print a verbose/debug message in cyan with timestamp. Only shown at verbose verbosity."""
-    printFormatted(f"[VERBOSE] {message}", colour=Colours.CYAN, minVerbosity=Verbosity.verbose)
+    printFormatted(f"[VERBOSE] {message}", colour=Colours.cyan, minVerbosity=Verbosity.verbose)
 
 
 def printDebug(message: str) -> None:
@@ -327,9 +327,9 @@ def printH1(message: str, dryRun: bool = False) -> None:
         centredMessage = " " * max(0, padding) + messageWithPrefix
 
         safePrint()
-        safePrint(f"{Colours.CYAN}{'=' * terminalWidth}{Colours.NC}")
-        safePrint(f"{Colours.CYAN}{centredMessage}{Colours.NC}")
-        safePrint(f"{Colours.CYAN}{'=' * terminalWidth}{Colours.NC}")
+        safePrint(f"{Colours.cyan}{'=' * terminalWidth}{Colours.nc}")
+        safePrint(f"{Colours.cyan}{centredMessage}{Colours.nc}")
+        safePrint(f"{Colours.cyan}{'=' * terminalWidth}{Colours.nc}")
         safePrint()
 
 
@@ -338,7 +338,7 @@ def printH2(message: str, dryRun: bool = False) -> None:
     if _verbosity >= Verbosity.normal:
         if dryRun:
             message = f"{message} (DRY RUN)"
-        safePrint(f"{Colours.CYAN}=== {message} ==={Colours.NC}")
+        safePrint(f"{Colours.cyan}=== {message} ==={Colours.nc}")
 
 
 def printH3(message: str, dryRun: bool = False) -> None:
@@ -346,7 +346,7 @@ def printH3(message: str, dryRun: bool = False) -> None:
     if _verbosity >= Verbosity.normal:
         if dryRun:
             message = f"{message} (DRY RUN)"
-        safePrint(f"{Colours.CYAN}--- {message}{Colours.NC}")
+        safePrint(f"{Colours.cyan}--- {message}{Colours.nc}")
 
 
 def printHeading(message: str, dryRun: bool = False) -> None:
@@ -433,4 +433,4 @@ def colourise(text, code, enable=None):
         enable = sys.stdout.isatty()
     if not enable:
         return text
-    return f"{code}{text}{Colours.NC}"
+    return f"{code}{text}{Colours.nc}"

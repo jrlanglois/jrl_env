@@ -276,11 +276,11 @@ def cleanDocs() -> bool:
     """Clean existing documentation build."""
     docsDir = projectRoot / "docs"
     buildDir = docsDir / "_build"
-    
+
     if not buildDir.exists():
         printInfo("No build directory to clean")
         return True
-    
+
     printInfo("Cleaning documentation build...")
     import shutil
     try:
@@ -417,7 +417,7 @@ def main() -> int:
 
     # Prompt for browser opening after successful build
     shouldPrompt = buildSuccess and not noOpen and getVerbosity() != Verbosity.quiet
-    
+
     if openBrowser:
         # --open flag: open directly without prompt
         if not openDocs():

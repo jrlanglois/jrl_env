@@ -288,7 +288,7 @@ def main() -> int:
         if getVerbosity() == Verbosity.quiet:
             safePrint("Success")
         else:
-            safePrint(colourise("No files found to process.", Colours.YELLOW, enableColour))
+            safePrint(colourise("No files found to process.", Colours.yellow, enableColour))
         return 0
 
     fileCount = 0
@@ -321,12 +321,12 @@ def main() -> int:
                 or stats.whitespaceLineCount
                 or stats.removedTrailingBlanks
             ):
-                safePrint(colourise(f"Would tidy: {filePath}", Colours.CYAN, enableColour))
+                safePrint(colourise(f"Would tidy: {filePath}", Colours.cyan, enableColour))
                 if stats.tabCount:
                     safePrint(
                         colourise(
                             f"Would convert {stats.tabCount} tab(s) to spaces",
-                            Colours.YELLOW,
+                            Colours.yellow,
                             enableColour,
                         )
                     )
@@ -334,7 +334,7 @@ def main() -> int:
                     safePrint(
                         colourise(
                             f"Would trim trailing whitespace from {stats.whitespaceLineCount} line(s)",
-                            Colours.YELLOW,
+                            Colours.yellow,
                             enableColour,
                         )
                     )
@@ -342,22 +342,22 @@ def main() -> int:
                     safePrint(
                         colourise(
                             "Would remove trailing blank lines",
-                            Colours.YELLOW,
+                            Colours.yellow,
                             enableColour,
                         )
                     )
             else:
                 if getVerbosity() == Verbosity.verbose:
-                    safePrint(colourise(f"File is already tidy: {filePath}", Colours.GREEN, enableColour))
+                    safePrint(colourise(f"File is already tidy: {filePath}", Colours.green, enableColour))
         else:
             if stats.modified:
                 modifiedCount += 1
-                safePrint(colourise(f"Tidied: {filePath}", Colours.GREEN, enableColour))
+                safePrint(colourise(f"Tidied: {filePath}", Colours.green, enableColour))
                 if stats.tabCount:
                     safePrint(
                         colourise(
                             f"Converted {stats.tabCount} tab(s) to spaces",
-                            Colours.GREEN,
+                            Colours.green,
                             enableColour,
                         )
                     )
@@ -365,7 +365,7 @@ def main() -> int:
                     safePrint(
                         colourise(
                             f"Trimmed trailing whitespace from {stats.whitespaceLineCount} line(s)",
-                            Colours.GREEN,
+                            Colours.green,
                             enableColour,
                         )
                     )
@@ -373,13 +373,13 @@ def main() -> int:
                     safePrint(
                         colourise(
                             "Removed trailing blank lines",
-                            Colours.GREEN,
+                            Colours.green,
                             enableColour,
                         )
                     )
             else:
                 if getVerbosity() == Verbosity.verbose:
-                    safePrint(colourise(f"File is already tidy: {filePath}", Colours.GREEN, enableColour))
+                    safePrint(colourise(f"File is already tidy: {filePath}", Colours.green, enableColour))
 
         totalTabCount += stats.tabCount
         totalWhitespaceCount += stats.whitespaceLineCount
@@ -392,7 +392,7 @@ def main() -> int:
             safePrint(
                 colourise(
                     f"DRY RUN: Would process {fileCount} file(s)",
-                    Colours.YELLOW,
+                    Colours.yellow,
                     enableColour,
                 )
             )
@@ -401,7 +401,7 @@ def main() -> int:
                 safePrint(
                     colourise(
                         "By type:",
-                        Colours.YELLOW,
+                        Colours.yellow,
                         enableColour,
                     )
                 )
@@ -409,7 +409,7 @@ def main() -> int:
                     safePrint(
                         colourise(
                             f"\t{ext}:\t\t{count}",
-                            Colours.YELLOW,
+                            Colours.yellow,
                             enableColour,
                         )
                     )
@@ -417,7 +417,7 @@ def main() -> int:
                 safePrint(
                     colourise(
                         f"\tWould convert {totalTabCount} tab(s) to spaces",
-                        Colours.YELLOW,
+                        Colours.yellow,
                         enableColour,
                     )
                 )
@@ -425,7 +425,7 @@ def main() -> int:
                 safePrint(
                     colourise(
                         f"\tWould trim trailing whitespace from {totalWhitespaceCount} line(s)",
-                        Colours.YELLOW,
+                        Colours.yellow,
                         enableColour,
                     )
                 )
@@ -434,7 +434,7 @@ def main() -> int:
             safePrint(
                 colourise(
                     f"Processed {fileCount} file(s)",
-                    Colours.CYAN,
+                    Colours.cyan,
                     enableColour,
                 )
             )
@@ -443,7 +443,7 @@ def main() -> int:
                 safePrint(
                     colourise(
                         "By type:",
-                        Colours.CYAN,
+                        Colours.cyan,
                         enableColour,
                     )
                 )
@@ -451,7 +451,7 @@ def main() -> int:
                     safePrint(
                         colourise(
                             f"\t{ext}:\t\t{count}",
-                            Colours.CYAN,
+                            Colours.cyan,
                             enableColour,
                         )
                     )
@@ -459,7 +459,7 @@ def main() -> int:
                 safePrint(
                     colourise(
                         f"Modified {modifiedCount} file(s)",
-                        Colours.GREEN,
+                        Colours.green,
                         enableColour,
                     )
                 )
@@ -467,7 +467,7 @@ def main() -> int:
                     safePrint(
                         colourise(
                             f"Converted {totalTabCount} tab(s) to spaces",
-                            Colours.GREEN,
+                            Colours.green,
                             enableColour,
                         )
                     )
@@ -475,12 +475,12 @@ def main() -> int:
                     safePrint(
                         colourise(
                             f"Trimmed trailing whitespace from {totalWhitespaceCount} line(s)",
-                            Colours.GREEN,
+                            Colours.green,
                             enableColour,
                         )
                     )
             else:
-                safePrint(colourise("No files needed tidying. All files are clean!", Colours.GREEN, enableColour))
+                safePrint(colourise("No files needed tidying. All files are clean!", Colours.green, enableColour))
 
     # Final success/failure message (always show in quiet mode)
     if getVerbosity() == Verbosity.quiet:
