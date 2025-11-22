@@ -7,7 +7,7 @@ Features:
 - Normalises YAML indentation to 2 spaces.
 - Trims trailing whitespace.
 - Removes trailing blank lines.
-- Forces CRLF for `.ps1`, `.json`, and `.md`, while keeping `.sh`, `.py`, `.yml`, and `.yaml` files LF.
+- Forces CRLF for `.ps1`, `.json`, `.txt`, and `.md`, while keeping `.sh`, `.py`, `.yml`, and `.yaml` files LF.
 """
 
 from __future__ import annotations
@@ -27,8 +27,8 @@ from common.common import Colours, colourise, printHeading
 from common.core.logging import setVerbosityFromArgs, getVerbosity, Verbosity, safePrint
 
 
-defaultExtensions = [".ps1", ".sh", ".json", ".md", ".py", ".yml", ".yaml"]
-crlfExtensions = {".ps1", ".json", ".md"}
+defaultExtensions = [".ps1", ".sh", ".json", ".md", ".py", ".yml", ".yaml", ".txt", ".rst"]
+crlfExtensions = {".ps1", ".json", ".md", ".txt", ".rst"}
 
 
 def parseArguments() -> argparse.Namespace:
@@ -36,7 +36,7 @@ def parseArguments() -> argparse.Namespace:
         description="Tidies files while preserving line endings.",
         epilog=(
             "Intent: Clean up files by converting tabs to spaces, trimming whitespace,\n"
-            "and enforcing proper line endings (CRLF for .ps1/.json/.md, LF for .sh/.py/.yml/.yaml).\n\n"
+            "and enforcing proper line endings (CRLF for .ps1/.json/.md/.txt, LF for .sh/.py/.yml/.yaml).\n\n"
             "Examples:\n"
             "python3 helpers/tidy.py --file script.sh\n"
             "python3 helpers/tidy.py --path src/ --extensions .py .sh\n"
@@ -198,7 +198,21 @@ def tidyContent(text: str, preferredNewline: str | None = None, isYaml: bool = F
 
 
 def gatherFiles(root: Path, extensionsLower: set[str]) -> Iterable[Path]:
+    """
+    Recursively gather files with specified extensions, excluding common ignore directories.
+    """
+    # Directories to exclude from search
+    excludeDirs = {
+        '.git', '__pycache__', 'node_modules', '.venv', 'venv', 'env',
+        '_build', '_static', '_templates', '.idea', '.vscode',
+        'results',  # Temporary/old documentation results
+    }
+
     for candidate in root.rglob("*"):
+        # Skip if any parent directory is in exclude list
+        if any(part in excludeDirs for part in candidate.parts):
+            continue
+
         if candidate.is_file() and candidate.suffix.lower() in extensionsLower:
             yield candidate
 

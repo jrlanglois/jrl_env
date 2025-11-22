@@ -278,6 +278,27 @@ This repository follows DRY (Don't Repeat Yourself) and SOLID principles:
 
 See [`common/README.md`](common/README.md) for detailed documentation on the common modules.
 
+### Documentation Generation
+
+Generate comprehensive API documentation using Sphinx:
+
+```bash
+python3 docs/generateDocs.py
+```
+
+This creates HTML documentation with:
+- Complete API reference from docstrings
+- Module structure and relationships
+- Function signatures and type hints
+- Automatic cross-referencing
+
+**Options:**
+- `--clean`: Clean previous build before generating
+- `--open`: Open documentation in browser after building
+- `--quiet`: Only show final success/failure
+
+Documentation will be generated in `docs/_build/html/index.html`.
+
 ## Style Guide
 
 This repository follows a consistent and intentionally opinionated coding style. I'm particular about my environment and I like things the way I like them.

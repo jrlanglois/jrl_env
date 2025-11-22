@@ -79,6 +79,16 @@ venv/
 env/
 ENV/
 
+# Sphinx documentation
+# Keep: generateDocs.py, conf.py, index.rst (source files)
+# Ignore: generated .rst files and build output
+docs/_build/
+docs/_static/
+docs/_templates/
+docs/common*.rst
+docs/modules.rst
+docs/results/
+
 # Node.js
 node_modules/
 npm-debug.log*

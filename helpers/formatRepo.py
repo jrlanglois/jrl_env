@@ -29,7 +29,8 @@ def printHelp() -> None:
             "Format the entire repository by running both Allman brace conversion",
             "and whitespace tidying. This is a convenience script that runs:",
             "- convertToAllman.py (converts Bash files to Allman brace style)",
-            "- tidy.py (cleans whitespace, enforces line endings, and formats YAML with 2-space indentation)",
+            "- tidy.py (cleans whitespace, enforces line endings for .ps1, .sh, .json, .md, .py, .yml, .yaml, .txt, .rst)",
+            "Excludes: .git, __pycache__, node_modules, venv, docs/_build, docs/_static, docs/results",
         ],
         usage="python3 helpers/formatRepo.py [--dryRun]",
         options=[
