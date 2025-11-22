@@ -5,7 +5,6 @@
 
 Cross-platform development environment setup and configuration.
 
-Helper tooling enforces Allman braces, camelCase for functions/variables, PascalCase for classes, and CRLF for `.ps1/.json/.md` while keeping `.sh/.py` LF.
 
 ## Overview
 
