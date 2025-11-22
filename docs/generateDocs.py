@@ -37,7 +37,8 @@ def printHelp() -> None:
         options=[
             ("--help, -h", "Show this help message and exit"),
             ("--clean", "Clean existing documentation before building"),
-            ("--open", "Open documentation in browser after building"),
+            ("--open", "Open documentation in browser after building (no prompt)"),
+            ("--no-open", "Skip opening browser (no prompt)"),
             ("--quiet, -q", "Only show final success/failure message"),
         ],
         examples=[
@@ -350,6 +351,7 @@ def main() -> int:
     # Parse arguments
     clean = "--clean" in sys.argv
     openBrowser = "--open" in sys.argv
+    noOpen = "--no-open" in sys.argv
     quiet = "--quiet" in sys.argv or "-q" in sys.argv
     setVerbosityFromArgs(quiet=quiet, verbose=False)
 
@@ -385,10 +387,23 @@ def main() -> int:
 
     safePrint()
 
-    # Open in browser if requested
+    # Handle browser opening
     if openBrowser:
+        # --open flag: open directly without prompt
         if not openDocs():
             return 1
+    elif not noOpen and getVerbosity() != Verbosity.quiet:
+        # Default: prompt user
+        safePrint("Open documentation in browser? (Y/n): ", end="", flush=True)
+        try:
+            response = input().strip().lower()
+            if not response or response in ('y', 'yes'):
+                safePrint()
+                if not openDocs():
+                    return 1
+        except (EOFError, KeyboardInterrupt):
+            safePrint()
+            printInfo("Skipping browser open")
 
     if getVerbosity() == Verbosity.quiet:
         safePrint("Success")

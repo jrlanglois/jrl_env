@@ -310,7 +310,7 @@ def printDebug(message: str) -> None:
 
 
 def printH1(message: str, dryRun: bool = False) -> None:
-    """Print a top-level heading (H1) with === borders, centered text, and extra spacing."""
+    """Print a top-level heading (H1) with === borders, centred text, and extra spacing."""
     if _verbosity >= Verbosity.normal:
         if dryRun:
             message = f"{message} (DRY RUN)"
@@ -321,14 +321,14 @@ def printH1(message: str, dryRun: bool = False) -> None:
         except (AttributeError, ValueError, OSError):
             terminalWidth = 80
 
-        # Calculate centering (accounting for "=== " prefix)
+        # Calculate centring (accounting for "=== " prefix)
         messageWithPrefix = f"=== {message}"
         padding = (terminalWidth - len(messageWithPrefix)) // 2
-        centeredMessage = " " * max(0, padding) + messageWithPrefix
+        centredMessage = " " * max(0, padding) + messageWithPrefix
 
         safePrint()
         safePrint(f"{Colours.CYAN}{'=' * terminalWidth}{Colours.NC}")
-        safePrint(f"{Colours.CYAN}{centeredMessage}{Colours.NC}")
+        safePrint(f"{Colours.CYAN}{centredMessage}{Colours.NC}")
         safePrint(f"{Colours.CYAN}{'=' * terminalWidth}{Colours.NC}")
         safePrint()
 

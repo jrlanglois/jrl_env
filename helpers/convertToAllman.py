@@ -209,14 +209,14 @@ def main() -> None:
     safePrint()
     printH2(summaryHeader)
     extensionsList = ', '.join(args.extensions)
-    printInfo(f"File types processed: {extensionsList}")
-    printInfo(f"Files scanned: {len(shellFiles)}")
-    printInfo(f"Files changed: {totalChanged}")
-    printInfo(f"Function braces updated: {totalFunctionUpdates}")
-    printInfo(f"Else braces updated    : {totalElseUpdates}")
-    printInfo(f"Inline if updates      : {totalIfUpdates}")
-    printInfo(f"Inline while updates   : {totalWhileUpdates}")
-    printInfo(f"Inline for updates     : {totalForUpdates}")
+    printInfo(f"\tFile types processed:\t\t{extensionsList}")
+    printInfo(f"\tFiles scanned:\t\t\t{len(shellFiles)}")
+    printInfo(f"\tFiles changed:\t\t\t{totalChanged}")
+    printInfo(f"\tFunction braces updated:\t{totalFunctionUpdates}")
+    printInfo(f"\tElse braces updated:\t\t{totalElseUpdates}")
+    printInfo(f"\tInline if updates:\t\t{totalIfUpdates}")
+    printInfo(f"\tInline while updates:\t\t{totalWhileUpdates}")
+    printInfo(f"\tInline for updates:\t\t{totalForUpdates}")
 
 
 if __name__ == "__main__":

@@ -295,9 +295,12 @@ def main() -> int:
     modifiedCount = 0
     totalTabCount = 0
     totalWhitespaceCount = 0
+    filesByExtension = {}  # Track count per extension
 
     for filePath in targets:
         fileCount += 1
+        ext = filePath.suffix.lower()
+        filesByExtension[ext] = filesByExtension.get(ext, 0) + 1
         preferredNewline = newlineForFile(filePath, extensionsLower)
         isYaml = filePath.suffix.lower() in {".yml", ".yaml"}
         stats = tidyFile(filePath, args.dryRun, preferredNewline, isYaml)
@@ -393,10 +396,27 @@ def main() -> int:
                     enableColour,
                 )
             )
+            if filesByExtension:
+                sortedExts = sorted(filesByExtension.items(), key=lambda x: x[1], reverse=True)
+                safePrint(
+                    colourise(
+                        "By type:",
+                        Colours.YELLOW,
+                        enableColour,
+                    )
+                )
+                for ext, count in sortedExts:
+                    safePrint(
+                        colourise(
+                            f"\t{ext}:\t\t{count}",
+                            Colours.YELLOW,
+                            enableColour,
+                        )
+                    )
             if totalTabCount:
                 safePrint(
                     colourise(
-                        f"Would convert {totalTabCount} tab(s) to spaces",
+                        f"\tWould convert {totalTabCount} tab(s) to spaces",
                         Colours.YELLOW,
                         enableColour,
                     )
@@ -404,20 +424,37 @@ def main() -> int:
             if totalWhitespaceCount:
                 safePrint(
                     colourise(
-                        f"Would trim trailing whitespace from {totalWhitespaceCount} line(s)",
+                        f"\tWould trim trailing whitespace from {totalWhitespaceCount} line(s)",
                         Colours.YELLOW,
                         enableColour,
                     )
                 )
         else:
-            extensionsList = ', '.join(args.extensions)
+            # Show total and breakdown by extension
             safePrint(
                 colourise(
-                    f"Processed {fileCount} file(s) ({extensionsList})",
+                    f"Processed {fileCount} file(s)",
                     Colours.CYAN,
                     enableColour,
                 )
             )
+            if filesByExtension:
+                sortedExts = sorted(filesByExtension.items(), key=lambda x: x[1], reverse=True)
+                safePrint(
+                    colourise(
+                        "By type:",
+                        Colours.CYAN,
+                        enableColour,
+                    )
+                )
+                for ext, count in sortedExts:
+                    safePrint(
+                        colourise(
+                            f"\t{ext}:\t\t{count}",
+                            Colours.CYAN,
+                            enableColour,
+                        )
+                    )
             if modifiedCount:
                 safePrint(
                     colourise(
