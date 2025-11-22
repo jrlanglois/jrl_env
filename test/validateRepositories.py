@@ -218,11 +218,55 @@ def validateRepositories(configPath: str) -> int:
 
     repoCount = 0
 
-    for repoUrl in repositories:
-        if not repoUrl or not repoUrl.strip():
+    for entry in repositories:
+        if not entry:
             continue
 
-        repoUrl = repoUrl.strip()
+        # Handle object format (wildcard support)
+        if isinstance(entry, dict):
+            pattern = entry.get('pattern', '')
+            visibility = entry.get('visibility', 'all')
+
+            if not pattern:
+                printError("Repository object missing 'pattern' field")
+                errors += 1
+                continue
+
+            repoCount += 1
+            printInfo(f"Checking pattern: {pattern} (visibility: {visibility})")
+
+            # Validate visibility
+            if visibility not in ('all', 'public', 'private'):
+                printError(f"  Invalid visibility: {visibility} (must be all/public/private)")
+                errors += 1
+                continue
+
+            # Validate wildcard pattern format
+            if '*' in pattern:
+                if re.match(r'^(https://github\.com/|git@github\.com:)[^/]+/\*$', pattern):
+                    printSuccess(f"  Valid wildcard pattern")
+                else:
+                    printError(f"  Invalid wildcard pattern format")
+                    printError(f"  Valid formats: git@github.com:owner/* or https://github.com/owner/*")
+                    errors += 1
+            else:
+                # Regular URL in object format - validate as normal
+                repoUrl = pattern
+                if re.match(r'^(https?|git)://|^git@', repoUrl):
+                    printSuccess(f"  Valid URL format")
+                else:
+                    printError(f"  Invalid URL format")
+                    errors += 1
+
+            continue
+
+        # Handle string format (backward compatible)
+        if not isinstance(entry, str) or not entry.strip():
+            printError(f"Invalid repository entry: {entry}")
+            errors += 1
+            continue
+
+        repoUrl = entry.strip()
         repoCount += 1
         printInfo(f"Checking: {repoUrl}")
 

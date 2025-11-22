@@ -25,6 +25,7 @@ Options:
     --verbose         Enable verbose output (show debug messages)
     --quiet, -q       Enable quiet mode (only show errors)
     --noTimestamps    Hide timestamps in console output (logs always have timestamps)
+    --clearRepoCache  Clear repository wildcard cache before setup
     --resume          Automatically resume from last successful step if setup was interrupted
     --noResume        Do not resume from previous setup (start fresh)
     --listSteps       Preview what steps will be executed without running setup
@@ -335,6 +336,7 @@ def printHelp() -> None:
             ("--verbose", "Enable verbose output (show debug messages)"),
             ("--quiet, -q", "Enable quiet mode (only show errors)"),
             ("--noTimestamps", "Hide timestamps in console output (logs always have timestamps)"),
+            ("--clearRepoCache", "Clear repository wildcard cache before setup"),
             ("--resume", "Automatically resume from last successful step if setup was interrupted"),
             ("--noResume", "Do not resume from previous setup (start fresh)"),
             ("--listSteps", "Preview what steps will be executed without running setup"),

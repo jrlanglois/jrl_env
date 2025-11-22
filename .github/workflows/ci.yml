@@ -81,3 +81,7 @@ jobs:
       - name: Run setup validation tests
         shell: bash
         run: python3 test/testSetupValidation.py
+
+      - name: Run wildcard repository tests
+        shell: bash
+        run: python3 test/testWildcardRepos.py

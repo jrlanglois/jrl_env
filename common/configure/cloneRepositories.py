@@ -18,6 +18,7 @@ from common.core.logging import (
     printH2,
     printSuccess,
     printWarning,
+    printVerbose,
     safePrint,
 )
 from common.core.utilities import (
@@ -25,6 +26,7 @@ from common.core.utilities import (
     getJsonArray,
     getJsonValue,
 )
+from common.configure.githubApi import expandWildcardPattern
 
 
 def isGitInstalled() -> bool:
@@ -205,9 +207,44 @@ def cloneRepositories(
         printInfo("No repositories specified in configuration file.")
         return True
 
-    repoCount = len(repositories)
+    # Process repositories (expand wildcards if present)
+    expandedRepos = []
+    for entry in repositories:
+        if not entry:
+            continue
+
+        # Handle string format (backward compatible)
+        if isinstance(entry, str):
+            expandedRepos.append(entry)
+            continue
+
+        # Handle object format with wildcard support
+        if isinstance(entry, dict):
+            pattern = entry.get('pattern', '')
+            visibility = entry.get('visibility', 'all')
+
+            if not pattern:
+                printWarning("Repository object missing 'pattern' field, skipping")
+                continue
+
+            # Check if it's a wildcard pattern
+            if '*' in pattern:
+                # Expand wildcard using GitHub API
+                expanded = expandWildcardPattern(pattern, visibility)
+                if expanded:
+                    expandedRepos.extend(expanded)
+                    printVerbose(f"Expanded {pattern} to {len(expanded)} repositories")
+                else:
+                    printWarning(f"Failed to expand wildcard pattern: {pattern}")
+            else:
+                # Not a wildcard, just use the pattern as-is
+                expandedRepos.append(pattern)
+        else:
+            printWarning(f"Invalid repository entry (not string or object): {entry}")
+
+    repoCount = len(expandedRepos)
     printInfo(f"Work directory: {workPath}")
-    printInfo(f"Found {repoCount} repository/repositories in configuration file.")
+    printInfo(f"Found {repoCount} repository/repositories (after wildcard expansion).")
     safePrint()
 
     # Create work directory if it doesn't exist
@@ -227,14 +264,14 @@ def cloneRepositories(
 
     if dryRun:
         printInfo("[DRY RUN] Would clone the following repositories:")
-        for repoUrl in repositories:
+        for repoUrl in expandedRepos:
             if not repoUrl or not repoUrl.strip():
                 continue
             repoUrl = repoUrl.strip()
             printInfo(f"- {repoUrl}")
-        clonedCount = len([r for r in repositories if r and r.strip()])
+        clonedCount = len([r for r in expandedRepos if r and r.strip()])
     else:
-        for repoUrl in repositories:
+        for repoUrl in expandedRepos:
             if not repoUrl or not repoUrl.strip():
                 continue
 

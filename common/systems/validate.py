@@ -561,9 +561,37 @@ def validateRepositoriesJson(filePath: Path) -> tuple[list[str], list[str]]:
         else:
             # Validate repository URLs in parallel for speed
             def validateSingleRepo(repo):
-                """Validate a single repository and return warnings."""
+                """Validate a single repository (string or object format) and return warnings."""
                 repoWarnings = []
 
+                # Handle object format
+                if isinstance(repo, dict):
+                    pattern = repo.get('pattern', '')
+                    visibility = repo.get('visibility', 'all')
+
+                    if not pattern:
+                        repoWarnings.append("repositories: Object missing 'pattern' field")
+                        return repoWarnings
+
+                    # Validate visibility enum
+                    if visibility not in ('all', 'public', 'private'):
+                        repoWarnings.append(f"repositories: Invalid visibility '{visibility}' (must be all/public/private)")
+
+                    # Validate wildcard pattern format
+                    if '*' in pattern:
+                        # Check for valid wildcard pattern
+                        if not re.match(r'^(https://github\.com/|git@github\.com:)[^/]+/\*$', pattern):
+                            repoWarnings.append(f"repositories: Invalid wildcard pattern: {pattern}")
+                            repoWarnings.append("repositories: Valid formats: git@github.com:owner/* or https://github.com/owner/*")
+                        # Don't validate wildcard existence (will be expanded at runtime)
+                    else:
+                        # Regular URL in object format
+                        if not re.match(r'^(https://|git@|http://|git://)', pattern):
+                            repoWarnings.append(f"repositories: Invalid URL format: {pattern}")
+
+                    return repoWarnings
+
+                # Handle string format (backward compatible)
                 if not isinstance(repo, str) or not repo.strip():
                     repoWarnings.append(f"repositories: Invalid repository entry: {repo}")
                     return repoWarnings

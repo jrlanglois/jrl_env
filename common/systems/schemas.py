@@ -387,6 +387,28 @@ fontsConfigSchema = {
     "additionalProperties": False,
 }
 
+# Repository entry schema (for wildcard support)
+repositoryEntrySchema = {
+    "oneOf": [
+        # String format (backward compatible): "git@github.com:owner/repo"
+        {"type": "string"},
+        # Object format (wildcard support)
+        {
+            "type": "object",
+            "properties": {
+                "pattern": {"type": "string"},
+                "visibility": {
+                    "type": "string",
+                    "enum": ["all", "public", "private"],
+                    "default": "all"
+                },
+            },
+            "required": ["pattern"],
+            "additionalProperties": False,
+        },
+    ]
+}
+
 # Repositories config schema
 repositoriesConfigSchema = {
     "type": "object",
@@ -395,7 +417,7 @@ repositoriesConfigSchema = {
         "workPathUnix": {"type": "string"},
         "repositories": {
             "type": "array",
-            "items": {"type": "string"},
+            "items": repositoryEntrySchema,
         },
     },
     "additionalProperties": False,

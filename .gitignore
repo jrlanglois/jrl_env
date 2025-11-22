@@ -79,6 +79,9 @@ venv/
 env/
 ENV/
 
+# Repository wildcard cache
+.cache/jrl_env/repo_cache.json
+
 # Sphinx documentation
 # Keep: generateDocs.py, conf.py, index.rst (source files)
 # Ignore: generated .rst files and build output
