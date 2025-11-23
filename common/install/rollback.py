@@ -25,6 +25,7 @@ from common.core.logging import (
     printWarning,
     safePrint,
 )
+from common.systems.platform import isWindows
 
 
 @dataclass
@@ -51,7 +52,7 @@ class RollbackSession:
 
 def getSessionDir() -> Path:
     """Get the directory for storing rollback sessions."""
-    if sys.platform == "win32":
+    if isWindows():
         tmpBase = os.environ.get("TEMP", os.environ.get("TMP", "C:\\Temp"))
     else:
         tmpBase = os.environ.get("TMPDIR", "/tmp")
@@ -177,7 +178,7 @@ def restoreConfigs(backupDir: str) -> bool:
     cursorBackup = backupPath / "Cursor" / "settings.json"
     if cursorBackup.exists():
         # Determine Cursor settings path based on platform
-        if sys.platform == "win32":
+        if isWindows():
             cursorSettings = Path.home() / "AppData/Roaming/Cursor/User/settings.json"
         else:
             cursorSettings = Path.home() / ".config/Cursor/User/settings.json"

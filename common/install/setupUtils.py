@@ -26,6 +26,7 @@ from common.core.logging import (
     printSuccess,
     printWarning,
 )
+from common.systems.platform import isWindows
 from common.configure.cloneRepositories import expandPath
 from common.configure.configureGit import isGitInstalled
 
@@ -42,7 +43,7 @@ def initLogging(platformName: str, dryRun: bool = False) -> str:
         Path to log file (or simulated path in dry-run mode)
     """
     # Determine temp directory based on platform
-    if sys.platform == "win32":
+    if isWindows():
         tmpBase = os.environ.get("TEMP", os.environ.get("TMP", "C:\\Temp"))
     else:
         tmpBase = os.environ.get("TMPDIR", "/tmp")
@@ -83,7 +84,7 @@ def backupConfigs(noBackup: bool, dryRun: bool, cursorSettingsPath: Optional[str
         return None
 
     # Determine temp directory based on platform
-    if sys.platform == "win32":
+    if isWindows():
         tmpBase = os.environ.get("TEMP", os.environ.get("TMP", "C:\\Temp"))
     else:
         tmpBase = os.environ.get("TMPDIR", "/tmp")

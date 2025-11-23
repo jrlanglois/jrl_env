@@ -40,6 +40,7 @@ from common.systems.validate import (
 )
 from common.core.utilities import getConfigDirectory
 from common.core.logging import safePrint
+from common.systems.platform import isWindows
 
 
 class TestSetupValidation(unittest.TestCase):
@@ -217,7 +218,7 @@ class TestSetupValidation(unittest.TestCase):
     def testSetupValidationFlowPermissionError(self):
         """Test: Setup validation handles permission errors gracefully."""
         # Create a directory we can't read (on Unix-like systems)
-        if os.name != 'nt':  # Skip on Windows
+        if not isWindows():  # Skip on Windows
             restrictedDir = self.tempDir / "restricted"
             restrictedDir.mkdir(mode=0o000)  # No permissions
 

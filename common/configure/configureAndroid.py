@@ -25,6 +25,7 @@ from common.core.utilities import (
     getJsonObject,
     getJsonValue,
 )
+from common.systems.platform import isWindows, isMacOS
 from common.configure.configureShellEnv import (
     configureAndroidEnvironmentVariables,
 )
@@ -47,12 +48,12 @@ def findAndroidSdkRoot() -> Optional[Path]:
                 return sdkPath
 
     commonPaths = []
-    if sys.platform == "win32":
+    if isWindows():
         commonPaths = [
             Path(os.environ.get("LOCALAPPDATA", "")) / "Android" / "Sdk",
             Path(os.environ.get("PROGRAMFILES", "")) / "Android" / "android-sdk",
         ]
-    elif sys.platform == "darwin":
+    elif isMacOS():
         commonPaths = [
             Path.home() / "Library" / "Android" / "sdk",
             Path("/usr/local/share/android-sdk"),
@@ -82,7 +83,7 @@ def findSdkManager() -> Optional[Path]:
     if not sdkRoot:
         return None
 
-    if sys.platform == "win32":
+    if isWindows():
         sdkManager = sdkRoot / "cmdline-tools" / "latest" / "bin" / "sdkmanager.bat"
         if not sdkManager.exists():
             sdkManager = sdkRoot / "tools" / "bin" / "sdkmanager.bat"
@@ -102,12 +103,12 @@ def isAndroidStudioInstalled() -> bool:
     Returns:
         True if Android Studio is found, False otherwise
     """
-    if sys.platform == "win32":
+    if isWindows():
         studioPaths = [
             Path(os.environ.get("LOCALAPPDATA", "")) / "Programs" / "Android" / "Android Studio" / "bin" / "studio64.exe",
             Path(os.environ.get("PROGRAMFILES", "")) / "Android" / "Android Studio" / "bin" / "studio64.exe",
         ]
-    elif sys.platform == "darwin":
+    elif isMacOS():
         studioPaths = [
             Path("/Applications") / "Android Studio.app" / "Contents" / "bin" / "studio.sh",
         ]
