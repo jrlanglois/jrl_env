@@ -513,6 +513,13 @@ def main() -> int:
 
     printSuccess(f"Detected platform: {platformName}")
     safePrint()
+    
+    # Validate sudo early (for Unix-like systems)
+    from common.core.sudoHelper import SudoManager
+    sudoManager = SudoManager(dryRun=dryRun)
+    if not sudoManager.validate():
+        # User refused sudo or validation failed
+        return 1
 
     # Check if setup has already been run
     setupAlreadyRan = checkIfSetupAlreadyRan()
