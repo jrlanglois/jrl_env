@@ -676,7 +676,7 @@ def validateGitConfigJson(filePath: Path) -> tuple[list[str], list[str]]:
             content = json.load(f)
 
         # Define allowed fields
-        allowedTopLevelFields = {"user", "defaults", "aliases", "lfs"}
+        allowedTopLevelFields = {"user", "ssh", "defaults", "aliases", "lfs"}
         unknownFieldErrors = detectUnknownFields(content, allowedTopLevelFields)
         errors.extend(unknownFieldErrors)
 
@@ -688,6 +688,18 @@ def validateGitConfigJson(filePath: Path) -> tuple[list[str], list[str]]:
                 allowedUserFields = {"name", "email", "usernameGitHub"}
                 userErrors = detectUnknownFields(content["user"], allowedUserFields, "user")
                 errors.extend(userErrors)
+
+        # Validate SSH section if present
+        if "ssh" in content and isinstance(content["ssh"], dict):
+            allowedSshFields = {"algorithm", "keySize", "keyFilename"}
+            sshErrors = detectUnknownFields(content["ssh"], allowedSshFields, "ssh")
+            errors.extend(sshErrors)
+
+            # Validate algorithm
+            if "algorithm" in content["ssh"]:
+                validAlgorithms = ["rsa", "dsa", "ecdsa", "ed25519"]
+                if content["ssh"]["algorithm"] not in validAlgorithms:
+                    errors.append(f"gitConfig: Invalid SSH algorithm '{content['ssh']['algorithm']}'. Valid: {', '.join(validAlgorithms)}")
 
             if not user.get("name"):
                 warnings.append("gitConfig: Missing user.name")
