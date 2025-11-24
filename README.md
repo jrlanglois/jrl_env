@@ -339,7 +339,7 @@ jrl_env supports configurable SSH key generation. Configure in `configs/gitConfi
 
 jrl_env supports secure SSH key generation with optional passphrases:
 
-**Default Behavior (Recommended):**
+**Default Behaviour (Recommended):**
 ```bash
 python3 setup.py
 ```

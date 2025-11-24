@@ -67,7 +67,7 @@ configs/
 └── android.json             # Optional (Android SDK config, used if Android Studio detected)
 ```
 
-### File Existence Behavior
+### File Existence Behaviour
 
 - **Missing platform config**: Setup will print an error and skip app installation, but continue with other steps (e.g., running on Ubuntu without `ubuntu.json` will skip app installation)
 - **Missing shared configs**: Setup will skip the corresponding step gracefully:
@@ -80,7 +80,7 @@ configs/
 
 ### Validation and Error Handling
 
-**Validation Behavior:**
+**Validation Behaviour:**
 
 The setup system performs strict validation and **fails early** with verbose error messages:
 
@@ -470,7 +470,7 @@ apt, yum, dnf, rpm, zypper, pacman, apk, snap, flatpak
 
 - `editor.*`: Editor settings (font, tab size, word wrap, etc.)
 - `files.*`: File handling settings (auto-save, trim whitespace, etc.)
-- `workbench.*`: Workbench appearance and behavior
+- `workbench.*`: Workbench appearance and behaviour
 - `terminal.*`: Integrated terminal settings
 - `git.*`: Git integration settings
 
