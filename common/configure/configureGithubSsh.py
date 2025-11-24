@@ -289,6 +289,56 @@ def configureGithubSsh(
     username = getJsonValue(configPath, ".user.usernameGitHub", "")
     githubUrl = "https://github.com/settings/ssh/new"
 
+    # Read SSH key configuration (with defaults)
+    sshAlgorithm = getJsonValue(configPath, ".ssh.algorithm", "ed25519")
+    sshKeySize = getJsonValue(configPath, ".ssh.keySize", None)
+    sshKeyFilename = getJsonValue(configPath, ".ssh.keyFilename", f"id_{sshAlgorithm}_github")
+
+    # Validate algorithm (fail fast)
+    validAlgorithms = ["rsa", "dsa", "ecdsa", "ed25519"]
+    if sshAlgorithm not in validAlgorithms:
+        printError(f"Invalid SSH algorithm '{sshAlgorithm}' in config.")
+        printError(f"Valid algorithms: {', '.join(validAlgorithms)}")
+        printError("Recommended: ed25519 (modern, secure, fast)")
+        return False
+
+    # Validate key size for algorithm (fail fast)
+    if sshKeySize is not None:
+        # Convert to int if it's a string
+        try:
+            sshKeySize = int(sshKeySize)
+        except (ValueError, TypeError):
+            printError(f"Invalid SSH key size '{sshKeySize}'. Must be an integer or null.")
+            return False
+
+        # Algorithm-specific validation
+        if sshAlgorithm == "ed25519":
+            printError("ed25519 algorithm does not support custom key size.")
+            printError("Remove 'keySize' from config or set it to null.")
+            return False
+        elif sshAlgorithm == "dsa":
+            printError("dsa algorithm does not support custom key size.")
+            printError("Remove 'keySize' from config or set it to null.")
+            return False
+        elif sshAlgorithm == "rsa":
+            if sshKeySize < 2048:
+                printError(f"RSA key size {sshKeySize} is too small (minimum 2048 bits).")
+                printError("Recommended: 4096 bits for RSA keys.")
+                return False
+            if sshKeySize not in (2048, 3072, 4096):
+                printWarning(f"Non-standard RSA key size {sshKeySize}. Common sizes: 2048, 3072, 4096.")
+        elif sshAlgorithm == "ecdsa":
+            if sshKeySize not in (256, 384, 521):
+                printError(f"Invalid ECDSA key size {sshKeySize}.")
+                printError("ECDSA only supports 256, 384, or 521 bits.")
+                printError("Recommended: 521 bits.")
+                return False
+
+    # Validate filename
+    if not sshKeyFilename or sshKeyFilename == "null":
+        printError("SSH key filename cannot be empty.")
+        return False
+
     if dryRun:
         printInfo("[DRY RUN] Would configure GitHub SSH key generation")
         if email and email != "null":
@@ -299,7 +349,8 @@ def configureGithubSsh(
             printInfo(f"Would use GitHub username: {username}")
         else:
             printInfo("Would prompt for GitHub username")
-        printInfo("Would generate SSH key: id_ed25519_github")
+        printInfo(f"Would generate SSH key: {sshKeyFilename}")
+        printInfo(f"Algorithm: {sshAlgorithm}" + (f" (key size: {sshKeySize})" if sshKeySize else ""))
         if requirePassphrase:
             printInfo("Would require passphrase for SSH key")
         elif noPassphrase:
@@ -331,9 +382,9 @@ def configureGithubSsh(
         printError("Email is required to generate SSH key.")
         return False
 
-    # Determine key path
+    # Determine key path (use config value as default)
     keyDir = Path.home() / ".ssh"
-    keyName = "id_ed25519_github"
+    keyName = sshKeyFilename
     keyNameInput = input(f"Key filename [{keyName}]: ").strip()
     keyName = keyNameInput if keyNameInput else keyName
     keyPath = keyDir / keyName
@@ -380,16 +431,26 @@ def configureGithubSsh(
                 printWarning("Passphrases do not match. Please try again.")
 
     # Generate SSH key
-    printInfo("Generating SSH key...")
+    printInfo(f"Generating SSH key ({sshAlgorithm})...")
     try:
+        # Build ssh-keygen command
+        sshKeygenCmd = ["ssh-keygen", "-t", sshAlgorithm, "-C", email, "-f", str(keyPath), "-N", passphrase]
+
+        # Add key size if specified (not all algorithms support -b)
+        # ed25519 and dsa don't use -b flag
+        if sshKeySize and sshAlgorithm not in ("ed25519", "dsa"):
+            # Insert -b flag before -C
+            sshKeygenCmd.insert(3, "-b")
+            sshKeygenCmd.insert(4, str(sshKeySize))
+
         subprocess.run(
-            ["ssh-keygen", "-t", "ed25519", "-C", email, "-f", str(keyPath), "-N", passphrase],
+            sshKeygenCmd,
             check=True,
             input="",
             capture_output=True,
         )
     except subprocess.CalledProcessError:
-        printError("Failed to generate SSH key.")
+        printError(f"Failed to generate SSH key using {sshAlgorithm}.")
         return False
 
     # Store passphrase securely if provided

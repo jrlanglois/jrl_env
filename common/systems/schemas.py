@@ -185,6 +185,20 @@ gitConfigSchema = {
             },
             "additionalProperties": False,
         },
+        "ssh": {
+            "type": "object",
+            "properties": {
+                "algorithm": {
+                    "type": "string",
+                    "enum": ["rsa", "dsa", "ecdsa", "ed25519"],
+                },
+                "keySize": {
+                    "type": ["integer", "null"],
+                },
+                "keyFilename": {"type": "string"},
+            },
+            "additionalProperties": False,
+        },
         "defaults": {
             "type": "object",
             "additionalProperties": {"type": "string"},

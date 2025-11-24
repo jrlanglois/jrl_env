@@ -256,7 +256,70 @@ All validation scripts support `--help` and `--quiet` flags. See [`test/README.m
 
 ## Security
 
-### SSH Key Passphrases
+### SSH Key Configuration
+
+#### Algorithm and Key Size
+
+jrl_env supports configurable SSH key generation. Configure in `configs/gitConfig.json`:
+
+```json
+{
+    "ssh": {
+        "algorithm": "ed25519",
+        "keySize": null,
+        "keyFilename": "id_ed25519_github"
+    }
+}
+```
+
+**Supported Algorithms:**
+
+| Algorithm | Key Size | Recommended | Notes |
+|-----------|----------|-------------|-------|
+| `ed25519` | N/A (fixed) | ✅ **Best choice** | Modern, secure, fast. Default. |
+| `rsa` | 2048-4096 | ⚠️ 4096 bits | Legacy support. Use 4096+ for security. |
+| `ecdsa` | 256, 384, 521 | ⚠️ 521 bits | Use 521 for maximum security. |
+| `dsa` | N/A (fixed 1024) | ❌ **Not recommended** | Deprecated, weak security. |
+
+**Configuration Examples:**
+
+```json
+// Default (ed25519 - recommended)
+{
+    "ssh": {
+        "algorithm": "ed25519",
+        "keySize": null,
+        "keyFilename": "id_ed25519_github"
+    }
+}
+
+// RSA 4096-bit (for legacy systems)
+{
+    "ssh": {
+        "algorithm": "rsa",
+        "keySize": 4096,
+        "keyFilename": "id_rsa_github"
+    }
+}
+
+// ECDSA 521-bit
+{
+    "ssh": {
+        "algorithm": "ecdsa",
+        "keySize": 521,
+        "keyFilename": "id_ecdsa_github"
+    }
+}
+```
+
+**Validation:**
+- Invalid algorithms fail immediately with clear error
+- Invalid key sizes for algorithm fail immediately
+- RSA keys < 2048 bits are rejected (insecure)
+- ECDSA only accepts 256, 384, or 521 bits
+- ed25519 and dsa don't support custom key sizes
+
+#### SSH Key Passphrases
 
 jrl_env supports secure SSH key generation with optional passphrases:
 
@@ -280,7 +343,7 @@ python3 setup.py --install=ssh --passphrase=no
 ```
 Skips passphrase prompt. Only use for testing/development. **Not recommended for production.**
 
-### Passphrase Storage
+#### Passphrase Storage
 
 When you provide a passphrase, it's stored securely in your system keychain:
 - **macOS:** Keychain

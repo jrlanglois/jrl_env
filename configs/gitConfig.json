@@ -5,6 +5,12 @@
         "email": "joel.r.langlois@gmail.com",
         "usernameGitHub": "jrlanglois"
     },
+    "ssh":
+    {
+        "algorithm": "ed25519",
+        "keySize": null,
+        "keyFilename": "id_ed25519_github"
+    },
     "defaults":
     {
         "init.defaultBranch": "main",
