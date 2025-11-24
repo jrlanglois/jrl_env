@@ -349,7 +349,7 @@ def openDocs() -> bool:
             subprocess.run(["start", str(indexFile)], check=False, shell=True)
         else:
             printWarning(f"Unknown system: {system}. Please open manually:")
-            printInfo(f"  {indexFile}")
+            printInfo(f"{indexFile}")
             return False
 
         printSuccess("Opened documentation in browser")

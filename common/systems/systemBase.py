@@ -103,6 +103,21 @@ class SystemBase(ABC):
         """
         pass
 
+    @abstractmethod
+    def updateSystem(self, dryRun: bool) -> bool:
+        """
+        Update the system and installed applications.
+        This includes system updates (OS updates), package manager updates,
+        and other platform-specific update operations.
+
+        Args:
+            dryRun: If True, don't actually update
+
+        Returns:
+            True if successful, False otherwise
+        """
+        pass
+
     # ========== Hook Methods (Optional Overrides) ==========
 
     def setupDevEnv(self) -> bool:

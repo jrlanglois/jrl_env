@@ -24,15 +24,7 @@
                 "command": "sudo zypper refresh"
             }
         ],
-        "postInstall":
-        [
-            {
-                "name": "zypperUpdate",
-                "runOnce": false,
-                "shell": "bash",
-                "command": "sudo zypper update -y"
-            }
-        ]
+        "postInstall": []
     },
     "cruft":
     {

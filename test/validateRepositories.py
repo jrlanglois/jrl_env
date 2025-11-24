@@ -237,25 +237,25 @@ def validateRepositories(configPath: str) -> int:
 
             # Validate visibility
             if visibility not in ('all', 'public', 'private'):
-                printError(f"  Invalid visibility: {visibility} (must be all/public/private)")
+                printError(f"Invalid visibility: {visibility} (must be all/public/private)")
                 errors += 1
                 continue
 
             # Validate wildcard pattern format
             if '*' in pattern:
                 if re.match(r'^(https://github\.com/|git@github\.com:)[^/]+/\*$', pattern):
-                    printSuccess(f"  Valid wildcard pattern")
+                    printSuccess(f"Valid wildcard pattern")
                 else:
-                    printError(f"  Invalid wildcard pattern format")
-                    printError(f"  Valid formats: git@github.com:owner/* or https://github.com/owner/*")
+                    printError(f"Invalid wildcard pattern format")
+                    printError(f"Valid formats: git@github.com:owner/* or https://github.com/owner/*")
                     errors += 1
             else:
                 # Regular URL in object format - validate as normal
                 repoUrl = pattern
                 if re.match(r'^(https?|git)://|^git@', repoUrl):
-                    printSuccess(f"  Valid URL format")
+                    printSuccess(f"Valid URL format")
                 else:
-                    printError(f"  Invalid URL format")
+                    printError(f"Invalid URL format")
                     errors += 1
 
             continue
@@ -281,11 +281,11 @@ def validateRepositories(configPath: str) -> int:
                 exists, message = checkGitHubRepository(ownerRepo)
 
                 if exists:
-                    printSuccess(f"  Repository exists")
+                    printSuccess(f"Repository exists")
                 elif exists is None:
-                    printWarning(f"  {message} - will be validated at clone time")
+                    printWarning(f"{message} - will be validated at clone time")
                 else:
-                    printWarning(f"  {message} - will be validated at clone time")
+                    printWarning(f"{message} - will be validated at clone time")
             elif repoUrl.startswith("git@"):
                 # Other SSH URLs - can't easily validate without SSH keys
                 printWarning("SSH URL detected - cannot validate without SSH keys (format is valid)")
@@ -295,20 +295,20 @@ def validateRepositories(configPath: str) -> int:
                 exists, message = checkGitHubRepository(ownerRepo)
 
                 if exists:
-                    printSuccess(f"  Repository exists")
+                    printSuccess(f"Repository exists")
                 elif exists is None:
-                    printWarning(f"  {message} - will be validated at clone time")
+                    printWarning(f"{message} - will be validated at clone time")
                 else:
-                    printWarning(f"  {message} - will be validated at clone time")
+                    printWarning(f"{message} - will be validated at clone time")
             else:
                 # Other HTTPS/Git URLs - try git ls-remote
                 if checkGitRepository(repoUrl):
-                    printSuccess(f"  Repository exists")
+                    printSuccess(f"Repository exists")
                 else:
-                    printError(f"  Repository not accessible or does not exist")
+                    printError(f"Repository not accessible or does not exist")
                     errors += 1
         else:
-            printError(f"  Invalid repository URL format")
+            printError(f"Invalid repository URL format")
             errors += 1
 
     safePrint()

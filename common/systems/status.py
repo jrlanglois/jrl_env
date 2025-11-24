@@ -291,12 +291,12 @@ def checkRepositories(platformName: str, configsPath: Optional[Path] = None) -> 
         workPathObj = Path(workPath)
 
         if workPathObj.exists():
-            printSuccess(f" Work directory exists: {workPath}")
+            printSuccess(f"Work directory exists: {workPath}")
 
             # Count owner directories
             ownerDirs = [d for d in workPathObj.iterdir() if d.is_dir()]
             if ownerDirs:
-                printSuccess(f" {len(ownerDirs)} owner directory(ies) found")
+                printSuccess(f"{len(ownerDirs)} owner directory(ies) found")
 
                 # Count repositories
                 totalRepos = 0
@@ -305,13 +305,13 @@ def checkRepositories(platformName: str, configsPath: Optional[Path] = None) -> 
                     totalRepos += len(repos)
 
                 if totalRepos > 0:
-                    printSuccess(f" {totalRepos} repository(ies) cloned")
+                    printSuccess(f"{totalRepos} repository(ies) cloned")
             else:
-                printWarning(f" Work directory exists but is empty: {workPath}")
+                printWarning(f"Work directory exists but is empty: {workPath}")
         else:
-            printWarning(f" Work directory does not exist: {workPath}")
+            printWarning(f"Work directory does not exist: {workPath}")
     except Exception as e:
-        printWarning(f" Error checking repositories: {e}")
+        printWarning(f"Error checking repositories: {e}")
 
     safePrint()
 
@@ -354,11 +354,11 @@ def checkFonts(platformName: str, fontsConfigPath: Path, fontInstallDir: str) ->
         # Check font installation directory
         installDirPath = Path(fontInstallDir)
         if not installDirPath.exists():
-            printWarning(f" Font installation directory does not exist: {fontInstallDir}")
+            printWarning(f"Font installation directory does not exist: {fontInstallDir}")
             safePrint()
             return
 
-        printSuccess(f" Font installation directory exists: {fontInstallDir}")
+        printSuccess(f"Font installation directory exists: {fontInstallDir}")
 
         # Count installed fonts
         system = platformModule.system()
@@ -387,17 +387,17 @@ def checkFonts(platformName: str, fontsConfigPath: Path, fontInstallDir: str) ->
                 installedCount += 1
             else:
                 missingCount += 1
-                printWarning(f" {fontName} not found")
+                printWarning(f"{fontName} not found")
 
         if installedCount > 0:
-            printSuccess(f" {installedCount} font(s) installed")
+            printSuccess(f"{installedCount} font(s) installed")
         if missingCount > 0:
-            printWarning(f" {missingCount} font(s) not found")
+            printWarning(f"{missingCount} font(s) not found")
         if installedCount == 0 and missingCount == 0:
             printWarning(" No fonts found in installation directory")
 
     except Exception as e:
-        printWarning(f" Error checking fonts: {e}")
+        printWarning(f"Error checking fonts: {e}")
 
     safePrint()
 
@@ -423,7 +423,15 @@ def runStatusCheck(system: Optional[object] = None) -> int:
     # Get platform name
     if system:
         platformName = system.getPlatformName()
-        paths = system.setupPaths()
+        # Use configManager if available, otherwise build paths manually
+        if system.configManager:
+            paths = system.configManager.getPaths()
+        else:
+            # Build minimal paths for status check
+            paths = {
+                "fontsConfigPath": str(configsPath / "fonts.json"),
+                "fontInstallDir": system.getFontInstallDir(),
+            }
     else:
         # Detect platform
         platformName = detectPlatform()

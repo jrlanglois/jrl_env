@@ -57,10 +57,9 @@ The unified setup script will:
 - `--resume`: Automatically resume from last successful step if setup was interrupted
 - `--noResume`: Do not resume from previous setup (start fresh)
 - `--listSteps`: Preview what steps will be executed without running setup
-- `--skipFonts`, `--skipApps`, `--skipGit`, `--skipCursor`, `--skipRepos`, `--skipSsh`: Skip specific steps
-- `--requirePassphrase`: Require a passphrase for SSH keys (recommended for security)
-- `--noPassphrase`: Skip passphrase for SSH keys (not recommended, less secure)
-- `--appsOnly`: Only install/update applications
+- `--install[=TARGETS]`: Install components (default: all). Targets: `all`, `fonts`, `apps`, `git`, `cursor`, `repos`, `ssh`
+- `--update[=TARGETS]`: Update components (default: all). Targets: `all`, `apps`, `system`
+- `--passphrase=MODE`: SSH passphrase mode: `require` (default) or `no`
 - `--dryRun`: Preview changes without making them
 - `--noBackup`: Skip backing up existing configuration files
 
@@ -68,6 +67,42 @@ The unified setup script will:
 
 ```bash
 pip install -r requirements.txt
+```
+
+### Usage Examples
+
+**Installation:**
+```bash
+# Install everything (default)
+python3 setup.py
+python3 setup.py --install
+python3 setup.py --install=all
+
+# Install specific components
+python3 setup.py --install=apps
+python3 setup.py --install=fonts,git,cursor
+
+# Install with SSH passphrase control
+python3 setup.py --install=ssh                    # Passphrase required (default)
+python3 setup.py --install=ssh --passphrase=no    # No passphrase (not recommended)
+```
+
+**Updates:**
+```bash
+# Update everything (packages, Android SDK, OS, stores, OMZ)
+python3 setup.py --update
+
+# Update only applications (package managers + Android SDK)
+python3 setup.py --update=apps
+
+# Update only system components (OS, stores, OMZ)
+python3 setup.py --update=system
+```
+
+**Dry Run (Preview Without Changes):**
+```bash
+python3 setup.py --install=apps --dryRun
+python3 setup.py --update --dryRun
 ```
 
 ### Individual Operations
@@ -85,10 +120,11 @@ python3 -m common.systems.cli <platform> <operation> [options]
 - `fonts`: Install Google Fonts
 - `git`: Configure Git
 - `repos`: Clone repositories
-- `rollback`: Rollback a failed setup session
 - `ssh`: Configure GitHub SSH
 - `status`: Check environment status (installed packages, Git config, fonts, repos)
 - `verify`: Run post-setup verification checks
+- `update`: Update system and all installed applications
+- `rollback`: Rollback a failed setup session
 
 **Examples:**
 
@@ -98,6 +134,10 @@ python3 -m common.systems.cli ubuntu status
 
 # Install fonts only
 python3 -m common.systems.cli macos fonts
+
+# Update everything (packages, system, OMZ, Android SDK)
+python3 -m common.systems.cli macos update
+python3 -m common.systems.cli ubuntu update --dryRun
 
 # Verify setup
 python3 -m common.systems.cli win11 verify
@@ -226,15 +266,17 @@ python3 setup.py
 ```
 You'll be prompted to optionally add a passphrase. Press Enter to skip or enter a strong passphrase.
 
-**Require Passphrase (Most Secure):**
+**Require Passphrase (Most Secure - Default):**
 ```bash
-python3 setup.py --requirePassphrase
+python3 setup.py --install=ssh --passphrase=require
+# Or just:
+python3 setup.py --install=ssh
 ```
-Forces passphrase creation. Recommended for production environments.
+Passphrase is required by default. Recommended for production environments.
 
 **No Passphrase (Least Secure):**
 ```bash
-python3 setup.py --noPassphrase
+python3 setup.py --install=ssh --passphrase=no
 ```
 Skips passphrase prompt. Only use for testing/development. **Not recommended for production.**
 

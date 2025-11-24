@@ -290,7 +290,7 @@ def installFontFile(fontPath: str, installDir: str) -> bool:
 
             return True
         except Exception as e:
-            printError(f"  Installation failed: {e}")
+            printError(f"Installation failed: {e}")
             return False
     else:
         # Linux/macOS: Install to user font directory
@@ -305,7 +305,7 @@ def installFontFile(fontPath: str, installDir: str) -> bool:
             shutil.copy2(fontPath, destination)
             return True
         except Exception as e:
-            printError(f"  Installation failed: {e}")
+            printError(f"Installation failed: {e}")
             return False
 
 
@@ -328,7 +328,7 @@ def convertFontFile(fontName: str, variant: str, filePath: str, tempDir: str) ->
                 pass
             return (fontName, variant, ttfPath)
         else:
-            printWarning(f"  ⚠ {fontName} {variant}: WOFF2 conversion failed")
+            printWarning(f"⚠ {fontName} {variant}: WOFF2 conversion failed")
             return None
     return (fontName, variant, filePath)
 

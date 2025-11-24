@@ -15,24 +15,8 @@
     },
     "commands":
     {
-        "preInstall":
-        [
-            {
-                "name": "dnfUpdate",
-                "runOnce": false,
-                "shell": "bash",
-                "command": "sudo dnf check-update || true"
-            }
-        ],
-        "postInstall":
-        [
-            {
-                "name": "dnfUpgrade",
-                "runOnce": false,
-                "shell": "bash",
-                "command": "sudo dnf upgrade -y"
-            }
-        ]
+        "preInstall": [],
+        "postInstall": []
     },
     "cruft":
     {

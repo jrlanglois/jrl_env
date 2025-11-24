@@ -36,16 +36,18 @@ jrl_env supports three passphrase options:
    - You'll be prompted to optionally add a passphrase
    - Press Enter to skip (less secure) or enter a passphrase
 
-2. **Require Passphrase (Most Secure):**
+2. **Require Passphrase (Most Secure - Default):**
    ```bash
-   python3 setup.py --requirePassphrase
+   python3 setup.py --install=ssh --passphrase=require
+   # Or just (passphrase is required by default):
+   python3 setup.py --install=ssh
    ```
-   - Forces passphrase creation
+   - Passphrase is required by default
    - Recommended for production environments
 
 3. **No Passphrase (Least Secure):**
    ```bash
-   python3 setup.py --noPassphrase
+   python3 setup.py --install=ssh --passphrase=no
    ```
    - Skips passphrase prompt
    - Only use for testing/development environments
@@ -273,7 +275,7 @@ While jrl_env uses standard `~/.ssh/` locations, you can:
 To review packages before installation:
 1. Use `--dryRun` to preview
 2. Modify config to remove untrusted packages
-3. Use `--skipApps` to skip package installation entirely
+3. Use `--install=fonts,git,cursor` to skip package installation entirely
 4. Manually install packages after review
 
 ## Security Audit Trail
