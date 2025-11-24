@@ -17,6 +17,7 @@ scriptDir = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(scriptDir))
 
 from common.core.logging import printError, printInfo, printWarning
+from common.systems.platform import isWindows
 
 
 @dataclass
@@ -35,7 +36,7 @@ class SetupState:
 
 def getStateDir() -> Path:
     """Get the directory for storing setup state files."""
-    if sys.platform == "win32":
+    if isWindows():
         baseDir = Path(os.environ.get("LOCALAPPDATA", Path.home() / "AppData/Local"))
     else:
         baseDir = Path.home() / ".cache"

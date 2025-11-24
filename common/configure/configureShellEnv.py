@@ -18,6 +18,7 @@ from common.core.logging import (
     printWarning,
     safePrint,
 )
+from common.systems.platform import isWindows, isMacOS
 
 
 def getShellConfigFile() -> Optional[Path]:
@@ -28,7 +29,7 @@ def getShellConfigFile() -> Optional[Path]:
         Path to shell config file (.zshrc, .bashrc, .bash_profile, etc.) or None
         Returns None on Windows (uses registry/system env vars instead)
     """
-    if sys.platform == "win32":
+    if isWindows():
         return None
 
     shell = os.environ.get("SHELL", "")
@@ -45,7 +46,7 @@ def getShellConfigFile() -> Optional[Path]:
         if bashProfile.exists():
             return bashProfile
         return bashrc
-    elif sys.platform == "darwin":
+    elif isMacOS():
         bashProfile = home / ".bash_profile"
         if bashProfile.exists():
             return bashProfile
@@ -310,7 +311,7 @@ def configureAndroidEnvironmentVariables(
     Returns:
         True if successful, False otherwise
     """
-    if sys.platform == "win32":
+    if isWindows():
         return configureWindowsEnvironmentVariables(sdkRoot, dryRun=dryRun)
 
     configFile = getShellConfigFile()

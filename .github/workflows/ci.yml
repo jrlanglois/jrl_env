@@ -85,3 +85,7 @@ jobs:
       - name: Run wildcard repository tests
         shell: bash
         run: python3 test/testWildcardRepos.py
+
+      - name: Run platform detection tests
+        shell: bash
+        run: python3 test/testPlatformDetection.py

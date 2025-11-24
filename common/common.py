@@ -19,7 +19,6 @@ from common.core.logging import (
     printH1,
     printH2,
     printH3,
-    printSection,
     printHelpText,
     colourise,
     setVerbosity,
@@ -40,9 +39,6 @@ from common.core.utilities import (
     getJsonValue,
     getJsonArray,
     getJsonObject,
-    findOperatingSystem,
-    getOperatingSystem,
-    isOperatingSystem,
     getConfigDirectory,
     hasInternetConnectivity,
 )
@@ -186,6 +182,13 @@ from common.systems.systemsConfig import (
 # Import them directly from common.systems.genericSystem when needed
 from common.systems.platform import (
     Platform,
+    findOperatingSystem,
+    getOperatingSystem,
+    isOperatingSystem,
+    isWindows,
+    isMacOS,
+    isLinux,
+    isUnix,
 )
 
 __all__ = [
@@ -200,7 +203,6 @@ __all__ = [
     "printH1",
     "printH2",
     "printH3",
-    "printSection",
     "colourise",
     # Utility functions
     "commandExists",
@@ -211,6 +213,10 @@ __all__ = [
     "findOperatingSystem",
     "getOperatingSystem",
     "isOperatingSystem",
+    "isWindows",
+    "isMacOS",
+    "isLinux",
+    "isUnix",
     "getConfigDirectory",
     "hasInternetConnectivity",
     # Linux package manager

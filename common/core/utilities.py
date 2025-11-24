@@ -156,47 +156,6 @@ def getJsonObject(configPath: str, jsonPath: str) -> Dict:
 
 
 
-def findOperatingSystem() -> str:
-    """Detect the current operating system ("linux", "macos", "windows", or "unknown")."""
-    system = platform.system().lower()
-
-    if system == "linux":
-        # Check for specific Linux distributions
-        os_release = Path("/etc/os-release")
-        if os_release.exists():
-            try:
-                with open(os_release, 'r', encoding='utf-8') as f:
-                    for line in f:
-                        if line.startswith("ID="):
-                            distro_id = line.split('=', 1)[1].strip().strip('"').strip("'")
-                            # All Linux distros return "linux" for now
-                            # Can be extended later if needed
-                            return "linux"
-            except (OSError, IOError):
-                pass
-        return "linux"
-    elif system == "darwin":
-        return "macos"
-    elif system in ("windows", "cygwin", "mingw", "msys"):
-        return "windows"
-    else:
-        return "unknown"
-
-
-def getOperatingSystem() -> str:
-    """Get the operating system (cached to avoid repeated detection)."""
-    global _OPERATING_SYSTEM
-
-    if _OPERATING_SYSTEM is None:
-        _OPERATING_SYSTEM = findOperatingSystem()
-
-    return _OPERATING_SYSTEM
-
-
-def isOperatingSystem(target: str) -> bool:
-    """Check if the current operating system matches the target."""
-    current = getOperatingSystem()
-    return current == target
 
 
 def getConfigDirectory(projectRoot: Path, args: Optional[List[str]] = None) -> Path:

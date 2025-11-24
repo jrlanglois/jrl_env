@@ -45,6 +45,9 @@ from common.common import (
     findOperatingSystem,
     getOperatingSystem,
     isOperatingSystem,
+    isWindows,
+    isMacOS,
+    isLinux,
     printError,
     printInfo,
     printH1,
@@ -93,9 +96,9 @@ def detectPlatform() -> tuple[str, Optional[Path]]:
     """
     osType = findOperatingSystem()
 
-    if isOperatingSystem("macos"):
+    if isMacOS():
         return ("macos", None)
-    elif isOperatingSystem("linux"):
+    elif isLinux():
         # Try to detect specific Linux distribution
         osRelease = Path("/etc/os-release")
         if osRelease.exists():
@@ -134,7 +137,7 @@ def detectPlatform() -> tuple[str, Optional[Path]]:
                 pass
         # Default to ubuntu for generic Linux
         return ("ubuntu", None)
-    elif isOperatingSystem("windows"):
+    elif isWindows():
         return ("win11", None)
     else:
         return ("unknown", None)
@@ -152,7 +155,7 @@ def checkIfSetupAlreadyRan() -> bool:
 
     # Indicator 1: Check for flag files
     flagLocations = []
-    if isOperatingSystem("windows"):
+    if isWindows():
         import os
         localAppData = os.environ.get("LOCALAPPDATA", "")
         if localAppData:
@@ -169,7 +172,7 @@ def checkIfSetupAlreadyRan() -> bool:
 
     # Indicator 2: Check for Git config with jrl_env markers
     gitConfig = None
-    if isOperatingSystem("windows"):
+    if isWindows():
         import os
         gitConfig = Path(os.environ.get("USERPROFILE", "")) / ".gitconfig"
     else:
@@ -203,10 +206,10 @@ def checkIfSetupAlreadyRan() -> bool:
 
     # Indicator 5: Check for Cursor settings (platform-specific)
     try:
-        if isOperatingSystem("windows"):
+        if isWindows():
             import os
             cursorSettings = Path(os.environ.get("APPDATA", "")) / "Cursor" / "User" / "settings.json"
-        elif isOperatingSystem("macos"):
+        elif isMacOS():
             cursorSettings = Path.home() / "Library" / "Application Support" / "Cursor" / "User" / "settings.json"
         else:
             cursorSettings = Path.home() / ".config" / "Cursor" / "User" / "settings.json"
@@ -232,7 +235,7 @@ def markSetupAsRun() -> None:
     """Create a flag file to mark that setup has been run."""
     flagFile = None
 
-    if isOperatingSystem("windows"):
+    if isWindows():
         import os
         localAppData = os.environ.get("LOCALAPPDATA", "")
         if localAppData:

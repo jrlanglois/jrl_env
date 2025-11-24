@@ -11,6 +11,8 @@ from enum import IntEnum
 from threading import Lock
 from typing import Optional, Union
 
+from common.systems.platform import isWindows
+
 # ANSI colour codes
 class Colours:
     red = '\033[0;31m'
@@ -27,7 +29,7 @@ class Verbosity(IntEnum):
     verbose = 2  # Everything including debug/verbose messages
 
 # Global verbosity level (default to normal)
-_verbosity: Verbosity = Verbosity.normal
+currentVerbosity: Verbosity = Verbosity.normal
 
 # Global timestamp display toggle (default to show timestamps)
 # Logs ALWAYS have timestamps - this only controls console display
@@ -44,7 +46,7 @@ printLock = Lock()
 def supportsUnicode() -> bool:
     """Check if the console supports Unicode emoji characters."""
     # On Windows, be conservative - only use Unicode if we can confirm UTF-8 support
-    if sys.platform == "win32":
+    if isWindows():
         try:
             # Try to reconfigure stdout to UTF-8 if possible (Python 3.7+)
             if hasattr(sys.stdout, 'reconfigure'):
@@ -85,13 +87,13 @@ emojiWarning = "⚠" if unicodeSupported else "[WARNING]"
 
 def setVerbosity(level: Verbosity) -> None:
     """Set the global verbosity level."""
-    global _verbosity
-    _verbosity = level
+    global currentVerbosity
+    currentVerbosity = level
 
 
 def getVerbosity() -> Verbosity:
     """Get the current verbosity level."""
-    return _verbosity
+    return currentVerbosity
 
 
 def setVerbosityFromArgs(quiet: bool = False, verbose: bool = False) -> None:
@@ -264,7 +266,7 @@ def printFormatted(
         alwaysShow: If True, show even in quiet mode (for errors)
     """
     # Check verbosity
-    if not alwaysShow and _verbosity < minVerbosity:
+    if not alwaysShow and currentVerbosity < minVerbosity:
         return
 
     # Prepend emoji if provided and not already in message
@@ -311,7 +313,7 @@ def printDebug(message: str) -> None:
 
 def printH1(message: str, dryRun: bool = False) -> None:
     """Print a top-level heading (H1) with === borders, centred text, and extra spacing."""
-    if _verbosity >= Verbosity.normal:
+    if currentVerbosity >= Verbosity.normal:
         if dryRun:
             message = f"{message} (DRY RUN)"
 
@@ -335,7 +337,7 @@ def printH1(message: str, dryRun: bool = False) -> None:
 
 def printH2(message: str, dryRun: bool = False) -> None:
     """Print a second-level heading (H2) with === borders."""
-    if _verbosity >= Verbosity.normal:
+    if currentVerbosity >= Verbosity.normal:
         if dryRun:
             message = f"{message} (DRY RUN)"
         safePrint(f"{Colours.cyan}=== {message} ==={Colours.nc}")
@@ -343,7 +345,7 @@ def printH2(message: str, dryRun: bool = False) -> None:
 
 def printH3(message: str, dryRun: bool = False) -> None:
     """Print a third-level heading (H3) with --- style."""
-    if _verbosity >= Verbosity.normal:
+    if currentVerbosity >= Verbosity.normal:
         if dryRun:
             message = f"{message} (DRY RUN)"
         safePrint(f"{Colours.cyan}--- {message}{Colours.nc}")
@@ -367,9 +369,6 @@ def printHeading(message: str, dryRun: bool = False) -> None:
         printH3(message, dryRun=dryRun)
 
 
-def printSection(message: str, dryRun: bool = False) -> None:
-    """Alias for printH2()."""
-    printH2(message, dryRun=dryRun)
 
 def printHelpText(
     title: str,

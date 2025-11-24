@@ -19,6 +19,9 @@ from common.common import (
     commandExists,
     findOperatingSystem,
     isOperatingSystem,
+    isMacOS,
+    isLinux,
+    isWindows,
     printError,
     printInfo,
     printH2,
@@ -36,9 +39,9 @@ def detectPlatform() -> str:
     """
     osType = findOperatingSystem()
 
-    if isOperatingSystem("macos"):
+    if isMacOS():
         return "macos"
-    elif isOperatingSystem("linux"):
+    elif isLinux():
         osRelease = Path("/etc/os-release")
         if osRelease.exists():
             try:
@@ -71,7 +74,7 @@ def detectPlatform() -> str:
             except Exception:
                 pass
         return "ubuntu"
-    elif isOperatingSystem("windows"):
+    elif isWindows():
         return "win11"
     else:
         return "unknown"

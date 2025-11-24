@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Optional, List
 
 from common.core.logging import printInfo, printWarning, printVerbose, printError
+from common.systems.platform import isWindows
 
 
 @dataclass
@@ -38,7 +39,7 @@ def getCacheDir() -> Path:
         Path to cache directory
     """
     # Use XDG_CACHE_HOME if set, otherwise ~/.cache
-    if os.name == 'nt':
+    if isWindows():
         # Windows: use LOCALAPPDATA
         cacheBase = Path(os.environ.get('LOCALAPPDATA', Path.home() / 'AppData' / 'Local'))
     else:

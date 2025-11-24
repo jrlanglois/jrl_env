@@ -23,9 +23,12 @@ from common.core.utilities import (
     getJsonValue,
     getJsonArray,
     getJsonObject,
+)
+from common.systems.platform import (
     findOperatingSystem,
     getOperatingSystem,
     isOperatingSystem,
+    isUnix,
 )
 from common.configure.cloneRepositories import expandPath
 
@@ -228,7 +231,7 @@ class TestExpandPath(unittest.TestCase):
 
     def test_expandPath_home_variable(self):
         """Test expandPath with $HOME variable."""
-        if os.name != "nt":  # Unix-like systems
+        if isUnix():  # Unix-like systems
             result = expandPath("$HOME/test")
             self.assertIn(os.path.expanduser("~"), result)
         else:  # Windows
@@ -285,26 +288,30 @@ class TestOSDetection(unittest.TestCase):
         """Test that getOperatingSystem caches the result."""
         # Reset the cache by importing the module fresh
         import importlib
-        import common.core.utilities as utils_module
-        importlib.reload(utils_module)
+        import common.systems.platform as platform_module
+        importlib.reload(platform_module)
 
         # First call should detect
-        result1 = utils_module.getOperatingSystem()
+        result1 = platform_module.getOperatingSystem()
         # Second call should return cached value
-        result2 = utils_module.getOperatingSystem()
+        result2 = platform_module.getOperatingSystem()
         self.assertEqual(result1, result2)
 
     def test_isOperatingSystem(self):
-        """Test isOperatingSystem function."""
-        current = getOperatingSystem()
-        self.assertTrue(isOperatingSystem(current))
-        # Test with wrong OS (assuming we're not on all three at once)
-        if current != "linux":
-            self.assertFalse(isOperatingSystem("linux"))
-        if current != "macos":
-            self.assertFalse(isOperatingSystem("macos"))
-        if current != "windows":
-            self.assertFalse(isOperatingSystem("windows"))
+        """Test isOperatingSystem function with Platform enum."""
+        from common.systems.platform import Platform
+
+        # Test that it accepts Platform enum
+        result = isOperatingSystem(Platform.macos)
+        self.assertIsInstance(result, bool)
+
+        # Test that exactly one platform is True
+        platforms = [
+            isOperatingSystem(Platform.win11),
+            isOperatingSystem(Platform.macos),
+            isOperatingSystem(Platform.ubuntu),
+        ]
+        self.assertEqual(sum(platforms), 1, "Exactly one platform should be True")
 
 
 if __name__ == "__main__":
