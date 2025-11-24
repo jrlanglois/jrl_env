@@ -2,6 +2,7 @@
 
 [![CI](https://github.com/jrlanglois/jrl_env/actions/workflows/ci.yml/badge.svg)](https://github.com/jrlanglois/jrl_env/actions/workflows/ci.yml)
 [![Validate Configs](https://github.com/jrlanglois/jrl_env/actions/workflows/validateConfigs.yml/badge.svg)](https://github.com/jrlanglois/jrl_env/actions/workflows/validateConfigs.yml)
+[![Coverage](https://codecov.io/gh/jrlanglois/jrl_env/branch/main/graph/badge.svg)](https://codecov.io/gh/jrlanglois/jrl_env)
 
 Cross-platform development environment setup and configuration.
 

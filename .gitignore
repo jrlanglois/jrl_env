@@ -69,6 +69,9 @@ coverage/
 *.gcov
 *.gcda
 *.gcno
+.coverage
+coverage.xml
+htmlcov/
 
 # Python
 __pycache__/

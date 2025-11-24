@@ -1,0 +1,49 @@
+name: Code Coverage
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python and dependencies
+        uses: ./.github/actions/setupPython
+
+      - name: Install coverage
+        run: python3 -m pip install coverage
+
+      - name: Run tests with coverage
+        run: |
+          python3 -m coverage run --source=common test/testUtilities.py
+          python3 -m coverage run --source=common -a test/testPlatformDetection.py
+          python3 -m coverage run --source=common -a test/testSetupValidation.py
+
+      - name: Generate coverage report
+        run: |
+          python3 -m coverage report
+          python3 -m coverage xml
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./coverage.xml
+          flags: unittests
+          name: codecov-umbrella
+          fail_ci_if_error: false
+          token: ${{ secrets.CODECOV_TOKEN }}
+
+      - name: Coverage comment
+        if: github.event_name == 'pull_request'
+        uses: py-cov-action/python-coverage-comment-action@v3
+        with:
+          GITHUB_TOKEN: ${{ github.token }}
+          MINIMUM_GREEN: 80
+          MINIMUM_ORANGE: 60
+

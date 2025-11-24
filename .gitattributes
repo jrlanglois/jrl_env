@@ -1,13 +1,15 @@
 # Default: CRLF for all text files
 * text eol=crlf
 
-# Exceptions: Files that MUST use LF (e.g., Bash scripts, Python, YAML)
+# Exceptions: Files that MUST use LF (e.g., Bash scripts, Python, YAML, RST, config files)
 *.bash text eol=lf
 *.gitmodules text eol=lf
 *.py text eol=lf
+*.rst text eol=lf
 *.sh text eol=lf
 *.yaml text eol=lf
 *.yml text eol=lf
+.coveragerc text eol=lf
 
 # Various misc binary files:
 *.7z binary

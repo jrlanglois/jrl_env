@@ -1,0 +1,42 @@
+# Coverage configuration for jrl_env
+[run]
+source = common
+omit =
+    */__pycache__/*
+    */tests/*
+    */.venv/*
+    */venv/*
+    setup.py
+
+[report]
+# Fail if coverage is below threshold
+fail_under = 80
+precision = 2
+show_missing = True
+skip_covered = False
+sort = Cover
+
+# Exclude lines from coverage
+exclude_lines =
+    # Have to re-enable the standard pragma
+    pragma: no cover
+    
+    # Don't complain about missing debug-only code
+    def __repr__
+    
+    # Don't complain if tests don't hit defensive assertion code
+    raise AssertionError
+    raise NotImplementedError
+    
+    # Don't complain if non-runnable code isn't run
+    if __name__ == .__main__.:
+    
+    # Don't complain about abstract methods
+    @abstractmethod
+    
+    # Don't complain about type checking
+    if TYPE_CHECKING:
+
+[html]
+directory = htmlcov
+
