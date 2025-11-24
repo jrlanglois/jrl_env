@@ -48,7 +48,7 @@ def runOperation(system: SystemBase, operation: str, dryRun: bool = False) -> in
 
     Args:
         system: System instance
-        operation: Operation name (fonts, apps, git, ssh, cursor, repos)
+        operation: Operation name (fonts, apps, git, ssh, cursor, repos, update)
         dryRun: If True, don't actually make changes
 
     Returns:
@@ -66,8 +66,22 @@ def runOperation(system: SystemBase, operation: str, dryRun: bool = False) -> in
         printWarning,
         safePrint,
     )
+    from common.install.setupArgs import SetupArgs
+    from common.systems.configManager import ConfigManager
 
-    paths = system.setupPaths()
+    # Create configManager if it doesn't exist
+    if not system.configManager:
+        setupArgs = SetupArgs(dryRun=dryRun)
+        system.configManager = ConfigManager(
+            projectRoot=system.projectRoot,
+            platformName=system.getPlatformName(),
+            configFileName=system.getConfigFileName(),
+            fontInstallDir=system.getFontInstallDir(),
+            cursorSettingsPath=system.getCursorSettingsPath(),
+            setupArgs=setupArgs,
+        )
+
+    paths = system.configManager.getPaths()
 
     if operation == "fonts":
         printH2("Installing fonts", dryRun=dryRun)
@@ -178,9 +192,30 @@ def runOperation(system: SystemBase, operation: str, dryRun: bool = False) -> in
         from common.systems.verify import runVerification
         return 0 if runVerification(system) else 1
 
+    elif operation == "update":
+        printH2("Updating system and applications", dryRun=dryRun)
+
+        # Run pure update using platform object
+        try:
+            from common.systems.platforms import createPlatform
+
+            platformName = system.getPlatformName()
+            platform = createPlatform(platformName, system.projectRoot, dryRun)
+            success = platform.updateAll()
+
+            if success:
+                printSuccess("All updates completed successfully")
+                return 0
+            else:
+                printWarning("Updates completed with some issues")
+                return 1
+        except Exception as e:
+            printError(f"Update failed: {e}")
+            return 1
+
     else:
         printError(f"Unknown operation: {operation}")
-        printInfo("Valid operations: fonts, apps, git, ssh, cursor, repos, status, rollback, verify")
+        printInfo("Valid operations: fonts, apps, git, ssh, cursor, repos, status, rollback, verify, update")
         return 1
 
 
@@ -231,6 +266,7 @@ def printHelp() -> None:
                 "status   - Check environment status (packages, Git, fonts, repos)",
                 "rollback - Rollback the last setup session",
                 "verify   - Verify installed packages and configurations",
+                "update   - Update system and all installed applications",
             ],
         },
         options=[
@@ -248,6 +284,8 @@ def printHelp() -> None:
             "python3 -m common.systems.cli win11 git",
             "python3 -m common.systems.cli ubuntu status",
             "python3 -m common.systems.cli ubuntu rollback",
+            "python3 -m common.systems.cli macos update",
+            "python3 -m common.systems.cli win11 update --dryRun",
         ],
     )
 

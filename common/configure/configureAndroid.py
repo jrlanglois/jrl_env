@@ -175,7 +175,7 @@ def installSdkComponents(sdkManager: Path, components: List[str], dryRun: bool =
     if dryRun:
         printInfo("[DRY RUN] Would install SDK components:")
         for component in components:
-            printInfo(f"  - {component}")
+            printInfo(f"- {component}")
         return True
 
     if not components:

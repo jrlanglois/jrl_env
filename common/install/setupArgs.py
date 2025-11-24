@@ -5,8 +5,8 @@ Provides argument parsing and run flag determination.
 """
 
 import sys
-from dataclasses import dataclass
-from typing import Optional
+from dataclasses import dataclass, field
+from typing import List, Optional
 
 # Import logging functions directly from source module
 from common.core.logging import printError
@@ -15,13 +15,16 @@ from common.core.logging import printError
 @dataclass
 class SetupArgs:
     """Setup script arguments."""
-    skipFonts: bool = False
-    skipApps: bool = False
-    skipGit: bool = False
-    skipCursor: bool = False
-    skipRepos: bool = False
-    skipSsh: bool = False
-    appsOnly: bool = False
+    # Installation targets (composable)
+    installTargets: List[str] = field(default_factory=list)
+
+    # Update targets (composable)
+    updateTargets: List[str] = field(default_factory=list)
+
+    # SSH passphrase mode: 'require' (default), 'no', or None (prompt)
+    passphraseMode: Optional[str] = 'require'
+
+    # Other flags
     dryRun: bool = False
     noBackup: bool = False
     quiet: bool = False
@@ -30,8 +33,6 @@ class SetupArgs:
     noResume: bool = False
     listSteps: bool = False
     configDir: Optional[str] = None
-    requirePassphrase: bool = False
-    noPassphrase: bool = False
     noConsoleTimestamps: bool = False
     clearRepoCache: bool = False
 
@@ -45,6 +46,40 @@ class RunFlags:
     runCursor: bool = False
     runRepos: bool = False
     runSsh: bool = False
+    runUpdate: bool = False
+
+
+# Valid target names
+VALID_INSTALL_TARGETS = {'all', 'fonts', 'apps', 'git', 'cursor', 'repos', 'ssh'}
+VALID_UPDATE_TARGETS = {'all', 'apps', 'system'}
+
+
+def parseTargets(targetString: str, validTargets: set) -> List[str]:
+    """
+    Parse comma-separated targets.
+
+    Args:
+        targetString: Comma-separated target string (e.g., "fonts,apps,git")
+        validTargets: Set of valid target names
+
+    Returns:
+        List of parsed targets
+
+    Raises:
+        ValueError: If invalid target is specified
+    """
+    if not targetString:
+        return ['all']
+
+    targets = [t.strip() for t in targetString.split(',')]
+
+    # Validate all targets
+    for target in targets:
+        if target not in validTargets:
+            valid = ', '.join(sorted(validTargets))
+            raise ValueError(f"Invalid target '{target}'. Valid targets: {valid}")
+
+    return targets
 
 
 def parseSetupArgs(args: Optional[list[str]] = None) -> SetupArgs:
@@ -58,29 +93,62 @@ def parseSetupArgs(args: Optional[list[str]] = None) -> SetupArgs:
         SetupArgs object with parsed arguments
 
     Raises:
-        SystemExit: If unknown option is encountered
+        SystemExit: If unknown option or invalid target is encountered
     """
     if args is None:
         args = sys.argv[1:]
 
     setupArgs = SetupArgs()
     i = 0
+
     while i < len(args):
         arg = args[i]
-        if arg == "--skipFonts":
-            setupArgs.skipFonts = True
-        elif arg == "--skipApps":
-            setupArgs.skipApps = True
-        elif arg == "--skipGit":
-            setupArgs.skipGit = True
-        elif arg == "--skipCursor":
-            setupArgs.skipCursor = True
-        elif arg == "--skipRepos":
-            setupArgs.skipRepos = True
-        elif arg == "--skipSsh":
-            setupArgs.skipSsh = True
+
+        # Install targets
+        if arg == "--install":
+            setupArgs.installTargets = ['all']
+        elif arg.startswith("--install="):
+            targetString = arg.split("=", 1)[1]
+            try:
+                setupArgs.installTargets = parseTargets(targetString, VALID_INSTALL_TARGETS)
+            except ValueError as e:
+                printError(str(e))
+                sys.exit(1)
+
+        # Update targets
+        elif arg == "--update":
+            setupArgs.updateTargets = ['all']
+        elif arg.startswith("--update="):
+            targetString = arg.split("=", 1)[1]
+            try:
+                setupArgs.updateTargets = parseTargets(targetString, VALID_UPDATE_TARGETS)
+            except ValueError as e:
+                printError(str(e))
+                sys.exit(1)
+
+        # Passphrase mode
+        elif arg.startswith("--passphrase="):
+            passphraseValue = arg.split("=", 1)[1]
+            if passphraseValue not in ('require', 'no'):
+                printError("--passphrase must be 'require' or 'no'")
+                sys.exit(1)
+            setupArgs.passphraseMode = passphraseValue
+
+        # Legacy flags (kept for backward compatibility with warnings)
         elif arg == "--appsOnly":
-            setupArgs.appsOnly = True
+            printError("WARNING: --appsOnly is deprecated. Use --install=apps instead.")
+            setupArgs.installTargets = ['apps']
+        elif arg.startswith("--skip"):
+            printError(f"WARNING: {arg} is deprecated. Use --install=<targets> to specify what to install.")
+            sys.exit(1)
+        elif arg == "--requirePassphrase":
+            printError("WARNING: --requirePassphrase is deprecated. Use --passphrase=require instead.")
+            setupArgs.passphraseMode = 'require'
+        elif arg == "--noPassphrase":
+            printError("WARNING: --noPassphrase is deprecated. Use --passphrase=no instead.")
+            setupArgs.passphraseMode = 'no'
+
+        # Other flags
         elif arg == "--dryRun":
             setupArgs.dryRun = True
         elif arg == "--noBackup":
@@ -95,10 +163,6 @@ def parseSetupArgs(args: Optional[list[str]] = None) -> SetupArgs:
             setupArgs.noResume = True
         elif arg == "--listSteps":
             setupArgs.listSteps = True
-        elif arg == "--requirePassphrase":
-            setupArgs.requirePassphrase = True
-        elif arg == "--noPassphrase":
-            setupArgs.noPassphrase = True
         elif arg == "--noTimestamps":
             setupArgs.noConsoleTimestamps = True
         elif arg == "--clearRepoCache":
@@ -108,18 +172,24 @@ def parseSetupArgs(args: Optional[list[str]] = None) -> SetupArgs:
         elif arg == "--configDir":
             if i + 1 < len(args):
                 setupArgs.configDir = args[i + 1]
-                i += 1  # Skip the next argument as it's the value
+                i += 1
             else:
                 printError("--configDir requires a directory path")
                 sys.exit(1)
         elif arg == "--version" or arg == "-v":
             from common.version import __version__
+            from common.core.logging import safePrint
             safePrint(f"jrl_env version {__version__}")
             sys.exit(0)
         else:
             printError(f"Unknown option: {arg}")
             sys.exit(1)
+
         i += 1
+
+    # If no targets specified, default to full installation
+    if not setupArgs.installTargets and not setupArgs.updateTargets:
+        setupArgs.installTargets = ['all']
 
     # Set verbosity level based on parsed arguments
     from common.core.logging import setVerbosityFromArgs, setShowConsoleTimestamps
@@ -134,7 +204,7 @@ def parseSetupArgs(args: Optional[list[str]] = None) -> SetupArgs:
 
 def determineRunFlags(setupArgs: SetupArgs) -> RunFlags:
     """
-    Determine what to run based on skip flags and appsOnly.
+    Determine what to run based on install/update targets.
 
     Args:
         setupArgs: Parsed setup arguments
@@ -144,23 +214,30 @@ def determineRunFlags(setupArgs: SetupArgs) -> RunFlags:
     """
     runFlags = RunFlags()
 
-    # Fonts: run if not skipped and not apps-only
-    runFlags.runFonts = not setupArgs.skipFonts and not setupArgs.appsOnly
+    # If update targets specified, only run updates
+    if setupArgs.updateTargets:
+        runFlags.runUpdate = True
+        return runFlags
 
-    # Apps: run if not skipped OR if apps-only
-    runFlags.runApps = not setupArgs.skipApps or setupArgs.appsOnly
+    # Otherwise, process install targets
+    installTargets = setupArgs.installTargets
 
-    # Git: run if not skipped and not apps-only
-    runFlags.runGit = not setupArgs.skipGit and not setupArgs.appsOnly
-
-    # Cursor: run if not skipped and not apps-only
-    runFlags.runCursor = not setupArgs.skipCursor and not setupArgs.appsOnly
-
-    # Repos: run if not skipped and not apps-only
-    runFlags.runRepos = not setupArgs.skipRepos and not setupArgs.appsOnly
-
-    # SSH: run if not skipped and not apps-only
-    runFlags.runSsh = not setupArgs.skipSsh and not setupArgs.appsOnly
+    if 'all' in installTargets:
+        # Install everything
+        runFlags.runFonts = True
+        runFlags.runApps = True
+        runFlags.runGit = True
+        runFlags.runCursor = True
+        runFlags.runRepos = True
+        runFlags.runSsh = True
+    else:
+        # Install only specified targets
+        runFlags.runFonts = 'fonts' in installTargets
+        runFlags.runApps = 'apps' in installTargets
+        runFlags.runGit = 'git' in installTargets
+        runFlags.runCursor = 'cursor' in installTargets
+        runFlags.runRepos = 'repos' in installTargets
+        runFlags.runSsh = 'ssh' in installTargets
 
     return runFlags
 
@@ -170,4 +247,6 @@ __all__ = [
     "RunFlags",
     "parseSetupArgs",
     "determineRunFlags",
+    "VALID_INSTALL_TARGETS",
+    "VALID_UPDATE_TARGETS",
 ]

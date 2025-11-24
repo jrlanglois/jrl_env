@@ -264,7 +264,15 @@ def runVerification(system: Optional[object] = None) -> bool:
     # Get platform name
     if system:
         platformName = system.getPlatformName()
-        paths = system.setupPaths()
+        # Use configManager if available, otherwise build paths manually
+        if system.configManager:
+            paths = system.configManager.getPaths()
+        else:
+            # Build minimal paths for verification
+            paths = {
+                "fontsConfigPath": str(configsPath / "fonts.json"),
+                "fontInstallDir": system.getFontInstallDir(),
+            }
     else:
         platformName = detectPlatform()
         if platformName == "unknown":
@@ -293,7 +301,7 @@ def runVerification(system: Optional[object] = None) -> bool:
         if packagesOk:
             printSuccess(" All critical packages are installed")
         else:
-            printWarning(f" {len(missingPackages)} critical package(s) missing: {', '.join(missingPackages)}")
+            printWarning(f"{len(missingPackages)} critical package(s) missing: {', '.join(missingPackages)}")
             allPassed = False
     else:
         printWarning(" Could not verify packages (no checker available)")

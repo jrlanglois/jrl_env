@@ -29,15 +29,7 @@
                 "command": "sudo pacman -Sy"
             }
         ],
-        "postInstall":
-        [
-            {
-                "name": "pacmanUpgrade",
-                "runOnce": false,
-                "shell": "bash",
-                "command": "sudo pacman -Syu --noconfirm"
-            }
-        ]
+        "postInstall": []
     },
     "cruft":
     {

@@ -507,11 +507,15 @@ class SetupOrchestrator:
 
         printH2("Step 5: Configuring GitHub SSH", dryRun=self.setupArgs.dryRun)
         try:
+            # Convert passphraseMode to boolean flags
+            requirePassphrase = self.setupArgs.passphraseMode == 'require'
+            noPassphrase = self.setupArgs.passphraseMode == 'no'
+
             sshSuccess = configureGithubSsh(
                 paths["gitConfigPath"],
                 dryRun=self.setupArgs.dryRun,
-                requirePassphrase=self.setupArgs.requirePassphrase,
-                noPassphrase=self.setupArgs.noPassphrase
+                requirePassphrase=requirePassphrase,
+                noPassphrase=noPassphrase
             )
             if not sshSuccess:
                 printWarning("GitHub SSH configuration had some issues, continuing...")

@@ -163,7 +163,7 @@ class AptPackageManager(PackageManager):
             return False
         # Check for "^ii  package " pattern
         for line in result.stdout.splitlines():
-            if line.startswith("ii  ") and f" {package} " in line:
+            if line.startswith("ii  ") and f"{package} " in line:
                 return True
         return False
 

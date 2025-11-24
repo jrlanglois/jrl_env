@@ -6,29 +6,39 @@ This is the main entry point for jrl_env setup.
 Usage:
     python3 setup.py [options]
 
+Installation:
+    --install[=TARGETS]   Install components (default: all)
+                          Targets: all, fonts, apps, git, cursor, repos, ssh
+                          Examples:
+                            --install          (install everything)
+                            --install=all      (install everything)
+                            --install=fonts,apps,git
+                            --install=apps
+
+Updates:
+    --update[=TARGETS]    Update components (default: all)
+                          Targets: all, apps, system
+                          Examples:
+                            --update           (update everything)
+                            --update=all       (update everything)
+                            --update=apps      (only update applications)
+                            --update=system    (only system updates)
+
 Options:
-    --help, -h        Show this help message and exit
-    --version, -v     Show version information and exit
-    --configDir DIR   Use custom configuration directory (default: ./configs)
-                       Can also be set via JRL_ENV_CONFIG_DIR environment variable
-    --skipFonts       Skip font installation
-    --skipApps        Skip application installation
-    --skipGit         Skip Git configuration
-    --skipCursor      Skip Cursor configuration
-    --skipRepos       Skip repository cloning
-    --skipSsh         Skip GitHub SSH setup
-    --requirePassphrase  Require a passphrase for SSH keys (most secure)
-    --noPassphrase    Skip passphrase for SSH keys (least secure, not recommended)
-    --appsOnly        Only install/update applications (skip fonts, Git, Cursor, repos, SSH)
-    --dryRun          Preview changes without making them
-    --noBackup        Skip backing up existing configuration files
-    --verbose         Enable verbose output (show debug messages)
-    --quiet, -q       Enable quiet mode (only show errors)
-    --noTimestamps    Hide timestamps in console output (logs always have timestamps)
-    --clearRepoCache  Clear repository wildcard cache before setup
-    --resume          Automatically resume from last successful step if setup was interrupted
-    --noResume        Do not resume from previous setup (start fresh)
-    --listSteps       Preview what steps will be executed without running setup
+    --help, -h            Show this help message and exit
+    --version, -v         Show version information and exit
+    --passphrase=MODE     SSH passphrase mode: 'require' (default) or 'no'
+    --configDir DIR       Use custom configuration directory (default: ./configs)
+                          Can also be set via JRL_ENV_CONFIG_DIR environment variable
+    --dryRun              Preview changes without making them
+    --noBackup            Skip backing up existing configuration files
+    --verbose             Enable verbose output (show debug messages)
+    --quiet, -q           Enable quiet mode (only show errors)
+    --noTimestamps        Hide timestamps in console output (logs always have timestamps)
+    --clearRepoCache      Clear repository wildcard cache before setup
+    --resume              Automatically resume from last successful step if setup was interrupted
+    --noResume            Do not resume from previous setup (start fresh)
+    --listSteps           Preview what steps will be executed without running setup
 """
 
 import signal
@@ -322,28 +332,42 @@ def printHelp() -> None:
             "The script auto-detects your operating system and runs the appropriate setup.",
         ],
         usage="python3 setup.py [options]",
-        options=[
-            ("--help, -h", "Show this help message and exit"),
-            ("--version, -v", "Show version information and exit"),
-            ("--skipFonts", "Skip font installation"),
-            ("--skipApps", "Skip application installation"),
-            ("--skipGit", "Skip Git configuration"),
-            ("--skipCursor", "Skip Cursor configuration"),
-            ("--skipRepos", "Skip repository cloning"),
-            ("--skipSsh", "Skip GitHub SSH setup"),
-            ("--requirePassphrase", "Require a passphrase for SSH keys (most secure)"),
-            ("--noPassphrase", "Skip passphrase for SSH keys (least secure, not recommended)"),
-            ("--appsOnly", "Only install/update applications (skip fonts, Git, Cursor, repos, SSH)"),
-            ("--dryRun", "Preview changes without making them"),
-            ("--noBackup", "Skip backing up existing configuration files"),
-            ("--verbose", "Enable verbose output (show debug messages)"),
-            ("--quiet, -q", "Enable quiet mode (only show errors)"),
-            ("--noTimestamps", "Hide timestamps in console output (logs always have timestamps)"),
-            ("--clearRepoCache", "Clear repository wildcard cache before setup"),
-            ("--resume", "Automatically resume from last successful step if setup was interrupted"),
-            ("--noResume", "Do not resume from previous setup (start fresh)"),
-            ("--listSteps", "Preview what steps will be executed without running setup"),
-        ],
+        sections={
+            "Installation": [
+                "--install[=TARGETS]  Install components (default: all)",
+                "                     Targets: all, fonts, apps, git, cursor, repos, ssh",
+                "                     Examples:",
+                "                       --install          (install everything)",
+                "                       --install=all      (install everything)",
+                "                       --install=fonts,apps,git",
+                "                       --install=apps",
+            ],
+            "Updates": [
+                "--update[=TARGETS]   Update components (default: all)",
+                "                     Targets: all, apps, system",
+                "                     Examples:",
+                "                       --update           (update everything)",
+                "                       --update=all       (update everything)",
+                "                       --update=apps      (packages + Android SDK)",
+                "                       --update=system    (OS + stores + OMZ)",
+            ],
+            "Options": [
+                "--help, -h           Show this help message and exit",
+                "--version, -v        Show version information and exit",
+                "--passphrase=MODE    SSH passphrase mode: 'require' (default) or 'no'",
+                "--configDir DIR      Use custom configuration directory (default: ./configs)",
+                "                     Can also be set via JRL_ENV_CONFIG_DIR environment variable",
+                "--dryRun             Preview changes without making them",
+                "--noBackup           Skip backing up existing configuration files",
+                "--verbose            Enable verbose output (show debug messages)",
+                "--quiet, -q          Enable quiet mode (only show errors)",
+                "--noTimestamps       Hide timestamps in console output (logs always have timestamps)",
+                "--clearRepoCache     Clear repository wildcard cache before setup",
+                "--resume             Automatically resume from last successful step if setup was interrupted",
+                "--noResume           Do not resume from previous setup (start fresh)",
+                "--listSteps          Preview what steps will be executed without running setup",
+            ],
+        },
     )
 
 
@@ -368,10 +392,70 @@ def main() -> int:
     quiet = "--quiet" in sys.argv or "-q" in sys.argv
     verbose = "--verbose" in sys.argv
     noTimestamps = "--noTimestamps" in sys.argv
-    from common.core.logging import setVerbosityFromArgs, setShowConsoleTimestamps
+    from common.core.logging import setVerbosityFromArgs, setShowConsoleTimestamps, printH1, printH2, printSuccess as printSuccessMsg, printWarning as printWarnMsg
     setVerbosityFromArgs(quiet=quiet, verbose=verbose)
     if noTimestamps:
         setShowConsoleTimestamps(False)
+
+    # Parse arguments early to check for update mode
+    from common.install.setupArgs import parseSetupArgs
+    try:
+        preliminaryArgs = parseSetupArgs()
+    except SystemExit:
+        return 1
+
+    # Check for --update flag early (pure update mode, bypass installation)
+    if preliminaryArgs.updateTargets:
+        dryRun = preliminaryArgs.dryRun
+
+        printH1("jrl_env Update", dryRun=dryRun)
+
+        # Detect platform
+        printInfo("Detecting operating system...")
+        platformName, _ = detectPlatform()
+
+        if platformName == "unknown":
+            printError(f"Unsupported operating system: {getOperatingSystem()}")
+            return 1
+
+        printSuccessMsg(f"Detected platform: {platformName}")
+        safePrint()
+
+        # Run pure update (no installation)
+        try:
+            from common.systems.platforms import createPlatform
+
+            updateTargets = preliminaryArgs.updateTargets
+            if 'all' in updateTargets:
+                printH2("System Updates", dryRun=dryRun)
+                platform = createPlatform(platformName, projectRoot, dryRun)
+                success = platform.updateAll()
+            else:
+                # Targeted updates
+                platform = createPlatform(platformName, projectRoot, dryRun)
+                success = True
+
+                if 'apps' in updateTargets:
+                    printH2("Updating Applications", dryRun=dryRun)
+                    if not platform.updatePackages():
+                        success = False
+                    safePrint()
+
+                if 'system' in updateTargets:
+                    printH2("Updating System", dryRun=dryRun)
+                    if not platform.updateSystemWithOmz():
+                        success = False
+                    safePrint()
+
+            if success:
+                printSuccessMsg("All updates completed successfully")
+                return 0
+            else:
+                printWarnMsg("Updates completed with some issues")
+                return 1
+        except Exception as e:
+            printError(f"Update failed: {e}")
+            return 1
 
     printH1("jrl_env Unified Setup")
 

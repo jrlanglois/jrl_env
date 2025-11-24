@@ -46,24 +46,8 @@
     },
     "commands":
     {
-        "preInstall":
-        [
-            {
-                "name": "apkUpdate",
-                "runOnce": false,
-                "shell": "bash",
-                "command": "apk update"
-            }
-        ],
-        "postInstall":
-        [
-            {
-                "name": "apkUpgrade",
-                "runOnce": false,
-                "shell": "bash",
-                "command": "apk upgrade"
-            }
-        ]
+        "preInstall": [],
+        "postInstall": []
     },
     "cruft":
     {

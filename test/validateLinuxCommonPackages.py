@@ -185,7 +185,7 @@ class LinuxCommonValidator:
             List of tuples (package_name, found)
         """
         if pm not in self.checkers:
-            printWarning(f"  No checker implemented for {pm}, skipping")
+            printWarning(f"No checker implemented for {pm}, skipping")
             return [(pkg, True) for pkg in packages]
 
         checker = self.checkers[pm]
@@ -212,11 +212,11 @@ class LinuxCommonValidator:
                     results.append((pkgName, found))
 
                     if found:
-                        printSuccess(f"  ✓ {pkgName}")
+                        printSuccess(f"✓ {pkgName}")
                     else:
-                        printError(f"  ✗ {pkgName}")
+                        printError(f"✗ {pkgName}")
                 except Exception as e:
-                    printError(f"  ✗ {package}: Error - {e}")
+                    printError(f"✗ {package}: Error - {e}")
                     results.append((package, False))
 
         # Sort results by original package order
@@ -240,7 +240,7 @@ class LinuxCommonValidator:
             if failed:
                 printError(f"✗ {pm}: {len(failed)}/{len(results)} packages NOT FOUND")
                 for pkg in failed:
-                    printError(f"    {pkg}")
+                    printError(f"{pkg}")
                 allPassed = False
             else:
                 printSuccess(f"✓ {pm}: All {len(results)} packages exist")

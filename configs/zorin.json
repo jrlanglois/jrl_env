@@ -17,24 +17,8 @@
     },
     "commands":
     {
-        "preInstall":
-        [
-            {
-                "name": "aptUpdate",
-                "runOnce": false,
-                "shell": "bash",
-                "command": "sudo apt update"
-            }
-        ],
-        "postInstall":
-        [
-            {
-                "name": "aptUpgrade",
-                "runOnce": false,
-                "shell": "bash",
-                "command": "sudo apt upgrade -y"
-            }
-        ]
+        "preInstall": [],
+        "postInstall": []
     },
     "cruft":
     {

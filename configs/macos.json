@@ -62,24 +62,6 @@
         "postInstall":
         [
             {
-                "name": "brewUpdate",
-                "runOnce": false,
-                "shell": "bash",
-                "command": "brew update"
-            },
-            {
-                "name": "brewUpgrade",
-                "runOnce": false,
-                "shell": "bash",
-                "command": "brew upgrade"
-            },
-            {
-                "name": "ohMyZshUpdate",
-                "runOnce": false,
-                "shell": "zsh",
-                "command": "omz update"
-            },
-            {
                 "name": "installXcode",
                 "runOnce": true,
                 "shell": "bash",

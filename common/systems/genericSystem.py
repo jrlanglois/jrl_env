@@ -29,7 +29,7 @@ class GenericSystem(SystemBase):
         """
         self.config = getSystemConfig(str(platform))
         if not self.config:
-            raise ValueError(f"Unsupported platform: {platformName}")
+            raise ValueError(f"Unsupported platform: {platform}")
 
         super().__init__(projectRoot)
 
@@ -93,6 +93,27 @@ class GenericSystem(SystemBase):
             updateSecondary=secondaryManager.update if secondaryManager else None,
             useLinuxCommon=useLinuxCommon,
         )
+
+    def updateSystem(self, dryRun: bool) -> bool:
+        """Update the system and installed applications."""
+        from common.core.logging import printH2, printSuccess, printWarning
+        from common.systems.platforms import createPlatform
+
+        printH2("System Updates", dryRun=dryRun)
+
+        try:
+            platform = createPlatform(self.config.platformName, self.projectRoot, dryRun)
+            success = platform.updateAll()
+
+            if success:
+                printSuccess("System updates completed")
+            else:
+                printWarning("System updates completed with some issues")
+
+            return success
+        except ValueError as e:
+            printWarning(f"Platform update error: {e}")
+            return False
 
     def getPackageManager(self, managerName: str):
         """Get package manager instance by name."""
