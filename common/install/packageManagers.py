@@ -400,6 +400,54 @@ class ChocolateyPackageManager(PackageManager):
             return False
 
 
+class VcpkgPackageManager(PackageManager):
+    """vcpkg package manager (Windows C/C++ libraries)."""
+
+    def check(self, package: str) -> bool:
+        try:
+            result = subprocess.run(
+                ["vcpkg", "list", package],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            # vcpkg list shows installed packages
+            return package in result.stdout
+        except Exception:
+            return False
+
+    def install(self, package: str) -> bool:
+        cmd = ["vcpkg", "install", package]
+        return runPackageCommand(cmd, package, "install", raiseOnError=False)
+
+    def update(self, package: str) -> bool:
+        cmd = ["vcpkg", "upgrade", package, "--no-dry-run"]
+        return runPackageCommand(cmd, package, "update", raiseOnError=False)
+
+    def updateAll(self, dryRun: bool = False) -> bool:
+        from common.core.logging import printInfo, printSuccess, printWarning
+
+        if dryRun:
+            printInfo("[DRY RUN] Would run: vcpkg upgrade --no-dry-run")
+            return True
+
+        try:
+            result = subprocess.run(
+                ["vcpkg", "upgrade", "--no-dry-run"],
+                capture_output=True,
+                check=False
+            )
+            if result.returncode == 0:
+                printSuccess("vcpkg packages updated")
+                return True
+            else:
+                printWarning("vcpkg upgrade had issues")
+        except Exception as e:
+            printWarning(f"Failed to update vcpkg packages: {e}")
+
+        return False
+
+
 class StorePackageManager(PackageManager):
     """Microsoft Store package manager (Windows)."""
 
@@ -478,10 +526,10 @@ class DnfPackageManager(PackageManager):
                 return True
             else:
                 printWarning("DNF upgrade had issues")
-                return False
         except Exception as e:
             printWarning(f"Failed to update DNF packages: {e}")
-            return False
+
+        return False
 
 
 class ZypperPackageManager(PackageManager):
@@ -525,10 +573,10 @@ class ZypperPackageManager(PackageManager):
                 return True
             else:
                 printWarning("Zypper update had issues")
-                return False
         except Exception as e:
             printWarning(f"Failed to update Zypper packages: {e}")
-            return False
+
+        return False
 
 
 class PacmanPackageManager(PackageManager):
@@ -565,10 +613,10 @@ class PacmanPackageManager(PackageManager):
                 return True
             else:
                 printWarning("Pacman update had issues")
-                return False
         except Exception as e:
             printWarning(f"Failed to update Pacman packages: {e}")
-            return False
+
+        return False
 
 
 __all__ = [
@@ -581,6 +629,7 @@ __all__ = [
     "PacmanPackageManager",
     "SnapPackageManager",
     "StorePackageManager",
+    "VcpkgPackageManager",
     "WingetPackageManager",
     "ZypperPackageManager",
     "runPackageCommand",

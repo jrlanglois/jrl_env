@@ -144,6 +144,9 @@ class GenericSystem(SystemBase):
         elif managerName == "chocolatey":
             from common.install.packageManagers import ChocolateyPackageManager
             return ChocolateyPackageManager()
+        elif managerName == "vcpkg":
+            from common.install.packageManagers import VcpkgPackageManager
+            return VcpkgPackageManager()
         else:
             raise ValueError(f"Unknown package manager: {managerName}")
 

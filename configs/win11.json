@@ -2,6 +2,9 @@
     "chocolatey":
     [
     ],
+    "vcpkg":
+    [
+    ],
     "winget":
     [
         "7zip.7zip",

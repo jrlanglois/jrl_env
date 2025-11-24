@@ -175,12 +175,13 @@ class WindowsPlatform(BasePlatform):
     """Windows platform implementation."""
 
     def initializePackageManagers(self) -> None:
-        from common.install.packageManagers import WingetPackageManager, ChocolateyPackageManager, StorePackageManager
+        from common.install.packageManagers import WingetPackageManager, ChocolateyPackageManager, VcpkgPackageManager, StorePackageManager
 
         self.packageManagers = [
-            WingetPackageManager(),
             ChocolateyPackageManager(),
             StorePackageManager(),
+            VcpkgPackageManager(),
+            WingetPackageManager(),
         ]
 
     def getPlatformName(self) -> str:

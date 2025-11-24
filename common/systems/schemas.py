@@ -155,6 +155,7 @@ win11ConfigSchema = {
     "type": "object",
     "properties": {
         "chocolatey": packageArraySchema,
+        "vcpkg": packageArraySchema,
         "winget": packageArraySchema,
         "windowsStore": packageArraySchema,
         "android": androidConfigFragment,
