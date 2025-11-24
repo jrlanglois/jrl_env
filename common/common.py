@@ -46,20 +46,6 @@ from common.core.signalHandling import (
     setupSignalHandlers,
 )
 
-# Import and expose Linux package manager
-from common.linux.packageManager import (
-    PackageManager,
-    AptPackageManager,
-    YumPackageManager,
-    DnfPackageManager,
-    RpmPackageManager,
-    validateManager,
-    createPackageManager,
-    getPackageManager,
-    mapPackageName,
-    packageMappings,
-    supportedManagers,
-)
 
 # Import and expose Windows package manager (only on Windows)
 try:
@@ -70,10 +56,10 @@ try:
         updateMicrosoftStore,
         isAppInstalled,
     )
-    _WINDOWS_AVAILABLE = True
+    windowsAvailable = True
 except ImportError:
     # Windows-specific modules not available on non-Windows systems
-    _WINDOWS_AVAILABLE = False
+    windowsAvailable = False
 
 # Import and expose setup args
 from common.install.setupArgs import (
@@ -219,18 +205,6 @@ __all__ = [
     "isUnix",
     "getConfigDirectory",
     "hasInternetConnectivity",
-    # Linux package manager
-    "PackageManager",
-    "AptPackageManager",
-    "YumPackageManager",
-    "DnfPackageManager",
-    "RpmPackageManager",
-    "validateManager",
-    "createPackageManager",
-    "getPackageManager",
-    "mapPackageName",
-    "packageMappings",
-    "supportedManagers",
     # Setup args
     "SetupArgs",
     "RunFlags",
@@ -311,7 +285,7 @@ __all__ = [
 ]
 
 # Conditionally add Windows exports if available
-if _WINDOWS_AVAILABLE:
+if windowsAvailable:
     __all__.extend([
         # Windows package manager
         "isWingetInstalled",

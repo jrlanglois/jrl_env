@@ -433,7 +433,7 @@ This repository follows DRY (Don't Repeat Yourself) and SOLID principles:
   - `common/core/utilities.py`: Generic Python utilities (e.g., `commandExists()`, JSON helpers, OS detection)
   - `common/core/logging.py`: Consistent logging functions with verbosity levels (`printInfo`, `printSuccess`, `printError`, `printWarning`, `printH2`, `printVerbose`, `safePrint`, `colourise`)
   - `common/core/logging.py`: Verbosity levels (`quiet`, `normal`, `verbose`) and ISO8601 timestamps
-- **Linux Package Helpers**: `common/linux/packageManager.py` provides distro-agnostic OOP abstractions so any Linux system can use its package manager (`apt`, `yum`, `dnf`, `pacman`, `zypper`, `apk`, `snap`, `flatpak`) and reuse install/update logic
+- **Package Managers**: `common/install/packageManagers.py` provides cross-platform OOP abstractions for all package managers (`brew`, `apt`, `dnf`, `pacman`, `zypper`, `winget`, `snap`, etc.) with standardised install/update logic
 - **Windows Package Helpers**: `common/windows/packageManager.py` provides Windows-specific package management utilities for winget and Microsoft Store
 - **Setup Utilities**: `common/install/setupUtils.py` provides shared setup functions (`initLogging`, `backupConfigs`, `checkDependencies`, `shouldCloneRepositories`) used across all platform setup scripts
 - **Setup State**: `common/install/setupState.py` tracks setup progress to enable resuming from interrupted setups

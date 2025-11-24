@@ -14,9 +14,9 @@ from typing import Optional
 
 try:
     import keyring
-    KEYRING_AVAILABLE = True
+    keyringAvailable = True
 except ImportError:
-    KEYRING_AVAILABLE = False
+    keyringAvailable = False
 
 # Import common utilities directly from source modules
 from common.core.logging import (
@@ -160,7 +160,7 @@ def storePassphrase(keyName: str, passphrase: str) -> bool:
     Returns:
         True if successful, False otherwise
     """
-    if not KEYRING_AVAILABLE:
+    if not keyringAvailable:
         printWarning("keyring library not available. Passphrase will not be stored.")
         return False
 
@@ -182,7 +182,7 @@ def getStoredPassphrase(keyName: str) -> Optional[str]:
     Returns:
         Passphrase if found, None otherwise
     """
-    if not KEYRING_AVAILABLE:
+    if not keyringAvailable:
         return None
 
     try:
@@ -201,7 +201,7 @@ def deleteStoredPassphrase(keyName: str) -> bool:
     Returns:
         True if successful or not found, False on error
     """
-    if not KEYRING_AVAILABLE:
+    if not keyringAvailable:
         return True
 
     try:
@@ -454,14 +454,14 @@ def configureGithubSsh(
         return False
 
     # Store passphrase securely if provided
-    if passphrase and KEYRING_AVAILABLE:
+    if passphrase and keyringAvailable:
         printInfo("Storing passphrase in system keychain...")
         if storePassphrase(keyName, passphrase):
             printSuccess("Passphrase stored securely in system keychain.")
             printInfo("The passphrase will be retrieved automatically when needed.")
         else:
             printWarning("Failed to store passphrase. You'll need to enter it manually when using the key.")
-    elif passphrase and not KEYRING_AVAILABLE:
+    elif passphrase and not keyringAvailable:
         printWarning("keyring library not available. Install with: pip install keyring")
         printWarning("Passphrase will not be stored. You'll need to enter it manually when using the key.")
 

@@ -17,7 +17,51 @@ from typing import Optional
 scriptDir = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(scriptDir))
 
-from common.core.logging import printError
+from common.core.logging import printError, printSuccess, printWarning
+
+
+def runPackageCommand(cmd: list, package: str, operation: str, raiseOnError: bool = True) -> bool:
+    """
+    Run a package manager command with standardised error handling.
+
+    Args:
+        cmd: Command to run (list format)
+        package: Package name being operated on
+        operation: Operation name ('install', 'update', etc) for error messages
+        raiseOnError: If True, use check=True (raise on error). If False, check returncode manually.
+
+    Returns:
+        True if command succeeded, False otherwise
+    """
+    try:
+        result = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            check=raiseOnError,
+        )
+
+        # If check=False, manually check return code
+        if not raiseOnError and result.returncode != 0:
+            cmdStr = " ".join(cmd)
+            stderr = result.stderr.strip() if result.stderr else "No error output"
+            printError(f"Failed to {operation} '{package}': Command '{cmdStr}' returned exit code {result.returncode}")
+            if stderr:
+                printError(f"Error output: {stderr}")
+            return False
+
+        return True
+    except subprocess.CalledProcessError as e:
+        cmdStr = " ".join(cmd)
+        stderr = e.stderr.strip() if e.stderr else "No error output"
+        printError(f"Failed to {operation} '{package}': Command '{cmdStr}' returned exit code {e.returncode}")
+        if stderr:
+            printError(f"Error output: {stderr}")
+        return False
+    except Exception as e:
+        cmdStr = " ".join(cmd)
+        printError(f"Failed to {operation} '{package}': Command '{cmdStr}' raised exception: {e}")
+        return False
 
 
 class PackageManager(ABC):
@@ -92,47 +136,11 @@ class AptPackageManager(PackageManager):
 
     def install(self, package: str) -> bool:
         cmd = ["sudo", "apt-get", "install", "-y", package]
-        try:
-            result = subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True,
-                check=True,
-            )
-            return True
-        except subprocess.CalledProcessError as e:
-            cmdStr = " ".join(cmd)
-            stderr = e.stderr.strip() if e.stderr else "No error output"
-            printError(f"Failed to install '{package}': Command '{cmdStr}' returned exit code {e.returncode}")
-            if stderr:
-                printError(f"Error output: {stderr}")
-            return False
-        except Exception as e:
-            cmdStr = " ".join(cmd)
-            printError(f"Failed to install '{package}': Command '{cmdStr}' raised exception: {e}")
-            return False
+        return runPackageCommand(cmd, package, "install")
 
     def update(self, package: str) -> bool:
         cmd = ["sudo", "apt-get", "install", "--only-upgrade", "-y", package]
-        try:
-            result = subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True,
-                check=True,
-            )
-            return True
-        except subprocess.CalledProcessError as e:
-            cmdStr = " ".join(cmd)
-            stderr = e.stderr.strip() if e.stderr else "No error output"
-            printError(f"Failed to update '{package}': Command '{cmdStr}' returned exit code {e.returncode}")
-            if stderr:
-                printError(f"Error output: {stderr}")
-            return False
-        except Exception as e:
-            cmdStr = " ".join(cmd)
-            printError(f"Failed to update '{package}': Command '{cmdStr}' raised exception: {e}")
-            return False
+        return runPackageCommand(cmd, package, "update")
 
     def updateAll(self, dryRun: bool = False) -> bool:
         from common.core.logging import printInfo, printSuccess, printWarning
@@ -176,48 +184,10 @@ class SnapPackageManager(PackageManager):
             return False
 
     def install(self, package: str) -> bool:
-        cmd = ["sudo", "snap", "install", package]
-        try:
-            result = subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True,
-                check=True,
-            )
-            return True
-        except subprocess.CalledProcessError as e:
-            cmdStr = " ".join(cmd)
-            stderr = e.stderr.strip() if e.stderr else "No error output"
-            printError(f"Failed to install '{package}': Command '{cmdStr}' returned exit code {e.returncode}")
-            if stderr:
-                printError(f"Error output: {stderr}")
-            return False
-        except Exception as e:
-            cmdStr = " ".join(cmd)
-            printError(f"Failed to install '{package}': Command '{cmdStr}' raised exception: {e}")
-            return False
+        return runPackageCommand(["sudo", "snap", "install", package], package, "install")
 
     def update(self, package: str) -> bool:
-        cmd = ["sudo", "snap", "refresh", package]
-        try:
-            result = subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True,
-                check=True,
-            )
-            return True
-        except subprocess.CalledProcessError as e:
-            cmdStr = " ".join(cmd)
-            stderr = e.stderr.strip() if e.stderr else "No error output"
-            printError(f"Failed to update '{package}': Command '{cmdStr}' returned exit code {e.returncode}")
-            if stderr:
-                printError(f"Error output: {stderr}")
-            return False
-        except Exception as e:
-            cmdStr = " ".join(cmd)
-            printError(f"Failed to update '{package}': Command '{cmdStr}' raised exception: {e}")
-            return False
+        return runPackageCommand(["sudo", "snap", "refresh", package], package, "update")
 
     def updateAll(self, dryRun: bool = False) -> bool:
         from common.core.logging import printInfo, printSuccess, printWarning
@@ -254,48 +224,10 @@ class BrewPackageManager(PackageManager):
             return False
 
     def install(self, package: str) -> bool:
-        cmd = ["brew", "install", package]
-        try:
-            result = subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True,
-                check=True,
-            )
-            return True
-        except subprocess.CalledProcessError as e:
-            cmdStr = " ".join(cmd)
-            stderr = e.stderr.strip() if e.stderr else "No error output"
-            printError(f"Failed to install '{package}': Command '{cmdStr}' returned exit code {e.returncode}")
-            if stderr:
-                printError(f"Error output: {stderr}")
-            return False
-        except Exception as e:
-            cmdStr = " ".join(cmd)
-            printError(f"Failed to install '{package}': Command '{cmdStr}' raised exception: {e}")
-            return False
+        return runPackageCommand(["brew", "install", package], package, "install")
 
     def update(self, package: str) -> bool:
-        cmd = ["brew", "upgrade", package]
-        try:
-            result = subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True,
-                check=True,
-            )
-            return True
-        except subprocess.CalledProcessError as e:
-            cmdStr = " ".join(cmd)
-            stderr = e.stderr.strip() if e.stderr else "No error output"
-            printError(f"Failed to update '{package}': Command '{cmdStr}' returned exit code {e.returncode}")
-            if stderr:
-                printError(f"Error output: {stderr}")
-            return False
-        except Exception as e:
-            cmdStr = " ".join(cmd)
-            printError(f"Failed to update '{package}': Command '{cmdStr}' raised exception: {e}")
-            return False
+        return runPackageCommand(["brew", "upgrade", package], package, "update")
 
     def updateAll(self, dryRun: bool = False) -> bool:
         from common.core.logging import printInfo, printSuccess, printWarning
@@ -339,48 +271,10 @@ class BrewCaskPackageManager(PackageManager):
             return False
 
     def install(self, package: str) -> bool:
-        cmd = ["brew", "install", "--cask", package]
-        try:
-            result = subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True,
-                check=True,
-            )
-            return True
-        except subprocess.CalledProcessError as e:
-            cmdStr = " ".join(cmd)
-            stderr = e.stderr.strip() if e.stderr else "No error output"
-            printError(f"Failed to install '{package}': Command '{cmdStr}' returned exit code {e.returncode}")
-            if stderr:
-                printError(f"Error output: {stderr}")
-            return False
-        except Exception as e:
-            cmdStr = " ".join(cmd)
-            printError(f"Failed to install '{package}': Command '{cmdStr}' raised exception: {e}")
-            return False
+        return runPackageCommand(["brew", "install", "--cask", package], package, "install")
 
     def update(self, package: str) -> bool:
-        cmd = ["brew", "upgrade", "--cask", package]
-        try:
-            result = subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True,
-                check=True,
-            )
-            return True
-        except subprocess.CalledProcessError as e:
-            cmdStr = " ".join(cmd)
-            stderr = e.stderr.strip() if e.stderr else "No error output"
-            printError(f"Failed to update '{package}': Command '{cmdStr}' returned exit code {e.returncode}")
-            if stderr:
-                printError(f"Error output: {stderr}")
-            return False
-        except Exception as e:
-            cmdStr = " ".join(cmd)
-            printError(f"Failed to update '{package}': Command '{cmdStr}' raised exception: {e}")
-            return False
+        return runPackageCommand(["brew", "upgrade", "--cask", package], package, "update")
 
     def updateAll(self, dryRun: bool = False) -> bool:
         from common.core.logging import printInfo, printSuccess, printWarning
@@ -421,26 +315,7 @@ class WingetPackageManager(PackageManager):
             "--accept-source-agreements",
             "--silent",
         ]
-        try:
-            result = subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True,
-                check=False,
-            )
-            if result.returncode == 0:
-                return True
-            else:
-                cmdStr = " ".join(cmd)
-                stderr = result.stderr.strip() if result.stderr else "No error output"
-                printError(f"Failed to install '{package}': Command '{cmdStr}' returned exit code {result.returncode}")
-                if stderr:
-                    printError(f"Error output: {stderr}")
-                return False
-        except Exception as e:
-            cmdStr = " ".join(cmd)
-            printError(f"Failed to install '{package}': Command '{cmdStr}' raised exception: {e}")
-            return False
+        return runPackageCommand(cmd, package, "install", raiseOnError=False)
 
     def update(self, package: str) -> bool:
         cmd = [
@@ -451,26 +326,7 @@ class WingetPackageManager(PackageManager):
             "--accept-source-agreements",
             "--silent",
         ]
-        try:
-            result = subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True,
-                check=False,
-            )
-            if result.returncode == 0:
-                return True
-            else:
-                cmdStr = " ".join(cmd)
-                stderr = result.stderr.strip() if result.stderr else "No error output"
-                printError(f"Failed to update '{package}': Command '{cmdStr}' returned exit code {result.returncode}")
-                if stderr:
-                    printError(f"Error output: {stderr}")
-                return False
-        except Exception as e:
-            cmdStr = " ".join(cmd)
-            printError(f"Failed to update '{package}': Command '{cmdStr}' raised exception: {e}")
-            return False
+        return runPackageCommand(cmd, package, "update", raiseOnError=False)
 
     def updateAll(self, dryRun: bool = False) -> bool:
         from common.core.logging import printInfo, printSuccess, printWarning
@@ -514,26 +370,7 @@ class StorePackageManager(PackageManager):
             "--accept-source-agreements",
             "--silent",
         ]
-        try:
-            result = subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True,
-                check=False,
-            )
-            if result.returncode == 0:
-                return True
-            else:
-                cmdStr = " ".join(cmd)
-                stderr = result.stderr.strip() if result.stderr else "No error output"
-                printError(f"Failed to install '{package}': Command '{cmdStr}' returned exit code {result.returncode}")
-                if stderr:
-                    printError(f"Error output: {stderr}")
-                return False
-        except Exception as e:
-            cmdStr = " ".join(cmd)
-            printError(f"Failed to install '{package}': Command '{cmdStr}' raised exception: {e}")
-            return False
+        return runPackageCommand(cmd, package, "install", raiseOnError=False)
 
     def update(self, package: str) -> bool:
         cmd = [
@@ -545,26 +382,7 @@ class StorePackageManager(PackageManager):
             "--accept-source-agreements",
             "--silent",
         ]
-        try:
-            result = subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True,
-                check=False,
-            )
-            if result.returncode == 0:
-                return True
-            else:
-                cmdStr = " ".join(cmd)
-                stderr = result.stderr.strip() if result.stderr else "No error output"
-                printError(f"Failed to update '{package}': Command '{cmdStr}' returned exit code {result.returncode}")
-                if stderr:
-                    printError(f"Error output: {stderr}")
-                return False
-        except Exception as e:
-            cmdStr = " ".join(cmd)
-            printError(f"Failed to update '{package}': Command '{cmdStr}' raised exception: {e}")
-            return False
+        return runPackageCommand(cmd, package, "update", raiseOnError=False)
 
     def updateAll(self, dryRun: bool = False) -> bool:
         from common.core.logging import printInfo, printWarning
@@ -593,48 +411,10 @@ class DnfPackageManager(PackageManager):
             return False
 
     def install(self, package: str) -> bool:
-        cmd = ["sudo", "dnf", "install", "-y", package]
-        try:
-            result = subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True,
-                check=True,
-            )
-            return True
-        except subprocess.CalledProcessError as e:
-            cmdStr = " ".join(cmd)
-            stderr = e.stderr.strip() if e.stderr else "No error output"
-            printError(f"Failed to install '{package}': Command '{cmdStr}' returned exit code {e.returncode}")
-            if stderr:
-                printError(f"Error output: {stderr}")
-            return False
-        except Exception as e:
-            cmdStr = " ".join(cmd)
-            printError(f"Failed to install '{package}': Command '{cmdStr}' raised exception: {e}")
-            return False
+        return runPackageCommand(["sudo", "dnf", "install", "-y", package], package, "install")
 
     def update(self, package: str) -> bool:
-        cmd = ["sudo", "dnf", "upgrade", "-y", package]
-        try:
-            result = subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True,
-                check=True,
-            )
-            return True
-        except subprocess.CalledProcessError as e:
-            cmdStr = " ".join(cmd)
-            stderr = e.stderr.strip() if e.stderr else "No error output"
-            printError(f"Failed to update '{package}': Command '{cmdStr}' returned exit code {e.returncode}")
-            if stderr:
-                printError(f"Error output: {stderr}")
-            return False
-        except Exception as e:
-            cmdStr = " ".join(cmd)
-            printError(f"Failed to update '{package}': Command '{cmdStr}' raised exception: {e}")
-            return False
+        return runPackageCommand(["sudo", "dnf", "upgrade", "-y", package], package, "update")
 
     def updateAll(self, dryRun: bool = False) -> bool:
         from common.core.logging import printInfo, printSuccess, printWarning
@@ -671,48 +451,10 @@ class ZypperPackageManager(PackageManager):
             return False
 
     def install(self, package: str) -> bool:
-        cmd = ["sudo", "zypper", "install", "-y", package]
-        try:
-            result = subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True,
-                check=True,
-            )
-            return True
-        except subprocess.CalledProcessError as e:
-            cmdStr = " ".join(cmd)
-            stderr = e.stderr.strip() if e.stderr else "No error output"
-            printError(f"Failed to install '{package}': Command '{cmdStr}' returned exit code {e.returncode}")
-            if stderr:
-                printError(f"Error output: {stderr}")
-            return False
-        except Exception as e:
-            cmdStr = " ".join(cmd)
-            printError(f"Failed to install '{package}': Command '{cmdStr}' raised exception: {e}")
-            return False
+        return runPackageCommand(["sudo", "zypper", "install", "-y", package], package, "install")
 
     def update(self, package: str) -> bool:
-        cmd = ["sudo", "zypper", "update", "-y", package]
-        try:
-            result = subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True,
-                check=True,
-            )
-            return True
-        except subprocess.CalledProcessError as e:
-            cmdStr = " ".join(cmd)
-            stderr = e.stderr.strip() if e.stderr else "No error output"
-            printError(f"Failed to update '{package}': Command '{cmdStr}' returned exit code {e.returncode}")
-            if stderr:
-                printError(f"Error output: {stderr}")
-            return False
-        except Exception as e:
-            cmdStr = " ".join(cmd)
-            printError(f"Failed to update '{package}': Command '{cmdStr}' raised exception: {e}")
-            return False
+        return runPackageCommand(["sudo", "zypper", "update", "-y", package], package, "update")
 
     def updateAll(self, dryRun: bool = False) -> bool:
         from common.core.logging import printInfo, printSuccess, printWarning
@@ -756,48 +498,10 @@ class PacmanPackageManager(PackageManager):
             return False
 
     def install(self, package: str) -> bool:
-        cmd = ["sudo", "pacman", "-S", "--noconfirm", package]
-        try:
-            result = subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True,
-                check=True,
-            )
-            return True
-        except subprocess.CalledProcessError as e:
-            cmdStr = " ".join(cmd)
-            stderr = e.stderr.strip() if e.stderr else "No error output"
-            printError(f"Failed to install '{package}': Command '{cmdStr}' returned exit code {e.returncode}")
-            if stderr:
-                printError(f"Error output: {stderr}")
-            return False
-        except Exception as e:
-            cmdStr = " ".join(cmd)
-            printError(f"Failed to install '{package}': Command '{cmdStr}' raised exception: {e}")
-            return False
+        return runPackageCommand(["sudo", "pacman", "-S", "--noconfirm", package], package, "install")
 
     def update(self, package: str) -> bool:
-        cmd = ["sudo", "pacman", "-S", "--noconfirm", "--needed", package]
-        try:
-            result = subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True,
-                check=True,
-            )
-            return True
-        except subprocess.CalledProcessError as e:
-            cmdStr = " ".join(cmd)
-            stderr = e.stderr.strip() if e.stderr else "No error output"
-            printError(f"Failed to update '{package}': Command '{cmdStr}' returned exit code {e.returncode}")
-            if stderr:
-                printError(f"Error output: {stderr}")
-            return False
-        except Exception as e:
-            cmdStr = " ".join(cmd)
-            printError(f"Failed to update '{package}': Command '{cmdStr}' raised exception: {e}")
-            return False
+        return runPackageCommand(["sudo", "pacman", "-S", "--noconfirm", "--needed", package], package, "update")
 
     def updateAll(self, dryRun: bool = False) -> bool:
         from common.core.logging import printInfo, printSuccess, printWarning
