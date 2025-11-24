@@ -292,6 +292,13 @@ def printHelp() -> None:
 
 def main() -> int:
     """Main CLI entry point."""
+    # Auto-install shell completions (silent, idempotent)
+    try:
+        from common.install.completionInstaller import autoInstallCompletion
+        autoInstallCompletion(scriptDir)
+    except Exception:
+        pass  # Non-fatal if completion installation fails
+
     # Parse verbosity flags early
     quiet = "--quiet" in sys.argv or "-q" in sys.argv
     verbose = "--verbose" in sys.argv

@@ -373,6 +373,13 @@ def printHelp() -> None:
 
 def main() -> int:
     """Main entry point for unified setup."""
+    # Auto-install shell completions (silent, idempotent)
+    try:
+        from common.install.completionInstaller import autoInstallCompletion
+        autoInstallCompletion(projectRoot)
+    except Exception:
+        pass  # Non-fatal if completion installation fails
+
     # Register signal handlers for graceful shutdown
     from common.core.signalHandling import setupSignalHandlers
     setupSignalHandlers(resumeMessage=True)

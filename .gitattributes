@@ -2,11 +2,12 @@
 * text eol=crlf
 
 # Exceptions: Files that MUST use LF (e.g., Bash scripts, Python, YAML)
+*.bash text eol=lf
 *.gitmodules text eol=lf
-*.sh text eol=lf
 *.py text eol=lf
-*.yml text eol=lf
+*.sh text eol=lf
 *.yaml text eol=lf
+*.yml text eol=lf
 
 # Various misc binary files:
 *.7z binary
@@ -52,4 +53,3 @@
 *.wmv binary
 *.woff binary
 *.zip binary
-
