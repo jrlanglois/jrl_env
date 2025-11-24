@@ -312,26 +312,46 @@ def printDebug(message: str) -> None:
 
 
 def printH1(message: str, dryRun: bool = False) -> None:
-    """Print a top-level heading (H1) with === borders, centred text, and extra spacing."""
+    """Print a top-level heading (H1) with borders, centred text, and extra spacing."""
     if currentVerbosity >= Verbosity.normal:
         if dryRun:
             message = f"{message} (DRY RUN)"
 
-        # Get terminal width (default to 80 if unavailable)
+        # Get terminal width with multiple fallbacks
+        terminalWidth = 80  # Default fallback
+        
+        # Try tput first (most reliable for actual terminal)
         try:
-            terminalWidth = shutil.get_terminal_size().columns
-        except (AttributeError, ValueError, OSError):
-            terminalWidth = 80
+            import subprocess
+            result = subprocess.run(['tput', 'cols'], capture_output=True, text=True, check=False, timeout=0.5)
+            if result.returncode == 0:
+                detectedWidth = int(result.stdout.strip())
+                if detectedWidth > 0:
+                    terminalWidth = detectedWidth
+        except Exception:
+            # Fall back to shutil
+            try:
+                size = shutil.get_terminal_size()
+                if size.columns > 0:
+                    terminalWidth = size.columns
+            except (AttributeError, ValueError, OSError):
+                pass
+        
+        # Account for timestamp width if timestamps are enabled
+        # Timestamp format: "[YYYY-MM-DDTHH:MM:SS] " = 21 characters
+        # Add 1 char safety margin for ANSI codes
+        timestampWidth = 21 if showConsoleTimestamps else 0
+        safetyMargin = 1
+        availableWidth = max(40, terminalWidth - timestampWidth - safetyMargin)
 
-        # Calculate centring (accounting for "=== " prefix)
-        messageWithPrefix = f"=== {message}"
-        padding = (terminalWidth - len(messageWithPrefix)) // 2
-        centredMessage = " " * max(0, padding) + messageWithPrefix
+        # Calculate centring
+        padding = (availableWidth - len(message)) // 2
+        centredMessage = " " * max(0, padding) + message
 
         safePrint()
-        safePrint(f"{Colours.cyan}{'=' * terminalWidth}{Colours.nc}")
+        safePrint(f"{Colours.cyan}{'=' * availableWidth}{Colours.nc}")
         safePrint(f"{Colours.cyan}{centredMessage}{Colours.nc}")
-        safePrint(f"{Colours.cyan}{'=' * terminalWidth}{Colours.nc}")
+        safePrint(f"{Colours.cyan}{'=' * availableWidth}{Colours.nc}")
         safePrint()
 
 
