@@ -118,7 +118,7 @@ Edit JSON files in `configs/` to customise:
 - **Git**: User info, defaults, aliases, and GitHub username/email for SSH
 - **Cursor**: Editor settings and preferences
 - **Shell**: Per-OS shell preferences (e.g., `ohMyZshTheme`)
-- **Cruft**: Packages to uninstall (e.g., Ubuntu `apt` wildcard patterns)
+- **Cruft**: Packages to uninstall per package manager (supports wildcard patterns)
 - **Commands**: Optional `preInstall`/`postInstall` command objects (name, shell, command, runOnce)
 - **Linux Common**: Shared packages for all Linux distributions (merged with distro-specific packages)
 
@@ -312,7 +312,7 @@ This repository follows DRY (Don't Repeat Yourself) and SOLID principles:
   - `common/core/utilities.py`: Generic Python utilities (e.g., `commandExists()`, JSON helpers, OS detection)
   - `common/core/logging.py`: Consistent logging functions with verbosity levels (`printInfo`, `printSuccess`, `printError`, `printWarning`, `printH2`, `printVerbose`, `safePrint`, `colourise`)
   - `common/core/logging.py`: Verbosity levels (`quiet`, `normal`, `verbose`) and ISO8601 timestamps
-- **Linux Package Helpers**: `common/linux/packageManager.py` provides distro-agnostic OOP abstractions so any Linux system can use its package manager (`apt`, `yum`, `dnf`, `rpm`) and reuse install/update logic
+- **Linux Package Helpers**: `common/linux/packageManager.py` provides distro-agnostic OOP abstractions so any Linux system can use its package manager (`apt`, `yum`, `dnf`, `pacman`, `zypper`, `apk`, `snap`, `flatpak`) and reuse install/update logic
 - **Windows Package Helpers**: `common/windows/packageManager.py` provides Windows-specific package management utilities for winget and Microsoft Store
 - **Setup Utilities**: `common/install/setupUtils.py` provides shared setup functions (`initLogging`, `backupConfigs`, `checkDependencies`, `shouldCloneRepositories`) used across all platform setup scripts
 - **Setup State**: `common/install/setupState.py` tracks setup progress to enable resuming from interrupted setups
@@ -380,13 +380,14 @@ Note: PowerShell has some syntax quirks that may prevent Allman braces in certai
 - **Python 3**: Python 3.6 or higher
 - **Dependencies**: Automatically installed from `requirements.txt` (includes `jsonschema` for validation)
 - **Platform-specific**:
-  - **ArchLinux**: pacman, zsh
   - **macOS**: Homebrew, zsh
-  - **OpenSUSE**: zypper, zsh
-  - **Raspberry Pi**: apt, snap, zsh
-  - **RedHat/Fedora/CentOS**: dnf, zsh
-  - **Ubuntu**: apt, snap, zsh
   - **Windows**: PowerShell 5.1+, winget (Windows Package Manager)
+  - **APT-based Linux** (Debian, Ubuntu, Pop!_OS, Linux Mint, Elementary OS, Zorin OS, MX Linux, Raspberry Pi): apt, snap, flatpak (optional), zsh
+  - **Pacman-based Linux** (Arch Linux, Manjaro, EndeavourOS): pacman, snap, flatpak (optional), zsh
+  - **DNF-based Linux** (Fedora, RedHat/CentOS 8+): dnf, snap, flatpak (optional), zsh
+  - **YUM-based Linux** (RedHat/CentOS 7): yum, zsh
+  - **Zypper-based Linux** (OpenSUSE): zypper, zsh
+  - **APK-based Linux** (Alpine): apk, zsh
 
 ## CI/CD
 

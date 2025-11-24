@@ -16,13 +16,23 @@ A valid `configs/` directory must contain the following files with exact names:
 
 **Platform-Specific Configs (at least one required):**
 
+- `alpine.json` - Alpine Linux configuration
 - `archlinux.json` - Arch Linux configuration
+- `debian.json` - Debian configuration
+- `elementary.json` - Elementary OS configuration
+- `endeavouros.json` - EndeavourOS configuration
+- `fedora.json` - Fedora configuration
+- `linuxmint.json` - Linux Mint configuration
 - `macos.json` - macOS configuration
+- `manjaro.json` - Manjaro configuration
+- `mxlinux.json` - MX Linux configuration
 - `opensuse.json` - OpenSUSE configuration
+- `popos.json` - Pop!_OS configuration
 - `raspberrypi.json` - Raspberry Pi OS configuration
-- `redhat.json` - RedHat/Fedora/CentOS configuration
-- `ubuntu.json` - Ubuntu/Debian configuration
+- `redhat.json` - RedHat/CentOS configuration
+- `ubuntu.json` - Ubuntu configuration
 - `win11.json` - Windows 11 configuration
+- `zorin.json` - Zorin OS configuration
 
 **Shared Configs (all optional, but recommended):**
 
@@ -141,14 +151,20 @@ This is useful for:
 - `brew`: Homebrew formula packages (e.g., `"git"`, `"node"`, `"postgresql"`)
 - `brewCask`: Homebrew Cask GUI applications (e.g., `"google-chrome"`, `"visual-studio-code"`)
 
-### Ubuntu (`ubuntu.json`)
+### APT-based Linux (Debian, Ubuntu, Pop!_OS, Linux Mint, Elementary OS, Zorin OS, MX Linux)
+
+Configuration files: `debian.json`, `ubuntu.json`, `popos.json`, `linuxmint.json`, `elementary.json`, `zorin.json`, `mxlinux.json`
 
 ```json
 {
     "useLinuxCommon": boolean,       // Merge packages from linuxCommon.json (default: false)
     "apt": ["string"],                // APT packages (Debian/Ubuntu package names)
-    "snap": ["string"],               // Snap packages (snap package names)
-    "cruft": ["string"],              // Packages to uninstall (supports wildcards: `"package*"`)
+    "snap": ["string"],               // Snap packages (optional, cross-distro applications)
+    "flatpak": ["string"],            // Flatpak packages (optional, cross-distro applications)
+    "cruft": {                        // Packages to uninstall by package manager
+        "apt": ["string"],            // APT packages (supports wildcards: `"package*"`)
+        "snap": ["string"]            // Snap packages to remove
+    }
     "shell": {
         "ohMyZshTheme": "string"    // Oh My Zsh theme name
     },
@@ -161,9 +177,11 @@ This is useful for:
 
 **Package Managers:**
 
-- `apt`: APT packages (e.g., `"docker.io"`, `"postgresql"`, `"redis-server"`)
-- `snap`: Snap packages (e.g., `"code"`, `"slack"`, `"spotify"`)
-- `cruft`: Wildcard patterns for packages to remove (e.g., `"libreoffice*"`, `"chromium*"`)
+- `apt`: APT packages to install (e.g., `"docker.io"`, `"postgresql"`, `"redis-server"`)
+- `snap`: Snap packages to install (optional, e.g., `"code"`, `"slack"`, `"spotify"`)
+- `flatpak`: Flatpak packages to install (optional, e.g., Flathub application IDs)
+- `cruft.apt`: APT packages to remove (supports wildcards: `"libreoffice*"`, `"chromium*"`)
+- `cruft.snap`: Snap packages to remove (optional)
 
 ### Raspberry Pi (`raspberrypi.json`)
 
@@ -174,7 +192,9 @@ Same structure as `ubuntu.json`:
     "linuxCommon": boolean,
     "apt": ["string"],
     "snap": ["string"],
-    "cruft": ["string"],
+    "cruft": {
+        "apt": ["string"]             // Packages to uninstall (wildcards supported)
+    },
     "shell": {
         "ohMyZshTheme": "string"
     },
@@ -189,12 +209,16 @@ Same structure as `ubuntu.json`:
 
 Same as Ubuntu (apt, snap, cruft)
 
-### RedHat/Fedora/CentOS (`redhat.json`)
+### DNF-based Linux (Fedora, RedHat/CentOS 8+)
+
+Configuration files: `fedora.json`, `redhat.json`
 
 ```json
 {
-    "linuxCommon": boolean,           // Merge packages from linuxCommon.json
+    "useLinuxCommon": boolean,        // Merge packages from linuxCommon.json
     "dnf": ["string"],                // DNF packages (RPM package names)
+    "snap": ["string"],               // Snap packages (optional, cross-distro applications)
+    "flatpak": ["string"],            // Flatpak packages (optional, cross-distro applications)
     "shell": {
         "ohMyZshTheme": "string"
     },
@@ -202,15 +226,20 @@ Same as Ubuntu (apt, snap, cruft)
         "preInstall": [Command],
         "postInstall": [Command]
     },
-    "cruft": ["string"]               // Packages to uninstall (wildcards supported)
+    "cruft": {
+        "dnf": ["string"],            // Packages to uninstall (wildcards supported)
+        "snap": ["string"]            // Snap packages to remove
+    }
 }
 ```
 
 **Package Managers:**
 
-- `dnf`: DNF packages (e.g., `"docker"`, `"postgresql"`, `"redis"`)
-
-**Note:** Package names from `linuxCommon.json` are automatically mapped to RPM equivalents (e.g., `libcurl4-openssl-dev` → `libcurl-devel`).
+- `dnf`: DNF packages to install (e.g., `"docker"`, `"postgresql"`, `"redis"`)
+- `snap`: Snap packages to install (optional, e.g., `"code"`, `"slack"`, `"spotify"`)
+- `flatpak`: Flatpak packages to install (optional, e.g., Flathub application IDs)
+- `cruft.dnf`: DNF packages to remove (wildcards supported)
+- `cruft.snap`: Snap packages to remove (optional)
 
 ### OpenSUSE (`opensuse.json`)
 
@@ -225,22 +254,29 @@ Same as Ubuntu (apt, snap, cruft)
         "preInstall": [Command],
         "postInstall": [Command]
     },
-    "cruft": ["string"]
+    "cruft": {
+        "zypper": ["string"]          // Packages to uninstall
+    }
 }
 ```
 
 **Package Managers:**
 
-- `zypper`: Zypper packages (e.g., `"docker"`, `"postgresql"`, `"redis"`)
+- `zypper`: Zypper packages to install (e.g., `"docker"`, `"postgresql"`, `"redis"`)
+- `cruft.zypper`: Zypper packages to remove
 
 **Note:** Package names from `linuxCommon.json` are automatically mapped to RPM equivalents.
 
-### ArchLinux (`archlinux.json`)
+### Pacman-based Linux (Arch Linux, Manjaro, EndeavourOS)
+
+Configuration files: `archlinux.json`, `manjaro.json`, `endeavouros.json`
 
 ```json
 {
-    "linuxCommon": boolean,
+    "useLinuxCommon": boolean,
     "pacman": ["string"],             // Pacman packages (Arch package names)
+    "snap": ["string"],               // Snap packages (optional, cross-distro applications)
+    "flatpak": ["string"],            // Flatpak packages (optional, cross-distro applications)
     "shell": {
         "ohMyZshTheme": "string"
     },
@@ -248,15 +284,45 @@ Same as Ubuntu (apt, snap, cruft)
         "preInstall": [Command],
         "postInstall": [Command]
     },
-    "cruft": ["string"]
+    "cruft": {
+        "pacman": ["string"]          // Packages to uninstall
+    }
 }
 ```
 
 **Package Managers:**
 
-- `pacman`: Pacman packages (e.g., `"docker"`, `"postgresql"`, `"redis"`)
+- `pacman`: Pacman packages to install (e.g., `"docker"`, `"postgresql"`, `"redis"`)
+- `cruft.pacman`: Pacman packages to remove
+- `snap`: Snap packages (optional, e.g., `"code"`, `"slack"`, `"spotify"`)
+- `flatpak`: Flatpak packages (optional, e.g., Flathub application IDs)
 
 **Note:** Package names from `linuxCommon.json` may need manual mapping for Arch-specific package names.
+
+### Alpine Linux (`alpine.json`)
+
+```json
+{
+    "apk": ["string"],                // APK packages (Alpine package names)
+    "shell": {
+        "ohMyZshTheme": "string"
+    },
+    "commands": {
+        "preInstall": [Command],
+        "postInstall": [Command]
+    },
+    "cruft": {
+        "apk": ["string"]             // Packages to uninstall
+    }
+}
+```
+
+**Package Managers:**
+
+- `apk`: APK packages to install (e.g., `"docker"`, `"postgresql"`, `"redis"`, `"build-base"`)
+- `cruft.apk`: APK packages to remove
+
+**Note:** Alpine uses musl libc instead of glibc. Package names often differ from other distributions (e.g., `build-essential` → `build-base`). Snap and Flatpak are typically not used on Alpine due to its minimal nature.
 
 ### Windows 11 (`win11.json`)
 
@@ -298,7 +364,7 @@ Same as Ubuntu (apt, snap, cruft)
 
 **Supported Package Managers:**
 
-apt, yum, dnf, rpm, zypper, pacman
+apt, yum, dnf, rpm, zypper, pacman, apk, snap, flatpak
 
 ### Fonts (`fonts.json`)
 

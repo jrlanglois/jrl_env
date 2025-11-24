@@ -6,7 +6,6 @@
     ],
     "snap":
     [
-        "code"
     ],
     "shell":
     {
@@ -34,16 +33,19 @@
         ]
     },
     "cruft":
-    [
-        "libreoffice*",
-        "chromium*",
-        "thunderbird*",
-        "rhythmbox*",
-        "gnome-mahjongg",
-        "gnome-mines",
-        "gnome-sudoku",
-        "aisleriot",
-        "transmission*",
-        "totem*"
-    ]
+    {
+        "apt":
+        [
+            "libreoffice*",
+            "chromium*",
+            "thunderbird*",
+            "rhythmbox*",
+            "gnome-mahjongg",
+            "gnome-mines",
+            "gnome-sudoku",
+            "aisleriot",
+            "transmission*",
+            "totem*"
+        ]
+    }
 }

@@ -271,7 +271,7 @@ def collectUnknownFieldErrors(configsPath: Path, targetPlatform: Optional[str] =
             import json
             with open(linuxCommonPath, 'r', encoding='utf-8') as f:
                 linuxCommonData = json.load(f)
-            allowedLinuxCommonFields = {"linuxCommon", "packageMappings"}
+            allowedLinuxCommonFields = {"apt", "dnf", "pacman", "zypper", "snap", "flatpak"}
             errors = detectUnknownFields(linuxCommonData, allowedLinuxCommonFields)
             unknownFieldErrors.extend(errors)
     except Exception:
@@ -440,15 +440,43 @@ def validateAppsJson(filePath: Path, platform: str) -> tuple[list[str], list[str
             content = json.load(f)
 
         # Define allowed fields for each platform
-        baseFields = {"useLinuxCommon", "commands", "shell", "cruft"}
+        baseFields = {"useLinuxCommon", "commands", "shell", "cruft", "android"}
+
+        # APT-based distributions
+        aptFields = baseFields | {"apt", "snap", "flatpak"}
+        # DNF-based distributions
+        dnfFields = baseFields | {"dnf", "snap", "flatpak"}
+        # Pacman-based distributions
+        pacmanFields = baseFields | {"pacman", "snap", "flatpak"}
+        # Zypper-based distributions
+        zypperFields = baseFields | {"zypper", "snap", "flatpak"}
+        # Alpine (APK-based, no useLinuxCommon)
+        alpineFields = {"apk", "commands", "shell", "cruft", "android"}
+
         platformFields = {
-            "win11": baseFields | {"winget", "windowsStore"},
-            "macos": baseFields | {"brew", "brewCask"},
-            "ubuntu": baseFields | {"apt", "snap"},
-            "raspberrypi": baseFields | {"apt", "snap"},
-            "redhat": baseFields | {"dnf"},
-            "opensuse": baseFields | {"zypper"},
-            "archlinux": baseFields | {"pacman"},
+            # macOS and Windows
+            "win11": {"winget", "windowsStore", "commands", "cruft", "android"},
+            "macos": {"brew", "brewCask", "commands", "shell", "cruft", "android"},
+            # APT-based
+            "debian": aptFields,
+            "ubuntu": aptFields,
+            "popos": aptFields,
+            "linuxmint": aptFields,
+            "elementary": aptFields,
+            "zorin": aptFields,
+            "mxlinux": aptFields,
+            "raspberrypi": aptFields,
+            # DNF-based
+            "fedora": dnfFields,
+            "redhat": dnfFields,
+            # Pacman-based
+            "archlinux": pacmanFields,
+            "manjaro": pacmanFields,
+            "endeavouros": pacmanFields,
+            # Zypper-based
+            "opensuse": zypperFields,
+            # Alpine
+            "alpine": alpineFields,
         }
 
         allowedFields = platformFields.get(platform, baseFields)
@@ -699,7 +727,9 @@ def printHelp() -> None:
                 "          If not specified, validates all platform configs",
             ],
             "Valid Platforms": [
-                "ubuntu, macos, win11, redhat, opensuse, archlinux, raspberrypi",
+                "macos, win11",
+                "debian, ubuntu, popos, linuxmint, elementary, zorin, mxlinux, raspberrypi",
+                "fedora, redhat, opensuse, archlinux, manjaro, endeavouros, alpine",
             ],
             "Validated Files": [
                 "- Platform-specific configs (e.g., ubuntu.json, macos.json)",
@@ -759,9 +789,14 @@ def main(setupSignalHandler: bool = True) -> int:
     args = [arg for arg in sys.argv[1:] if not arg.startswith("--configDir") and arg != "--quiet" and arg != "-q" and arg != "--help" and arg != "-h"]
     if len(args) > 0:
         targetPlatform = args[0].lower()
-        if targetPlatform not in ("win11", "macos", "ubuntu", "raspberrypi", "redhat", "opensuse", "archlinux"):
+        validPlatforms = (
+            "win11", "macos",
+            "debian", "ubuntu", "popos", "linuxmint", "elementary", "zorin", "mxlinux", "raspberrypi",
+            "fedora", "redhat", "opensuse", "archlinux", "manjaro", "endeavouros", "alpine"
+        )
+        if targetPlatform not in validPlatforms:
             printError(f"Unknown platform: {targetPlatform}")
-            printInfo("Valid platforms: win11, macos, ubuntu, raspberrypi, redhat, opensuse, archlinux")
+            printInfo(f"Valid platforms: {', '.join(validPlatforms)}")
             return 1
 
     allErrors = []
@@ -864,7 +899,7 @@ def main(setupSignalHandler: bool = True) -> int:
             try:
                 with open(linuxCommonPath, 'r', encoding='utf-8') as f:
                     linuxCommonData = json.load(f)
-                allowedLinuxCommonFields = {"linuxCommon", "packageMappings"}
+                allowedLinuxCommonFields = {"apt", "dnf", "pacman", "zypper", "snap", "flatpak"}
                 unknownLinuxCommonErrors = detectUnknownFields(linuxCommonData, allowedLinuxCommonFields)
                 allErrors.extend(unknownLinuxCommonErrors)
             except Exception:

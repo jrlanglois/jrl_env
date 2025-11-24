@@ -2,10 +2,12 @@
     "useLinuxCommon": true,
     "pacman":
     [
-        "docker",
-        "docker-compose",
-        "postgresql",
-        "redis"
+    ],
+    "snap":
+    [
+    ],
+    "flatpak":
+    [
     ],
     "shell":
     {
@@ -33,5 +35,6 @@
         ]
     },
     "cruft":
-    []
+    {
+    }
 }

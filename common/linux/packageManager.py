@@ -45,7 +45,7 @@ packageMappings: Dict[str, str] = {
     "xz-utils": "xz",
 }
 
-supportedManagers = ["apt", "yum", "dnf", "rpm", "zypper", "pacman"]
+supportedManagers = ["apt", "yum", "dnf", "rpm", "zypper", "pacman", "apk", "snap", "flatpak"]
 
 
 def mapPackageName(package: str, manager: str) -> str:
@@ -368,6 +368,118 @@ class PacmanPackageManager(PackageManager):
         return "Pacman packages"
 
 
+class ApkPackageManager(PackageManager):
+    """APK package manager (Alpine Linux)."""
+
+    def __init__(self):
+        super().__init__("apk")
+
+    def commandName(self) -> str:
+        return "apk"
+
+    def prepareCache(self) -> None:
+        if self.cacheUpdated:
+            return
+        printInfo("Updating apk package cache...")
+        self.runCommand(["apk", "update"])
+        self.cacheUpdated = True
+
+    def checkPackage(self, package: str) -> bool:
+        result = subprocess.run(
+            ["apk", "info", "-e", package],
+            capture_output=True,
+            check=False
+        )
+        return result.returncode == 0
+
+    def installPackage(self, package: str) -> bool:
+        self.prepareCache()
+        return self.runCommand(["apk", "add", package])
+
+    def updatePackage(self, package: str) -> bool:
+        self.prepareCache()
+        return self.runCommand(["apk", "upgrade", package])
+
+    def getLabel(self) -> str:
+        return "APK packages"
+
+
+class SnapPackageManager(PackageManager):
+    """Snap package manager (cross-distribution)."""
+
+    def __init__(self):
+        super().__init__("snap")
+
+    def commandName(self) -> str:
+        return "snap"
+
+    def prepareCache(self) -> None:
+        # Snap doesn't require manual cache updates
+        self.cacheUpdated = True
+
+    def checkPackage(self, package: str) -> bool:
+        result = subprocess.run(
+            ["snap", "list", package],
+            capture_output=True,
+            check=False
+        )
+        return result.returncode == 0
+
+    def installPackage(self, package: str) -> bool:
+        return self.runCommand(["sudo", "snap", "install", package])
+
+    def updatePackage(self, package: str) -> bool:
+        return self.runCommand(["sudo", "snap", "refresh", package])
+
+    def getLabel(self) -> str:
+        return "Snap applications"
+
+
+class FlatpakPackageManager(PackageManager):
+    """Flatpak package manager (cross-distribution)."""
+
+    def __init__(self):
+        super().__init__("flatpak")
+
+    def commandName(self) -> str:
+        return "flatpak"
+
+    def prepareCache(self) -> None:
+        if self.cacheUpdated:
+            return
+        # Ensure Flathub repository is configured
+        printInfo("Ensuring Flathub repository is configured...")
+        self.runCommand(
+            [
+                "flatpak", "remote-add", "--if-not-exists",
+                "flathub", "https://flathub.org/repo/flathub.flatpakrepo"
+            ]
+        )
+        self.cacheUpdated = True
+
+    def checkPackage(self, package: str) -> bool:
+        result = subprocess.run(
+            ["flatpak", "list", "--app", "--columns=application"],
+            capture_output=True,
+            text=True,
+            check=False
+        )
+        if result.returncode != 0:
+            return False
+        return package in result.stdout
+
+    def installPackage(self, package: str) -> bool:
+        self.prepareCache()
+        return self.runCommand(["flatpak", "install", "-y", "flathub", package])
+
+    def updatePackage(self, package: str) -> bool:
+        self.prepareCache()
+        return self.runCommand(["flatpak", "update", "-y", package])
+
+    def getLabel(self) -> str:
+        return "Flatpak applications"
+
+
 def validateManager(manager: str) -> bool:
     """
     Validate that a package manager is supported.
@@ -416,6 +528,12 @@ def createPackageManager(manager: Optional[str] = None) -> Optional[PackageManag
         return ZypperPackageManager()
     elif managerLower == "pacman":
         return PacmanPackageManager()
+    elif managerLower == "apk":
+        return ApkPackageManager()
+    elif managerLower == "snap":
+        return SnapPackageManager()
+    elif managerLower == "flatpak":
+        return FlatpakPackageManager()
     else:
         return None
 
@@ -452,6 +570,9 @@ __all__ = [
     "RpmPackageManager",
     "ZypperPackageManager",
     "PacmanPackageManager",
+    "ApkPackageManager",
+    "SnapPackageManager",
+    "FlatpakPackageManager",
     "validateManager",
     "createPackageManager",
     "getPackageManager",
