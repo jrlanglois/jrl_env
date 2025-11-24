@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Generic data-driven system implementation.
-Uses SystemConfig to provide platform-specific behavior without code duplication.
+Uses SystemConfig to provide platform-specific behaviour without code duplication.
 """
 
 import sys

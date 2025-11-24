@@ -35,7 +35,7 @@ class SystemBase(ABC):
     """
     Base class for system-specific setup implementations.
     Provides platform abstraction layer with minimal orchestration.
-    Uses Template Method pattern for platform-specific behavior.
+    Uses Template Method pattern for platform-specific behaviour.
     """
 
     def __init__(self, projectRoot: Path):

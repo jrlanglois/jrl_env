@@ -2,8 +2,6 @@
     "useLinuxCommon": true,
     "apt":
     [
-        "docker-compose",
-        "docker.io",
         "ladspa-sdk",
         "libglu1-mesa-dev",
         "libjack-jackd2-dev",
@@ -17,20 +15,15 @@
         "libxmlsec1-dev",
         "libxrandr-dev",
         "libxrender-dev",
-        "mesa-common-dev",
-        "postgresql",
-        "redis-server"
+        "mesa-common-dev"
     ],
     "snap":
     [
-        "code",
-        "slack",
-        "spotify",
-        "discord",
-        "postman",
-        "vlc",
         "steam",
         "obs-studio"
+    ],
+    "flatpak":
+    [
     ],
     "shell":
     {
@@ -58,16 +51,19 @@
         ]
     },
     "cruft":
-    [
-        "libreoffice*",
-        "chromium*",
-        "thunderbird*",
-        "rhythmbox*",
-        "gnome-mahjongg",
-        "gnome-mines",
-        "gnome-sudoku",
-        "aisleriot",
-        "transmission*",
-        "totem*"
-    ]
+    {
+        "apt":
+        [
+            "libreoffice*",
+            "chromium*",
+            "thunderbird*",
+            "rhythmbox*",
+            "gnome-mahjongg",
+            "gnome-mines",
+            "gnome-sudoku",
+            "aisleriot",
+            "transmission*",
+            "totem*"
+        ]
+    }
 }

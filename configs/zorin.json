@@ -1,10 +1,12 @@
 {
     "useLinuxCommon": true,
-    "dnf":
+    "apt":
     [
+        "zorin-os-desktop"
     ],
     "snap":
     [
+        "steam"
     ],
     "flatpak":
     [
@@ -18,23 +20,32 @@
         "preInstall":
         [
             {
-                "name": "dnfUpdate",
+                "name": "aptUpdate",
                 "runOnce": false,
                 "shell": "bash",
-                "command": "sudo dnf check-update || true"
+                "command": "sudo apt update"
             }
         ],
         "postInstall":
         [
             {
-                "name": "dnfUpgrade",
+                "name": "aptUpgrade",
                 "runOnce": false,
                 "shell": "bash",
-                "command": "sudo dnf upgrade -y"
+                "command": "sudo apt upgrade -y"
             }
         ]
     },
     "cruft":
     {
+        "apt":
+        [
+            "libreoffice*",
+            "thunderbird*",
+            "rhythmbox*",
+            "gnome-mahjongg",
+            "gnome-mines",
+            "gnome-sudoku"
+        ]
     }
 }

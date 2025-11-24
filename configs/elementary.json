@@ -1,7 +1,8 @@
 {
     "useLinuxCommon": true,
-    "dnf":
+    "apt":
     [
+        "elementary-desktop"
     ],
     "snap":
     [
@@ -18,23 +19,27 @@
         "preInstall":
         [
             {
-                "name": "dnfUpdate",
+                "name": "aptUpdate",
                 "runOnce": false,
                 "shell": "bash",
-                "command": "sudo dnf check-update || true"
+                "command": "sudo apt update"
             }
         ],
         "postInstall":
         [
             {
-                "name": "dnfUpgrade",
+                "name": "aptUpgrade",
                 "runOnce": false,
                 "shell": "bash",
-                "command": "sudo dnf upgrade -y"
+                "command": "sudo apt upgrade -y"
             }
         ]
     },
     "cruft":
     {
+        "apt":
+        [
+            "epiphany-browser"
+        ]
     }
 }

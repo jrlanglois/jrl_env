@@ -36,41 +36,6 @@ jobs:
         run: |
           python3 test/validatePackages.py configs/macos.json
 
-  validate-ubuntu-config:
-    name: Validate Ubuntu Config
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Python and dependencies
-        uses: ./.github/actions/setupPython
-
-      - name: Validate JSON syntax and schema
-        run: |
-          python3 -m common.systems.validate ubuntu
-
-      - name: Validate Ubuntu packages
-        run: |
-          python3 test/validatePackages.py configs/ubuntu.json
-
-  validate-raspberrypi-config:
-    name: Validate Raspberry Pi Config
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Python and dependencies
-        uses: ./.github/actions/setupPython
-
-      - name: Validate JSON syntax and schema
-        run: |
-          python3 -m common.systems.validate raspberrypi
-
-      - name: Validate Raspberry Pi packages
-        run: |
-          python3 test/validatePackages.py configs/raspberrypi.json
 
   validate-windows-config:
     name: Validate Windows Config
@@ -169,3 +134,77 @@ jobs:
       - name: Validate JSON syntax
         run: |
           python3 helpers/validateJson.py configs/cursorSettings.json
+
+  validate-linuxcommon-config:
+    name: Validate linuxCommon Config
+    runs-on: ubuntu-latest
+    if: contains(github.event.head_commit.modified, 'configs/linuxCommon.json') || github.event_name == 'workflow_dispatch'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python and dependencies
+        uses: ./.github/actions/setupPython
+
+      - name: Validate JSON syntax
+        run: |
+          python3 helpers/validateJson.py configs/linuxCommon.json
+
+      - name: Validate all package manager sections exist
+        run: |
+          python3 -c "
+          import json, sys
+          with open('configs/linuxCommon.json') as f:
+              config = json.load(f)
+          required = ['apt', 'dnf', 'pacman', 'zypper', 'snap', 'flatpak']
+          missing = [pm for pm in required if pm not in config]
+          if missing:
+              print(f'Missing: {missing}')
+              sys.exit(1)
+          for pm in required:
+              print(f'✓ {pm}: {len(config[pm])} packages')
+          "
+
+      - name: Validate all packages exist (parallel, all package managers)
+        run: |
+          echo "Validating packages for apt, dnf, pacman, zypper, snap, flatpak..."
+          echo "Using parallel API validation for speed (may take 1-3 minutes)"
+          python3 test/validateLinuxCommonPackages.py configs/linuxCommon.json --all
+        continue-on-error: true
+
+  validate-linux-distros:
+    name: Validate ${{ matrix.distro }} Config
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        distro:
+          - alpine
+          - archlinux
+          - debian
+          - elementary
+          - endeavouros
+          - fedora
+          - linuxmint
+          - manjaro
+          - mxlinux
+          - opensuse
+          - popos
+          - raspberrypi
+          - redhat
+          - ubuntu
+          - zorin
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python and dependencies
+        uses: ./.github/actions/setupPython
+
+      - name: Validate JSON syntax
+        run: |
+          python3 helpers/validateJson.py configs/${{ matrix.distro }}.json
+
+      - name: Validate with schema
+        run: |
+          python3 -m common.systems.validate ${{ matrix.distro }}

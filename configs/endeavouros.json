@@ -1,10 +1,15 @@
 {
     "useLinuxCommon": true,
-    "dnf":
+    "pacman":
     [
+        "eos-apps-info",
+        "eos-log-tool",
+        "eos-update-notifier",
+        "welcome"
     ],
     "snap":
     [
+        "steam"
     ],
     "flatpak":
     [
@@ -18,19 +23,19 @@
         "preInstall":
         [
             {
-                "name": "dnfUpdate",
+                "name": "pacmanSync",
                 "runOnce": false,
                 "shell": "bash",
-                "command": "sudo dnf check-update || true"
+                "command": "sudo pacman -Sy"
             }
         ],
         "postInstall":
         [
             {
-                "name": "dnfUpgrade",
+                "name": "pacmanUpgrade",
                 "runOnce": false,
                 "shell": "bash",
-                "command": "sudo dnf upgrade -y"
+                "command": "sudo pacman -Syu --noconfirm"
             }
         ]
     },

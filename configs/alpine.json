@@ -1,0 +1,71 @@
+{
+    "apk":
+    [
+        "bash",
+        "bat",
+        "build-base",
+        "ca-certificates",
+        "clang",
+        "cmake",
+        "curl",
+        "fd",
+        "g++",
+        "gcc",
+        "gdb",
+        "gettext",
+        "git",
+        "git-lfs",
+        "gnupg",
+        "htop",
+        "llvm",
+        "make",
+        "musl-dev",
+        "neovim",
+        "ninja",
+        "nodejs",
+        "npm",
+        "openssl-dev",
+        "py3-pip",
+        "python3",
+        "python3-dev",
+        "ripgrep",
+        "rsync",
+        "shellcheck",
+        "tmux",
+        "tree",
+        "vim",
+        "wget",
+        "xz",
+        "zip",
+        "zlib-dev",
+        "zsh"
+    ],
+    "shell":
+    {
+        "ohMyZshTheme": "agnoster"
+    },
+    "commands":
+    {
+        "preInstall":
+        [
+            {
+                "name": "apkUpdate",
+                "runOnce": false,
+                "shell": "bash",
+                "command": "apk update"
+            }
+        ],
+        "postInstall":
+        [
+            {
+                "name": "apkUpgrade",
+                "runOnce": false,
+                "shell": "bash",
+                "command": "apk upgrade"
+            }
+        ]
+    },
+    "cruft":
+    {
+    }
+}

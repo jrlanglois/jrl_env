@@ -2,9 +2,13 @@
 """
 JSON schemas for configuration file validation.
 Defines schemas for all config file types used in jrl_env.
+Uses composition to avoid redundancy (DRY principles).
 """
 
-# Command schema (used in platform configs)
+# ============================================================================
+# Common Schema Fragments (Reusable Components)
+# ============================================================================
+
 commandSchema = {
     "type": "object",
     "properties": {
@@ -16,6 +20,84 @@ commandSchema = {
     "required": ["name", "command"],
     "additionalProperties": False,
 }
+
+shellConfigSchema = {
+    "type": "object",
+    "properties": {
+        "ohMyZshTheme": {"type": "string"},
+    },
+    "additionalProperties": False,
+}
+
+commandsConfigSchema = {
+    "type": "object",
+    "properties": {
+        "preInstall": {
+            "type": "array",
+            "items": commandSchema,
+        },
+        "postInstall": {
+            "type": "array",
+            "items": commandSchema,
+        },
+    },
+    "additionalProperties": False,
+}
+
+packageArraySchema = {
+    "type": "array",
+    "items": {"type": "string"},
+}
+
+cruftSchema = {
+    "type": "object",
+    "additionalProperties": packageArraySchema,  # Allow any package manager
+}
+
+androidConfigFragment = {
+    "type": "object",
+    "properties": {
+        "sdkComponents": {
+            "type": "array",
+            "items": {"type": "string"},
+        },
+    },
+    "additionalProperties": False,
+}
+
+
+def createLinuxConfigSchema(packageManagers: list) -> dict:
+    """
+    Create a Linux distribution config schema with specified package managers.
+
+    Args:
+        packageManagers: List of package manager names (e.g., ["apt", "snap", "flatpak"])
+
+    Returns:
+        Complete config schema for the distribution
+    """
+    properties = {
+        "useLinuxCommon": {"type": "boolean"},
+        "android": androidConfigFragment,
+        "commands": commandsConfigSchema,
+        "shell": shellConfigSchema,
+        "cruft": cruftSchema,
+    }
+
+    # Add package manager properties
+    for pm in packageManagers:
+        properties[pm] = packageArraySchema
+
+    return {
+        "type": "object",
+        "properties": properties,
+        "additionalProperties": False,
+    }
+
+
+# ============================================================================
+# Platform-Specific Schemas
+# ============================================================================
 
 # Platform config schema (base)
 platformConfigSchema = {
@@ -51,105 +133,19 @@ platformConfigSchema = {
     "minProperties": 1,  # At least one property must exist
 }
 
-# Ubuntu/Raspberry Pi config schema
-ubuntuConfigSchema = {
-    "type": "object",
-    "properties": {
-        "useLinuxCommon": {"type": "boolean"},
-        "apt": {
-            "type": "array",
-            "items": {"type": "string"},
-        },
-        "snap": {
-            "type": "array",
-            "items": {"type": "string"},
-        },
-        "android": {
-            "type": "object",
-            "properties": {
-                "sdkComponents": {
-                    "type": "array",
-                    "items": {"type": "string"},
-                },
-            },
-            "additionalProperties": False,
-        },
-        "commands": {
-            "type": "object",
-            "properties": {
-                "preInstall": {
-                    "type": "array",
-                    "items": commandSchema,
-                },
-                "postInstall": {
-                    "type": "array",
-                    "items": commandSchema,
-                },
-            },
-            "additionalProperties": False,
-        },
-        "shell": {
-            "type": "object",
-            "properties": {
-                "ohMyZshTheme": {"type": "string"},
-            },
-            "additionalProperties": False,
-        },
-        "cruft": {
-            "type": "array",
-            "items": {"type": "string"},
-        },
-    },
-    "additionalProperties": False,
-}
+# APT-based distributions (Debian, Ubuntu, Pop!_OS, Mint, Elementary, Zorin, MX, Raspberry Pi)
+ubuntuConfigSchema = createLinuxConfigSchema(["apt", "snap", "flatpak"])
 
 # macOS config schema
 macosConfigSchema = {
     "type": "object",
     "properties": {
-        "brew": {
-            "type": "array",
-            "items": {"type": "string"},
-        },
-        "brewCask": {
-            "type": "array",
-            "items": {"type": "string"},
-        },
-        "android": {
-            "type": "object",
-            "properties": {
-                "sdkComponents": {
-                    "type": "array",
-                    "items": {"type": "string"},
-                },
-            },
-            "additionalProperties": False,
-        },
-        "commands": {
-            "type": "object",
-            "properties": {
-                "preInstall": {
-                    "type": "array",
-                    "items": commandSchema,
-                },
-                "postInstall": {
-                    "type": "array",
-                    "items": commandSchema,
-                },
-            },
-            "additionalProperties": False,
-        },
-        "shell": {
-            "type": "object",
-            "properties": {
-                "ohMyZshTheme": {"type": "string"},
-            },
-            "additionalProperties": False,
-        },
-        "cruft": {
-            "type": "array",
-            "items": {"type": "string"},
-        },
+        "brew": packageArraySchema,
+        "brewCask": packageArraySchema,
+        "android": androidConfigFragment,
+        "commands": commandsConfigSchema,
+        "shell": shellConfigSchema,
+        "cruft": cruftSchema,
     },
     "additionalProperties": False,
 }
@@ -158,196 +154,23 @@ macosConfigSchema = {
 win11ConfigSchema = {
     "type": "object",
     "properties": {
-        "winget": {
-            "type": "array",
-            "items": {"type": "string"},
-        },
-        "windowsStore": {
-            "type": "array",
-            "items": {"type": "string"},
-        },
-        "android": {
-            "type": "object",
-            "properties": {
-                "sdkComponents": {
-                    "type": "array",
-                    "items": {"type": "string"},
-                },
-            },
-            "additionalProperties": False,
-        },
-        "commands": {
-            "type": "object",
-            "properties": {
-                "preInstall": {
-                    "type": "array",
-                    "items": commandSchema,
-                },
-                "postInstall": {
-                    "type": "array",
-                    "items": commandSchema,
-                },
-            },
-            "additionalProperties": False,
-        },
-        "shell": {
-            "type": "object",
-            "properties": {
-                "ohMyZshTheme": {"type": "string"},
-            },
-            "additionalProperties": False,
-        },
-        "cruft": {
-            "type": "array",
-            "items": {"type": "string"},
-        },
+        "winget": packageArraySchema,
+        "windowsStore": packageArraySchema,
+        "android": androidConfigFragment,
+        "commands": commandsConfigSchema,
+        "cruft": cruftSchema,
     },
     "additionalProperties": False,
 }
 
-# RedHat config schema
-redhatConfigSchema = {
-    "type": "object",
-    "properties": {
-        "useLinuxCommon": {"type": "boolean"},
-        "dnf": {
-            "type": "array",
-            "items": {"type": "string"},
-        },
-        "android": {
-            "type": "object",
-            "properties": {
-                "sdkComponents": {
-                    "type": "array",
-                    "items": {"type": "string"},
-                },
-            },
-            "additionalProperties": False,
-        },
-        "commands": {
-            "type": "object",
-            "properties": {
-                "preInstall": {
-                    "type": "array",
-                    "items": commandSchema,
-                },
-                "postInstall": {
-                    "type": "array",
-                    "items": commandSchema,
-                },
-            },
-            "additionalProperties": False,
-        },
-        "shell": {
-            "type": "object",
-            "properties": {
-                "ohMyZshTheme": {"type": "string"},
-            },
-            "additionalProperties": False,
-        },
-        "cruft": {
-            "type": "array",
-            "items": {"type": "string"},
-        },
-    },
-    "additionalProperties": False,
-}
+# DNF-based distributions (Fedora, RedHat/CentOS)
+redhatConfigSchema = createLinuxConfigSchema(["dnf", "snap", "flatpak"])
 
-# OpenSUSE config schema
-opensuseConfigSchema = {
-    "type": "object",
-    "properties": {
-        "useLinuxCommon": {"type": "boolean"},
-        "zypper": {
-            "type": "array",
-            "items": {"type": "string"},
-        },
-        "android": {
-            "type": "object",
-            "properties": {
-                "sdkComponents": {
-                    "type": "array",
-                    "items": {"type": "string"},
-                },
-            },
-            "additionalProperties": False,
-        },
-        "commands": {
-            "type": "object",
-            "properties": {
-                "preInstall": {
-                    "type": "array",
-                    "items": commandSchema,
-                },
-                "postInstall": {
-                    "type": "array",
-                    "items": commandSchema,
-                },
-            },
-            "additionalProperties": False,
-        },
-        "shell": {
-            "type": "object",
-            "properties": {
-                "ohMyZshTheme": {"type": "string"},
-            },
-            "additionalProperties": False,
-        },
-        "cruft": {
-            "type": "array",
-            "items": {"type": "string"},
-        },
-    },
-    "additionalProperties": False,
-}
+# Zypper-based distributions (OpenSUSE)
+opensuseConfigSchema = createLinuxConfigSchema(["zypper", "snap", "flatpak"])
 
-# ArchLinux config schema
-archlinuxConfigSchema = {
-    "type": "object",
-    "properties": {
-        "useLinuxCommon": {"type": "boolean"},
-        "pacman": {
-            "type": "array",
-            "items": {"type": "string"},
-        },
-        "android": {
-            "type": "object",
-            "properties": {
-                "sdkComponents": {
-                    "type": "array",
-                    "items": {"type": "string"},
-                },
-            },
-            "additionalProperties": False,
-        },
-        "commands": {
-            "type": "object",
-            "properties": {
-                "preInstall": {
-                    "type": "array",
-                    "items": commandSchema,
-                },
-                "postInstall": {
-                    "type": "array",
-                    "items": commandSchema,
-                },
-            },
-            "additionalProperties": False,
-        },
-        "shell": {
-            "type": "object",
-            "properties": {
-                "ohMyZshTheme": {"type": "string"},
-            },
-            "additionalProperties": False,
-        },
-        "cruft": {
-            "type": "array",
-            "items": {"type": "string"},
-        },
-    },
-    "additionalProperties": False,
-}
+# Pacman-based distributions (Arch, Manjaro, EndeavourOS)
+archlinuxConfigSchema = createLinuxConfigSchema(["pacman", "snap", "flatpak"])
 
 # Git config schema
 gitConfigSchema = {
@@ -427,16 +250,32 @@ repositoriesConfigSchema = {
 linuxCommonConfigSchema = {
     "type": "object",
     "properties": {
-        "linuxCommon": {
+        "apt": {
             "type": "array",
             "items": {"type": "string"},
         },
-        "packageMappings": {
-            "type": "object",
-            "additionalProperties": {"type": "string"},
+        "dnf": {
+            "type": "array",
+            "items": {"type": "string"},
+        },
+        "pacman": {
+            "type": "array",
+            "items": {"type": "string"},
+        },
+        "zypper": {
+            "type": "array",
+            "items": {"type": "string"},
+        },
+        "snap": {
+            "type": "array",
+            "items": {"type": "string"},
+        },
+        "flatpak": {
+            "type": "array",
+            "items": {"type": "string"},
         },
     },
-    "required": ["linuxCommon"],
+    "required": ["apt", "dnf", "pacman", "zypper", "snap", "flatpak"],
     "additionalProperties": False,
 }
 
@@ -445,6 +284,11 @@ cursorSettingsSchema = {
     "type": "object",
     "additionalProperties": True,
 }
+
+# Alpine config schema (APK-based, no linuxCommon - Alpine is standalone)
+alpineConfigSchema = createLinuxConfigSchema(["apk"])
+# Remove useLinuxCommon from Alpine since it doesn't use it
+alpineConfigSchema["properties"].pop("useLinuxCommon", None)
 
 # Android config schema
 androidConfigSchema = {
@@ -481,16 +325,27 @@ def getSchemaForConfig(configType: str, platform: str = None):
     if configType == "platform":
         if platform == "ubuntu" or platform == "raspberrypi":
             return ubuntuConfigSchema
+        # APT-based distributions (Debian/Ubuntu family)
+        elif platform in ("debian", "popos", "linuxmint", "elementary", "zorin", "mxlinux"):
+            return ubuntuConfigSchema
+        # macOS
         elif platform == "macos":
             return macosConfigSchema
+        # Windows
         elif platform == "win11":
             return win11ConfigSchema
-        elif platform == "redhat":
+        # DNF-based distributions (Fedora/RedHat)
+        elif platform in ("fedora", "redhat"):
             return redhatConfigSchema
+        # Zypper-based (OpenSUSE)
         elif platform == "opensuse":
             return opensuseConfigSchema
-        elif platform == "archlinux":
+        # Pacman-based distributions (Arch family)
+        elif platform in ("archlinux", "manjaro", "endeavouros"):
             return archlinuxConfigSchema
+        # Alpine (APK-based) - needs its own schema
+        elif platform == "alpine":
+            return alpineConfigSchema
     elif configType == "gitConfig":
         return gitConfigSchema
     elif configType == "fonts":

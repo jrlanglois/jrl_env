@@ -14,13 +14,36 @@ cachedOperatingSystem: Optional[str] = None
 
 class Platform(Enum):
     """Supported platform identifiers."""
+    # macOS
     macos = "macos"
-    ubuntu = "ubuntu"
-    archlinux = "archlinux"
-    opensuse = "opensuse"
-    redhat = "redhat"
-    raspberrypi = "raspberrypi"
+
+    # Windows
     win11 = "win11"
+
+    # Debian/Ubuntu-based
+    debian = "debian"
+    ubuntu = "ubuntu"
+    popos = "popos"
+    linuxmint = "linuxmint"
+    elementary = "elementary"
+    zorin = "zorin"
+    mxlinux = "mxlinux"
+    raspberrypi = "raspberrypi"
+
+    # Arch-based
+    archlinux = "archlinux"
+    manjaro = "manjaro"
+    endeavouros = "endeavouros"
+
+    # RPM-based
+    redhat = "redhat"
+    fedora = "fedora"
+
+    # SUSE-based
+    opensuse = "opensuse"
+
+    # Independent
+    alpine = "alpine"
 
     def __str__(self) -> str:
         """Return the string value of the platform."""
@@ -100,7 +123,18 @@ def isOperatingSystem(platform: Platform) -> bool:
         return current == "windows"
     elif platformStr == "macos":
         return current == "macos"
-    elif platformStr in ("ubuntu", "archlinux", "opensuse", "redhat", "raspberrypi"):
+    elif platformStr in (
+        # Debian/Ubuntu-based
+        "debian", "ubuntu", "popos", "linuxmint", "elementary", "zorin", "mxlinux", "raspberrypi",
+        # Arch-based
+        "archlinux", "manjaro", "endeavouros",
+        # RPM-based
+        "redhat", "fedora",
+        # SUSE-based
+        "opensuse",
+        # Independent
+        "alpine"
+    ):
         return current == "linux"
 
     return False

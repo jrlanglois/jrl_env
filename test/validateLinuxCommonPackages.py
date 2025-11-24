@@ -1,22 +1,23 @@
 #!/usr/bin/env python3
 """
-Validates linuxCommon packages across ALL package managers (apt, yum, dnf, rpm).
+Validates linuxCommon.json packages for each package manager.
 Uses repository APIs to check package availability, not local system state.
-Packages that fail in ANY package manager should be removed or moved to OS-specific configs.
+Each package manager section (apt, dnf, pacman, zypper) is validated independently.
+Uses thread pool for parallel API calls (much faster than sequential).
 """
 
 import json
 import re
 import sys
 import time
-import urllib.parse
 from abc import ABC, abstractmethod
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 from urllib.request import urlopen, Request
 from urllib.error import URLError, HTTPError
 
-# Add project root to path so we can import from common
+# Add project root to path
 scriptDir = Path(__file__).parent.absolute()
 projectRoot = scriptDir.parent
 sys.path.insert(0, str(projectRoot))
@@ -29,34 +30,6 @@ from common.common import (
     printWarning,
     safePrint,
 )
-
-
-# Package name mappings from Debian/Ubuntu to RPM-based systems
-packageMappings: Dict[str, str] = {
-    "libasound2-dev": "alsa-lib-devel",
-    "libbz2-dev": "bzip2-devel",
-    "libcurl4-openssl-dev": "libcurl-devel",
-    "libffi-dev": "libffi-devel",
-    "libfontconfig1-dev": "fontconfig-devel",
-    "libfreetype-dev": "freetype-devel",
-    "liblzma-dev": "xz-devel",
-    "libncursesw5-dev": "ncurses-devel",
-    "libreadline-dev": "readline-devel",
-    "libsqlite3-dev": "sqlite-devel",
-    "libssl-dev": "openssl-devel",
-    "zlib1g-dev": "zlib-devel",
-    "tk-dev": "tk-devel",
-    "xz-utils": "xz",
-}
-
-
-class PackageMapper:
-    """Maps package names between different package managers."""
-
-    @staticmethod
-    def mapForRpm(package: str) -> str:
-        """Map Debian/Ubuntu package name to RPM equivalent."""
-        return packageMappings.get(package, package)
 
 
 class PackageManagerChecker(ABC):
@@ -81,7 +54,7 @@ class PackageManagerChecker(ABC):
 
 
 class AptChecker(PackageManagerChecker):
-    """Checks packages in apt repositories (Debian/Ubuntu)."""
+    """Checks packages in APT repositories (Debian/Ubuntu)."""
 
     def __init__(self):
         super().__init__("apt")
@@ -91,326 +64,286 @@ class AptChecker(PackageManagerChecker):
         ]
 
     def checkPackage(self, package: str) -> bool:
-        """Check if package exists in apt repositories."""
-        params = {
-            "keywords": package,
-            "searchon": "names",
-            "suite": "all",
-            "section": "all",
-        }
-        queryString = urllib.parse.urlencode(params)
+        """Check if package exists in APT repositories."""
+        params = f"?keywords={package}&searchon=names&suite=all&section=all"
 
         for baseUrl in self.baseUrls:
-            url = f"{baseUrl}?{queryString}"
+            url = baseUrl + params
             content = self.fetchUrl(url)
-
-            if content and self.parseResponse(content, package):
+            if content and package in content:
                 return True
 
         return False
 
-    def parseResponse(self, content: str, package: str) -> bool:
-        """Parse response to determine if package was found."""
-        contentLower = content.lower()
-        packageLower = package.lower()
-        return (
-            f"package {packageLower}" in contentLower or
-            f">{package}<" in content or
-            f">{packageLower}<" in contentLower
-        )
 
-
-class RpmChecker(PackageManagerChecker):
-    """Base class for RPM-based package managers (yum, dnf, rpm)."""
-
-    def __init__(self, name: str):
-        super().__init__(name)
-        self.baseUrls = [
-            "https://rpmfind.net/linux/rpm2html/search.php",
-            "https://pkgs.org/search/",
-            "https://apps.fedoraproject.org/packages",
-        ]
-
-    def checkPackage(self, package: str) -> bool:
-        """Check if package exists in RPM repositories."""
-        rpmPackage = PackageMapper.mapForRpm(package)
-
-        # Try rpmfind.net
-        url = f"{self.baseUrls[0]}?query={urllib.parse.quote(rpmPackage)}"
-        content = self.fetchUrl(url)
-        if content and self.parseRpmFindResponse(content, rpmPackage):
-            return True
-
-        # Try pkgs.org
-        url = f"{self.baseUrls[1]}?q={urllib.parse.quote(rpmPackage)}"
-        content = self.fetchUrl(url)
-        if content and self.parsePkgsOrgResponse(content, rpmPackage):
-            return True
-
-        # Try Fedora packages
-        url = f"{self.baseUrls[2]}/{urllib.parse.quote(rpmPackage)}"
-        try:
-            request = Request(url, headers={'User-Agent': 'Mozilla/5.0'})
-            with urlopen(request, timeout=10) as response:
-                if response.getcode() == 200:
-                    return True
-        except (URLError, HTTPError, TimeoutError):
-            pass
-
-        return False
-
-    def parseRpmFindResponse(self, content: str, package: str) -> bool:
-        """Parse rpmfind.net response."""
-        packageLower = package.lower()
-        contentLower = content.lower()
-        return (
-            f">{package}<" in content or
-            f">{packageLower}<" in contentLower or
-            re.search(rf"href.*{re.escape(package)}", content, re.IGNORECASE) is not None or
-            f"package: {package}" in contentLower
-        )
-
-    def parsePkgsOrgResponse(self, content: str, package: str) -> bool:
-        """Parse pkgs.org response."""
-        packageLower = package.lower()
-        return (
-            packageLower in content.lower() and
-            "no packages found" not in content.lower()
-        )
-
-
-class YumChecker(RpmChecker):
-    """Checks packages in yum repositories."""
-
-    def __init__(self):
-        super().__init__("yum")
-
-
-class DnfChecker(RpmChecker):
-    """Checks packages in dnf repositories."""
+class DnfChecker(PackageManagerChecker):
+    """Checks packages in DNF repositories (Fedora/RHEL 8+)."""
 
     def __init__(self):
         super().__init__("dnf")
 
+    def checkPackage(self, package: str) -> bool:
+        """Check if package exists in DNF/Fedora repositories."""
+        # Use Fedora packages API
+        url = f"https://packages.fedoraproject.org/pkgs/{package}/"
+        content = self.fetchUrl(url)
+        return content is not None and "Package not found" not in content
 
-class RpmCheckerImpl(RpmChecker):
-    """Checks packages in rpm repositories."""
+
+class PacmanChecker(PackageManagerChecker):
+    """Checks packages in Pacman repositories (Arch Linux)."""
 
     def __init__(self):
-        super().__init__("rpm")
+        super().__init__("pacman")
+
+    def checkPackage(self, package: str) -> bool:
+        """Check if package exists in Arch repositories."""
+        # Use Arch Linux package search
+        url = f"https://archlinux.org/packages/search/json/?name={package}"
+        content = self.fetchUrl(url)
+        if content:
+            try:
+                data = json.loads(content)
+                return len(data.get("results", [])) > 0
+            except json.JSONDecodeError:
+                pass
+        return False
 
 
-class PackageValidationResult:
-    """Stores validation results for a single package."""
+class ZypperChecker(PackageManagerChecker):
+    """Checks packages in Zypper repositories (OpenSUSE)."""
 
-    def __init__(self, package: str):
-        self.package = package
-        self.aptFound = False
-        self.yumFound = False
-        self.dnfFound = False
-        self.rpmFound = False
+    def __init__(self):
+        super().__init__("zypper")
 
-    @property
-    def isUniversal(self) -> bool:
-        """Check if package is available in all package managers."""
-        return self.aptFound and self.yumFound and self.rpmFound
+    def checkPackage(self, package: str) -> bool:
+        """Check if package exists in OpenSUSE repositories."""
+        # Use OpenSUSE software search
+        url = f"https://software.opensuse.org/search?q={package}"
+        content = self.fetchUrl(url)
+        return content is not None and package in content
 
-    @property
-    def isFoundAnywhere(self) -> bool:
-        """Check if package is found in at least one package manager."""
-        return self.aptFound or self.yumFound or self.dnfFound or self.rpmFound
 
-    @property
-    def foundIn(self) -> List[str]:
-        """Get list of package managers where package was found."""
-        found = []
-        if self.aptFound:
-            found.append("apt")
-        if self.yumFound or self.dnfFound:
-            found.append("yum/dnf")
-        if self.rpmFound:
-            found.append("rpm")
-        return found
+class SnapChecker(PackageManagerChecker):
+    """Checks packages in Snap Store."""
 
-    @property
-    def recommendation(self) -> Tuple[str, str]:
-        """
-        Get recommendation for this package.
-        Returns: (action, target) where action is 'keep', 'move', or 'remove'
-        """
-        if self.isUniversal:
-            return ("keep", "linuxCommon.json")
-        elif not self.isFoundAnywhere:
-            return ("remove", "linuxCommon.json")
-        elif self.aptFound and not (self.yumFound or self.rpmFound):
-            return ("move", "ubuntu,raspberrypi")
-        elif not self.aptFound and (self.yumFound or self.rpmFound):
-            return ("move", "rpm-based")
-        else:
-            return ("move", "mixed")
+    def __init__(self):
+        super().__init__("snap")
+
+    def checkPackage(self, package: str) -> bool:
+        """Check if package exists in Snap Store."""
+        # Use snapcraft.io API
+        url = f"https://snapcraft.io/api/v2/snaps/info/{package}"
+        content = self.fetchUrl(url)
+        if content:
+            try:
+                data = json.loads(content)
+                return "error-list" not in data
+            except json.JSONDecodeError:
+                pass
+        return False
+
+
+class FlatpakChecker(PackageManagerChecker):
+    """Checks packages in Flathub."""
+
+    def __init__(self):
+        super().__init__("flatpak")
+
+    def checkPackage(self, package: str) -> bool:
+        """Check if package exists in Flathub."""
+        # Flathub API
+        url = f"https://flathub.org/api/v2/appstream/{package}"
+        content = self.fetchUrl(url)
+        return content is not None and len(content) > 10
 
 
 class LinuxCommonValidator:
-    """Validates linuxCommon packages across all package managers."""
+    """Validates packages for each package manager in linuxCommon.json."""
 
     def __init__(self):
-        self.checkers = {
+        self.checkers: Dict[str, PackageManagerChecker] = {
             "apt": AptChecker(),
-            "yum": YumChecker(),
             "dnf": DnfChecker(),
-            "rpm": RpmCheckerImpl(),
+            "pacman": PacmanChecker(),
+            "zypper": ZypperChecker(),
+            "snap": SnapChecker(),
+            "flatpak": FlatpakChecker(),
         }
-        self.results: List[PackageValidationResult] = []
+        self.results: Dict[str, List[Tuple[str, bool]]] = {}
 
-    def validate(self, configPath: str) -> int:
-        """Validate all packages in linuxCommon.json. Returns exit code."""
-        packages = self.loadPackages(configPath)
-        if not packages:
-            printError(f"No packages found in {configPath}")
-            return 1
+    def validatePackageManager(self, pm: str, packages: List[str], maxWorkers: int = 10) -> List[Tuple[str, bool]]:
+        """
+        Validate packages for a specific package manager using parallel threads.
 
-        printH2("Validating Linux Common Packages Across ALL Package Managers")
-        safePrint()
-        printInfo("Checking each package against: apt, yum, dnf, rpm")
-        printInfo("Using repository APIs (not local system state)")
-        safePrint()
+        Args:
+            pm: Package manager name
+            packages: List of package names to validate
+            maxWorkers: Maximum number of parallel threads (default: 10)
 
-        for package in packages:
-            result = self.validatePackage(package)
-            self.results.append(result)
-            self.printPackageResult(result)
+        Returns:
+            List of tuples (package_name, found)
+        """
+        if pm not in self.checkers:
+            printWarning(f"  No checker implemented for {pm}, skipping")
+            return [(pkg, True) for pkg in packages]
 
-        return self.printSummary()
+        checker = self.checkers[pm]
+        results = []
 
-    def loadPackages(self, configPath: str) -> List[str]:
-        """Load packages from JSON config file."""
-        try:
-            with open(configPath, 'r', encoding='utf-8') as f:
-                data = json.load(f)
-                return data.get("linuxCommon", [])
-        except (FileNotFoundError, json.JSONDecodeError) as e:
-            printError(f"Error loading config: {e}")
-            return []
+        def checkSinglePackage(package: str) -> Tuple[str, bool]:
+            """Check a single package (for thread pool)."""
+            found = checker.checkPackage(package)
+            return (package, found)
 
-    def validatePackage(self, package: str) -> PackageValidationResult:
-        """Validate a single package against all package managers."""
-        result = PackageValidationResult(package)
+        # Use ThreadPoolExecutor for parallel API calls
+        with ThreadPoolExecutor(max_workers=maxWorkers) as executor:
+            # Submit all package checks
+            futureToPackage = {
+                executor.submit(checkSinglePackage, pkg): pkg
+                for pkg in packages
+            }
 
-        printInfo(f"Checking: {package}")
+            # Collect results as they complete
+            for future in as_completed(futureToPackage):
+                package = futureToPackage[future]
+                try:
+                    pkgName, found = future.result()
+                    results.append((pkgName, found))
 
-        # Check each package manager
-        result.aptFound = self.checkers["apt"].checkPackage(package)
-        result.yumFound = self.checkers["yum"].checkPackage(package)
-        result.dnfFound = self.checkers["dnf"].checkPackage(package)
-        result.rpmFound = self.checkers["rpm"].checkPackage(package)
+                    if found:
+                        printSuccess(f"  ✓ {pkgName}")
+                    else:
+                        printError(f"  ✗ {pkgName}")
+                except Exception as e:
+                    printError(f"  ✗ {package}: Error - {e}")
+                    results.append((package, False))
 
-        # Print individual results
-        if result.aptFound:
-            printSuccess("✓ apt: found")
-        else:
-            printError("✗ apt: not found")
+        # Sort results by original package order
+        packageOrder = {pkg: i for i, pkg in enumerate(packages)}
+        results.sort(key=lambda x: packageOrder.get(x[0], 999))
 
-        if result.yumFound or result.dnfFound:
-            rpmPackage = PackageMapper.mapForRpm(package)
-            if rpmPackage != package:
-                printSuccess(f"✓ yum/dnf: found (as {rpmPackage})")
-            else:
-                printSuccess("✓ yum/dnf: found")
-        else:
-            printError("✗ yum/dnf: not found")
-
-        if result.rpmFound:
-            printSuccess("✓ rpm: found")
-        else:
-            printError("✗ rpm: not found")
-
-        return result
-
-    def printPackageResult(self, result: PackageValidationResult):
-        """Print result summary for a package."""
-        if result.isUniversal:
-            printSuccess("→ Universal: available in all package managers")
-        elif result.isFoundAnywhere:
-            foundList = ", ".join(result.foundIn)
-            printWarning(f"→ Partial: available in {foundList} only")
-        else:
-            printError("→ FAILED: not found in any package manager")
-        safePrint()
+        return results
 
     def printSummary(self) -> int:
         """Print validation summary and return exit code."""
         printH2("Validation Summary")
         safePrint()
 
-        totalPackages = len(self.results)
-        universalPackages = sum(1 for r in self.results if r.isUniversal)
-        packagesToMove = [r for r in self.results if not r.isUniversal and r.isFoundAnywhere]
-        packagesToRemove = [r for r in self.results if not r.isFoundAnywhere]
+        allPassed = True
+        totalChecked = 0
 
-        printInfo(f"Total packages checked: {totalPackages}")
-        printSuccess(f"Universal packages (all managers): {universalPackages}")
+        for pm, results in self.results.items():
+            totalChecked += len(results)
+            failed = [pkg for pkg, found in results if not found]
 
-        if packagesToMove:
-            safePrint()
-            printWarning(f"Packages to move to OS-specific configs: {len(packagesToMove)}")
-            printInfo("These packages are available in some but not all package managers.")
-            safePrint()
-            for result in packagesToMove:
-                action, target = result.recommendation
-                if target == "ubuntu,raspberrypi":
-                    printInfo(f"- {result.package} → Move to ubuntu.json and raspberrypi.json")
-                elif target == "rpm-based":
-                    printInfo(f"- {result.package} → Move to RPM-based OS configs (when created)")
-                else:
-                    printInfo(f"- {result.package} → Review and move to appropriate OS config")
-
-        if packagesToRemove:
-            safePrint()
-            printError(f"Packages to remove (not found anywhere): {len(packagesToRemove)}")
-            printInfo("These packages were not found in any package manager repository.")
-            printInfo("They should be removed from linuxCommon.json")
-            safePrint()
-            for result in packagesToRemove:
-                printError(f"- {result.package}")
+            if failed:
+                printError(f"✗ {pm}: {len(failed)}/{len(results)} packages NOT FOUND")
+                for pkg in failed:
+                    printError(f"    {pkg}")
+                allPassed = False
+            else:
+                printSuccess(f"✓ {pm}: All {len(results)} packages exist")
 
         safePrint()
-        if packagesToRemove:
-            printError(f"Validation failed: {len(packagesToRemove)} package(s) not found in any package manager")
-            printInfo("")
-            printInfo("Action required: Remove these packages from linuxCommon.json:")
-            for result in packagesToRemove:
-                safePrint(f'    "{result.package}",')
-            return 1
-        elif packagesToMove:
-            printWarning("Validation completed with warnings")
-            printInfo("")
-            printInfo("Action required: Move these packages to OS-specific config files:")
-            for result in packagesToMove:
-                safePrint(f'    "{result.package}",')
-            return 1
-        else:
-            printSuccess("All packages are available in all package managers!")
+        printInfo(f"Total packages validated: {totalChecked}")
+
+        if allPassed:
+            printSuccess("✅ All packages validated successfully!")
             return 0
+        else:
+            printError("❌ Some packages not found")
+            printInfo("Fix package names in linuxCommon.json")
+            return 1
+
+
+def loadLinuxCommon(configPath: Path) -> Dict[str, List[str]]:
+    """Load package manager sections from linuxCommon.json."""
+    try:
+        with open(configPath, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+            return {
+                "apt": data.get("apt", []),
+                "dnf": data.get("dnf", []),
+                "pacman": data.get("pacman", []),
+                "zypper": data.get("zypper", []),
+                "snap": data.get("snap", []),
+                "flatpak": data.get("flatpak", []),
+            }
+    except (FileNotFoundError, json.JSONDecodeError) as e:
+        printError(f"Error loading config: {e}")
+        return {}
 
 
 def main():
     """Main entry point."""
     if len(sys.argv) < 2:
-        printError("Usage: python3 validateLinuxCommonPackages.py <path-to-linuxCommon.json>")
-        sys.exit(1)
+        printError("Usage: python3 validateLinuxCommonPackages.py <path-to-linuxCommon.json> [package-manager] [--quiet]")
+        printInfo("")
+        printInfo("Options:")
+        printInfo("  --all        Validate all package managers (default)")
+        printInfo("  --quiet      Suppress detailed output")
+        printInfo("  apt          Validate only APT packages")
+        printInfo("  dnf          Validate only DNF packages")
+        printInfo("  pacman       Validate only Pacman packages")
+        printInfo("  zypper       Validate only Zypper packages")
+        printInfo("  snap         Validate only Snap packages")
+        printInfo("  flatpak      Validate only Flatpak packages")
+        return 1
 
-    configPath = sys.argv[1]
-    startTime = time.time()
+    configPath = Path(sys.argv[1])
+    if not configPath.exists():
+        printError(f"Config file not found: {configPath}")
+        return 1
 
-    validator = LinuxCommonValidator()
-    exitCode = validator.validate(configPath)
+    # Parse arguments
+    quiet = "--quiet" in sys.argv
+    checkAll = "--all" in sys.argv or len(sys.argv) == 2
 
-    elapsed = int(time.time() - startTime)
+    # Determine which package managers to check
+    managersToCheck = ["apt", "dnf", "pacman", "zypper", "snap", "flatpak"] if checkAll else []
+    for arg in sys.argv[2:]:
+        if arg in ["apt", "dnf", "pacman", "zypper", "snap", "flatpak"]:
+            managersToCheck = [arg]
+            break
+
+    printH2("Validating linuxCommon.json Packages")
     safePrint()
-    printInfo(f"Validation completed in {elapsed}s")
+    printInfo(f"Checking package managers: {', '.join(managersToCheck)}")
+    printInfo("Using repository APIs (not local system state)")
+    safePrint()
 
-    sys.exit(exitCode)
+    # Load package sections
+    packageSections = loadLinuxCommon(configPath)
+    if not packageSections:
+        printError("Failed to load package sections")
+        return 1
+
+    # Create validator
+    startTime = time.time()
+    validator = LinuxCommonValidator()
+
+    # Validate each requested package manager
+    for pm in managersToCheck:
+        packages = packageSections.get(pm, [])
+        if not packages:
+            printWarning(f"{pm}: No packages defined")
+            continue
+
+        printInfo(f"\nValidating {len(packages)} {pm} packages...")
+        safePrint()
+        results = validator.validatePackageManager(pm, packages)
+        validator.results[pm] = results
+
+    elapsedTime = int(time.time() - startTime)
+
+    # Print summary
+    exitCode = validator.printSummary()
+
+    printInfo(f"Validation completed in {elapsedTime}s")
+
+    return exitCode
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

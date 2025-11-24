@@ -179,7 +179,7 @@ def safePrint(*args, end: str = '\n', flush: bool = True, **kwargs):
     Thread-safe print function with automatic timestamp handling.
     This is the ONLY function that calls Python's print() - all other functions use this.
 
-    Timestamp behavior:
+    Timestamp behaviour:
     - If showConsoleTimestamps is True, prepends timestamp to each line
     - If False, prints without timestamps
     - Handles multiline strings by timestamping each line

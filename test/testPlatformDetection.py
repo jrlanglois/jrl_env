@@ -29,15 +29,49 @@ class TestPlatformEnum(unittest.TestCase):
 
     def testPlatformEnumValues(self):
         """Test that Platform enum has all expected values."""
-        expectedPlatforms = {"macos", "ubuntu", "archlinux", "opensuse", "redhat", "raspberrypi", "win11"}
+        expectedPlatforms = {
+            # macOS
+            "macos",
+            # Windows
+            "win11",
+            # Debian/Ubuntu-based
+            "debian", "ubuntu", "popos", "linuxmint", "elementary", "zorin", "mxlinux", "raspberrypi",
+            # Arch-based
+            "archlinux", "manjaro", "endeavouros",
+            # RPM-based
+            "redhat", "fedora",
+            # SUSE-based
+            "opensuse",
+            # Independent
+            "alpine"
+        }
         actualPlatforms = {p.value for p in Platform}
         self.assertEqual(actualPlatforms, expectedPlatforms)
 
     def testPlatformEnumStringConversion(self):
         """Test that Platform enum converts to string correctly."""
+        # Test original platforms
         self.assertEqual(str(Platform.macos), "macos")
         self.assertEqual(str(Platform.win11), "win11")
         self.assertEqual(str(Platform.ubuntu), "ubuntu")
+
+        # Test new APT-based platforms
+        self.assertEqual(str(Platform.debian), "debian")
+        self.assertEqual(str(Platform.popos), "popos")
+        self.assertEqual(str(Platform.linuxmint), "linuxmint")
+        self.assertEqual(str(Platform.elementary), "elementary")
+        self.assertEqual(str(Platform.zorin), "zorin")
+        self.assertEqual(str(Platform.mxlinux), "mxlinux")
+
+        # Test new Arch-based platforms
+        self.assertEqual(str(Platform.manjaro), "manjaro")
+        self.assertEqual(str(Platform.endeavouros), "endeavouros")
+
+        # Test new RPM-based platforms
+        self.assertEqual(str(Platform.fedora), "fedora")
+
+        # Test new independent platforms
+        self.assertEqual(str(Platform.alpine), "alpine")
 
 
 class TestHelperFunctions(unittest.TestCase):
