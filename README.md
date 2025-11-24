@@ -105,6 +105,22 @@ python3 setup.py --install=apps --dryRun
 python3 setup.py --update --dryRun
 ```
 
+### Tab Completion
+
+Tab completion is **automatically installed** on first run for Bash, Zsh, and PowerShell.
+
+After running setup once, restart your shell and tab completion will work:
+
+```bash
+./setup.sh --inst<TAB>                 # Completes to --install
+./setup.sh --install=<TAB>             # Shows: all, fonts, apps, git, cursor, repos, ssh
+./setup.sh --install=fonts,<TAB>       # Shows remaining targets
+./setup.sh --update=<TAB>              # Shows: all, apps, system
+./setup.sh --passphrase=<TAB>          # Shows: require, no
+```
+
+See [`completions/README.md`](completions/README.md) for details.
+
 ### Individual Operations
 
 Run specific operations without running the full setup:
