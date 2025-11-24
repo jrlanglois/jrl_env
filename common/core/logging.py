@@ -319,7 +319,7 @@ def printH1(message: str, dryRun: bool = False) -> None:
 
         # Get terminal width with multiple fallbacks
         terminalWidth = 80  # Default fallback
-        
+
         # Try tput first (most reliable for actual terminal)
         try:
             import subprocess
@@ -336,7 +336,7 @@ def printH1(message: str, dryRun: bool = False) -> None:
                     terminalWidth = size.columns
             except (AttributeError, ValueError, OSError):
                 pass
-        
+
         # Account for timestamp width if timestamps are enabled
         # Timestamp format: "[YYYY-MM-DDTHH:MM:SS] " = 21 characters
         # Add 1 char safety margin for ANSI codes

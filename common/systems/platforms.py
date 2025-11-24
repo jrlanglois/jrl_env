@@ -51,18 +51,18 @@ class BasePlatform(ABC):
         Returns:
             True if successful, False if errors occurred
         """
-        hasErrors = False
+        allSuccess = True
 
         # Update via package managers
         for manager in self.packageManagers:
             if not manager.updateAll(self.dryRun):
-                hasErrors = True
+                allSuccess = False
 
         # Update Android SDK (application development kit)
         if not self.androidManager.updateSdk():
-            hasErrors = True
+            allSuccess = False
 
-        return not hasErrors
+        return allSuccess
 
     @abstractmethod
     def updateSystem(self) -> bool:
@@ -83,17 +83,7 @@ class BasePlatform(ABC):
         Returns:
             True if successful, False if errors occurred
         """
-        hasErrors = False
-
-        # Update OS-level components
-        if not self.updateSystem():
-            hasErrors = True
-
-        # Update Oh My Zsh (system shell configuration)
-        if not self.omzManager.update():
-            hasErrors = True
-
-        return not hasErrors
+        return self.updateSystem() and self.omzManager.update()
 
     def updateAll(self) -> bool:
         """
@@ -102,17 +92,7 @@ class BasePlatform(ABC):
         Returns:
             True if successful, False if errors occurred
         """
-        hasErrors = False
-
-        # Update apps: package managers + Android SDK
-        if not self.updatePackages():
-            hasErrors = True
-
-        # Update system: OS updates + stores + OMZ
-        if not self.updateSystemWithOmz():
-            hasErrors = True
-
-        return not hasErrors
+        return self.updatePackages() and self.updateSystemWithOmz()
 
 
 class MacOsPlatform(BasePlatform):
@@ -129,45 +109,66 @@ class MacOsPlatform(BasePlatform):
     def getPlatformName(self) -> str:
         return "macos"
 
-    def updateSystem(self) -> bool:
-        """Update Mac App Store and check for macOS updates."""
-        hasErrors = False
+    def updateMacAppStore(self) -> bool:
+        """
+        Update Mac App Store applications.
 
-        # Update Mac App Store apps
-        if commandExists("mas"):
-            printInfo("Updating Mac App Store applications...")
-            if self.dryRun:
-                printInfo("[DRY RUN] Would run: mas upgrade")
-            else:
-                try:
-                    result = subprocess.run(["mas", "upgrade"], capture_output=True, check=False)
-                    if result.returncode == 0:
-                        printSuccess("Mac App Store apps updated")
-                    else:
-                        printWarning("Mac App Store update had issues")
-                except Exception as e:
-                    printWarning(f"Failed to update Mac App Store apps: {e}")
+        Returns:
+            True if successful, False if errors occurred
+        """
+        if not commandExists("mas"):
+            return True  # Not installed, skip
 
-        # Check for macOS system updates
+        printInfo("Updating Mac App Store applications...")
+        if self.dryRun:
+            printInfo("[DRY RUN] Would run: mas upgrade")
+            return True
+
+        try:
+            result = subprocess.run(["mas", "upgrade"], capture_output=True, check=False)
+            if result.returncode == 0:
+                printSuccess("Mac App Store apps updated")
+                return True
+
+            printWarning("Mac App Store update had issues")
+        except Exception as e:
+            printWarning(f"Failed to update Mac App Store apps: {e}")
+
+        return False
+
+    def checkMacOsUpdates(self) -> bool:
+        """
+        Check for macOS system updates.
+
+        Returns:
+            True if successful, False if errors occurred
+        """
         printInfo("Checking for macOS system updates...")
         if self.dryRun:
             printInfo("[DRY RUN] Would run: softwareupdate --list")
-        else:
-            try:
-                result = subprocess.run(
-                    ["softwareupdate", "--list"],
-                    capture_output=True,
-                    text=True,
-                    check=False
-                )
-                if "No new software available" in result.stdout or result.returncode == 0:
-                    printSuccess("macOS is up to date")
-                else:
-                    printInfo("System updates available. Run 'softwareupdate --install --recommended' to install.")
-            except Exception as e:
-                printWarning(f"Failed to check for system updates: {e}")
+            return True
 
-        return not hasErrors
+        try:
+            result = subprocess.run(
+                ["softwareupdate", "--list"],
+                capture_output=True,
+                text=True,
+                check=False
+            )
+            if "No new software available" in result.stdout or result.returncode == 0:
+                printSuccess("macOS is up to date")
+            else:
+                printInfo("System updates available. Run 'softwareupdate --install --recommended' to install.")
+
+            return True
+        except Exception as e:
+            printWarning(f"Failed to check for system updates: {e}")
+
+        return False
+
+    def updateSystem(self) -> bool:
+        """Update Mac App Store and check for macOS updates."""
+        return self.updateMacAppStore() and self.checkMacOsUpdates()
 
 
 class WindowsPlatform(BasePlatform):
@@ -277,31 +278,29 @@ class AlpinePlatform(BasePlatform):
 
     def updateSystem(self) -> bool:
         """Update Alpine packages using apk."""
-        hasErrors = False
-
         printInfo("Updating APK packages...")
         if self.dryRun:
             printInfo("[DRY RUN] Would run: sudo apk update && sudo apk upgrade")
-        else:
-            try:
-                # Update package index
-                result = subprocess.run(["sudo", "apk", "update"], capture_output=True, check=False)
-                if result.returncode != 0:
-                    printWarning("APK update had issues")
-                    hasErrors = True
-                else:
-                    # Upgrade packages
-                    result = subprocess.run(["sudo", "apk", "upgrade"], capture_output=True, check=False)
-                    if result.returncode != 0:
-                        printWarning("APK upgrade had issues")
-                        hasErrors = True
-                    else:
-                        printSuccess("APK packages updated")
-            except Exception as e:
-                printWarning(f"Failed to update APK packages: {e}")
-                hasErrors = True
+            return True
 
-        return not hasErrors
+        try:
+            # Update package index
+            result = subprocess.run(["sudo", "apk", "update"], capture_output=True, check=False)
+            if result.returncode != 0:
+                printWarning("APK update had issues")
+                return False
+
+            # Upgrade packages
+            result = subprocess.run(["sudo", "apk", "upgrade"], capture_output=True, check=False)
+            if result.returncode == 0:
+                printSuccess("APK packages updated")
+                return True
+
+            printWarning("APK upgrade had issues")
+        except Exception as e:
+            printWarning(f"Failed to update APK packages: {e}")
+
+        return False
 
 
 class RaspberryPiPlatform(UbuntuPlatform):

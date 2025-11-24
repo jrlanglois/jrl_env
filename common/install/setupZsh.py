@@ -114,12 +114,12 @@ class ZshManager:
                 printSuccess("Default shell changed to zsh")
                 printInfo("Note: This change will take effect after you log out and log back in.")
                 return True
-            else:
-                printError("Failed to change default shell")
-                return False
+
+            printError("Failed to change default shell")
         except Exception as e:
             printError(f"Failed to change default shell: {e}")
-            return False
+
+        return False
 
 
 class OhMyZshManager:
@@ -178,12 +178,12 @@ class OhMyZshManager:
             if self.isInstalled():
                 printSuccess("Oh My Zsh installed successfully")
                 return True
-            else:
-                printError("Failed to install Oh My Zsh")
-                return False
+
+            printError("Failed to install Oh My Zsh")
         except Exception as e:
             printError(f"Failed to install Oh My Zsh: {e}")
-            return False
+
+        return False
 
     def update(self) -> bool:
         """
