@@ -156,10 +156,10 @@ def expandWildcardPattern(
 ) -> Optional[List[str]]:
     """
     Expand a wildcard pattern to a list of repository URLs.
-    Uses HTTP caching to minimize API calls.
+    Uses HTTP caching to minimise API calls.
 
     Args:
-        pattern: Wildcard pattern (e.g., "git@github.com:owner/*")
+        pattern: Wildcard pattern (e.g., ``git@github.com:owner/*``)
         visibility: Visibility filter (all/public/private)
 
     Returns:

@@ -21,6 +21,7 @@ extensions = [
     'sphinx.ext.viewcode',
     'sphinx.ext.intersphinx',
     'sphinx.ext.inheritance_diagram',
+    'sphinx.ext.graphviz',  # For call graphs and diagrams
     'sphinx_autodoc_typehints',
 ]
 
@@ -66,4 +67,31 @@ autodoc_default_options = {
 # Intersphinx configuration
 intersphinx_mapping = {
     'python': ('https://docs.python.org/3', None),
+}
+
+# Graphviz configuration (for call graphs and diagrams)
+graphviz_output_format = 'svg'
+graphviz_dot_args = [
+    '-Nfontname=Helvetica',
+    '-Efontname=Helvetica',
+    '-Gfontname=Helvetica',
+    '-Nfontsize=10',
+    '-Efontsize=10',
+]
+
+# Inheritance diagram configuration
+inheritance_graph_attrs = {
+    'rankdir': 'TB',  # Top to bottom
+    'size': '"8.0, 10.0"',
+    'fontsize': 10,
+    'ratio': 'compress',
+}
+
+inheritance_node_attrs = {
+    'shape': 'box',
+    'fontsize': 10,
+    'height': 0.5,
+    'color': '"#2980b9"',
+    'style': '"rounded,filled"',
+    'fillcolor': '"#ecf0f1"',
 }

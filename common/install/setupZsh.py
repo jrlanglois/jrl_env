@@ -1,125 +1,19 @@
 #!/usr/bin/env python3
 """
-Zsh and Oh My Zsh management classes.
-Provides clean OOP interface for shell configuration.
+Oh My Zsh management class.
+Provides clean OOP interface for OMZ configuration.
+
+Note: Zsh itself is installed via package managers (brew, apt, dnf, etc.).
+This module only manages Oh My Zsh, which is a framework that runs on top of Zsh.
 """
 
 import os
 import re
-import shutil
 import subprocess
 from pathlib import Path
-from typing import Callable, Optional
 
 from common.core.logging import printError, printInfo, printSuccess, printWarning
-from common.core.utilities import commandExists, getJsonValue
-
-
-class ZshManager:
-    """Manages Zsh installation and configuration."""
-
-    def __init__(self, dryRun: bool = False):
-        """
-        Initialise the Zsh manager.
-
-        Args:
-            dryRun: If True, don't actually make changes
-        """
-        self.dryRun = dryRun
-
-    def isInstalled(self) -> bool:
-        """
-        Check if zsh is installed.
-
-        Returns:
-            True if zsh is installed, False otherwise
-        """
-        return commandExists("zsh")
-
-    def install(self, installFunc: Optional[Callable[[], bool]] = None, dryRunMessage: str = "[DRY RUN] Would install zsh...") -> bool:
-        """
-        Install zsh using a platform-specific installer function.
-
-        Args:
-            installFunc: Function to call to install zsh (platform-specific)
-            dryRunMessage: Message to show during dry run
-
-        Returns:
-            True if successful, False otherwise
-        """
-        printInfo("Installing zsh...")
-
-        if self.isInstalled():
-            try:
-                result = subprocess.run(
-                    ["zsh", "--version"],
-                    capture_output=True,
-                    text=True,
-                    check=True,
-                )
-                printSuccess(f"zsh is already installed: {result.stdout.strip()}")
-            except Exception:
-                printSuccess("zsh is already installed")
-            return True
-
-        if self.dryRun:
-            printInfo(dryRunMessage)
-            return True
-
-        if installFunc:
-            return installFunc()
-
-        printError("No installer function provided")
-        return False
-
-    def setAsDefault(self) -> bool:
-        """
-        Set zsh as default shell.
-
-        Returns:
-            True if successful, False otherwise
-        """
-        printInfo("Setting zsh as default shell...")
-
-        if not self.isInstalled():
-            printError("zsh is not installed. Please install it first.")
-            return False
-
-        try:
-            zshPath = shutil.which("zsh")
-            if not zshPath:
-                printError("Could not find zsh path")
-                return False
-
-            currentShell = os.environ.get("SHELL", "")
-
-            if currentShell == zshPath:
-                printSuccess("zsh is already the default shell")
-                return True
-
-            if self.dryRun:
-                printInfo(f"[DRY RUN] Would change default shell to zsh ({zshPath})...")
-                printInfo("[DRY RUN] Would run: sudo chsh -s zsh")
-                return True
-
-            printInfo("Changing default shell to zsh...")
-            printInfo("You may be prompted for your password.")
-
-            result = subprocess.run(
-                ["sudo", "chsh", "-s", zshPath, os.environ.get("USER", "")],
-                check=False,
-            )
-
-            if result.returncode == 0:
-                printSuccess("Default shell changed to zsh")
-                printInfo("Note: This change will take effect after you log out and log back in.")
-                return True
-
-            printError("Failed to change default shell")
-        except Exception as e:
-            printError(f"Failed to change default shell: {e}")
-
-        return False
+from common.core.utilities import getJsonValue
 
 
 class OhMyZshManager:
@@ -299,6 +193,5 @@ class OhMyZshManager:
 
 
 __all__ = [
-    "ZshManager",
     "OhMyZshManager",
 ]

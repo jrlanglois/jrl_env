@@ -513,7 +513,7 @@ def main() -> int:
 
     printSuccess(f"Detected platform: {platformName}")
     safePrint()
-    
+
     # Validate sudo early (for Unix-like systems)
     from common.core.sudoHelper import SudoManager
     sudoManager = SudoManager(dryRun=dryRun)

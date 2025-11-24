@@ -14,3 +14,6 @@ argcomplete>=3.0.0
 sphinx>=7.0.0
 sphinx-autodoc-typehints>=1.24.0
 furo>=2024.04.27
+
+# For generating import trees and module graphs
+pydeps>=1.12.0

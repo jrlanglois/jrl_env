@@ -7,7 +7,9 @@ Welcome to jrl_env's documentation!
    :maxdepth: 2
    :caption: Contents:
 
+   diagrams
    modules
+   tests
 
 Overview
 --------

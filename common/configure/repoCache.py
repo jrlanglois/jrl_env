@@ -105,7 +105,7 @@ def getCacheEntry(pattern: str, visibility: str = "all") -> Optional[CacheEntry]
     Get cache entry for a pattern if it exists and is valid.
 
     Args:
-        pattern: Repository pattern (e.g., "git@github.com:owner/*")
+        pattern: Repository pattern (e.g., ``git@github.com:owner/*``)
         visibility: Visibility filter (all/public/private)
 
     Returns:

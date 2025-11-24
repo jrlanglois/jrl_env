@@ -246,7 +246,7 @@ def generateModuleDocs() -> bool:
     printInfo("Generating module documentation...")
 
     try:
-        # Only generate docs for common/ since helpers/ and test/ are standalone scripts
+        # Generate docs for common/
         result = subprocess.run(
             [
                 sys.executable, "-m", "sphinx.ext.apidoc",
@@ -263,7 +263,10 @@ def generateModuleDocs() -> bool:
         )
 
         if result.returncode != 0:
-            printWarning(f"sphinx-apidoc had issues: {result.stderr}")
+            printWarning(f"sphinx-apidoc had issues for common/: {result.stderr}")
+
+        # Note: helpers/ are standalone scripts, documented manually in helpers.rst
+        # No need to run sphinx-apidoc on them
 
         printSuccess("Generated module documentation")
         return True

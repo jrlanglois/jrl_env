@@ -7,9 +7,10 @@
         "doxygen",
         "fd",
         "fzf",
-        "git",
         "git-lfs",
+        "git",
         "go",
+        "graphviz",
         "htop",
         "make",
         "mas",
@@ -18,9 +19,9 @@
         "node",
         "postgresql",
         "pyenv",
+        "rbenv",
         "redis",
         "ripgrep",
-        "rbenv",
         "shellcheck",
         "tmux",
         "tree",
@@ -28,9 +29,9 @@
         "wget",
         "xcodes",
         "yarn",
-        "zsh",
         "zsh-autosuggestions",
         "zsh-syntax-highlighting"
+        "zsh",
     ],
     "brewCask":
     [
