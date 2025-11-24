@@ -37,14 +37,13 @@ def printHelp() -> None:
         options=[
             ("--help, -h", "Show this help message and exit"),
             ("--clean", "Clean existing documentation (remove _build directory)"),
-            ("--open", "Open documentation in browser after building (no prompt)"),
-            ("--no-open", "Skip opening browser (no prompt)"),
+            ("--noOpen", "Skip opening browser after building (default: auto-open)"),
             ("--quiet, -q", "Only show final success/failure message"),
         ],
         examples=[
             "python3 docs/generateDocs.py",
             "python3 docs/generateDocs.py --clean",
-            "python3 docs/generateDocs.py --open",
+            "python3 docs/generateDocs.py --noOpen",
         ],
     )
 
@@ -372,10 +371,13 @@ def main() -> int:
 
     # Parse arguments
     cleanOnly = "--clean" in sys.argv
-    openBrowser = "--open" in sys.argv
-    noOpen = "--no-open" in sys.argv
+    noOpen = "--noOpen" in sys.argv
     quiet = "--quiet" in sys.argv or "-q" in sys.argv
     setVerbosityFromArgs(quiet=quiet, verbose=False)
+
+    # Detect CI environment (skip opening browser in CI)
+    import os
+    isCi = any(key in os.environ for key in ['CI', 'GITHUB_ACTIONS', 'JENKINS_URL', 'TRAVIS', 'CIRCLECI'])
 
     # Print title
     if getVerbosity() != Verbosity.quiet:
@@ -418,25 +420,14 @@ def main() -> int:
 
     safePrint()
 
-    # Prompt for browser opening after successful build
-    shouldPrompt = buildSuccess and not noOpen and getVerbosity() != Verbosity.quiet
+    # Open browser after successful build
+    # Skip if: --noOpen flag, CI environment, quiet mode, or build failed
+    shouldOpen = buildSuccess and not noOpen and not isCi and getVerbosity() != Verbosity.quiet
 
-    if openBrowser:
-        # --open flag: open directly without prompt
+    if shouldOpen:
+        # Default: open directly (no prompt)
         if not openDocs():
             return 1
-    elif shouldPrompt:
-        # Default: prompt user (only for regular builds, not --clean)
-        safePrint("Open documentation in browser? (Y/n): ", end="", flush=True)
-        try:
-            response = input().strip().lower()
-            if not response or response in ('y', 'yes'):
-                safePrint()
-                if not openDocs():
-                    return 1
-        except (EOFError, KeyboardInterrupt):
-            safePrint()
-            printInfo("Skipping browser open")
 
     if getVerbosity() == Verbosity.quiet:
         safePrint("Success")

@@ -98,6 +98,15 @@ Install Graphviz (required for diagram generation):
    # Windows
    choco install graphviz
 
+   # Fedora/RedHat
+   sudo dnf install graphviz
+
+   # Arch Linux
+   sudo pacman -S graphviz
+
+   # Windows
+   winget install Graphviz.Graphviz
+
 **Generate Documentation:**
 
 .. code-block:: bash
