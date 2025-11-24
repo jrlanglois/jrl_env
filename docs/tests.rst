@@ -43,11 +43,15 @@ Checks each package in a platform config against the actual package manager to e
 
 **Supported Package Managers:**
 
-- Homebrew (macOS)
 - APT (Debian/Ubuntu)
+- Chocolatey (Windows)
 - DNF (Fedora/RedHat)
+- Homebrew + Cask (macOS)
+- Microsoft Store (Windows)
 - Pacman (Arch Linux)
+- Snap (Linux)
 - Winget (Windows)
+- Zypper (OpenSUSE)
 
 validateLinuxCommonPackages.py
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -66,7 +70,9 @@ Ensures packages in ``linuxCommon.json`` are available across all supported Linu
 
 - APT (Debian/Ubuntu family)
 - DNF (Fedora/RedHat)
+- Flatpak (cross-distribution)
 - Pacman (Arch Linux)
+- Snap (cross-distribution)
 - Zypper (OpenSUSE)
 
 validateFonts.py

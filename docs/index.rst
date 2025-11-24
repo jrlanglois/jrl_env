@@ -7,9 +7,18 @@ Welcome to jrl_env's documentation!
    :maxdepth: 2
    :caption: Contents:
 
+   guide
    diagrams
    modules
    tests
+
+.. toctree::
+   :hidden:
+
+   security
+   configs
+   common-readme
+   tests-readme
 
 Overview
 --------

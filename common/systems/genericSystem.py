@@ -141,6 +141,9 @@ class GenericSystem(SystemBase):
         elif managerName == "winget":
             from common.install.packageManagers import WingetPackageManager
             return WingetPackageManager()
+        elif managerName == "chocolatey":
+            from common.install.packageManagers import ChocolateyPackageManager
+            return ChocolateyPackageManager()
         else:
             raise ValueError(f"Unknown package manager: {managerName}")
 

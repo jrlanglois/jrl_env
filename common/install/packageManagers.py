@@ -352,6 +352,54 @@ class WingetPackageManager(PackageManager):
             return False
 
 
+class ChocolateyPackageManager(PackageManager):
+    """Chocolatey package manager (Windows)."""
+
+    def check(self, package: str) -> bool:
+        try:
+            result = subprocess.run(
+                ["choco", "list", "--local-only", "--exact", package],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            # Chocolatey returns the package if installed
+            return package.lower() in result.stdout.lower()
+        except Exception:
+            return False
+
+    def install(self, package: str) -> bool:
+        cmd = ["choco", "install", package, "-y"]
+        return runPackageCommand(cmd, package, "install", raiseOnError=False)
+
+    def update(self, package: str) -> bool:
+        cmd = ["choco", "upgrade", package, "-y"]
+        return runPackageCommand(cmd, package, "update", raiseOnError=False)
+
+    def updateAll(self, dryRun: bool = False) -> bool:
+        from common.core.logging import printInfo, printSuccess, printWarning
+
+        if dryRun:
+            printInfo("[DRY RUN] Would run: choco upgrade all -y")
+            return True
+
+        try:
+            result = subprocess.run(
+                ["choco", "upgrade", "all", "-y"],
+                capture_output=True,
+                check=False
+            )
+            if result.returncode == 0:
+                printSuccess("Chocolatey packages updated")
+                return True
+            else:
+                printWarning("Chocolatey upgrade had issues")
+                return False
+        except Exception as e:
+            printWarning(f"Failed to update Chocolatey packages: {e}")
+            return False
+
+
 class StorePackageManager(PackageManager):
     """Microsoft Store package manager (Windows)."""
 
@@ -526,12 +574,14 @@ class PacmanPackageManager(PackageManager):
 __all__ = [
     "PackageManager",
     "AptPackageManager",
-    "SnapPackageManager",
-    "BrewPackageManager",
     "BrewCaskPackageManager",
-    "WingetPackageManager",
-    "StorePackageManager",
+    "BrewPackageManager",
+    "ChocolateyPackageManager",
     "DnfPackageManager",
-    "ZypperPackageManager",
     "PacmanPackageManager",
+    "SnapPackageManager",
+    "StorePackageManager",
+    "WingetPackageManager",
+    "ZypperPackageManager",
+    "runPackageCommand",
 ]

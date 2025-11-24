@@ -19,8 +19,7 @@
     ],
     "snap":
     [
-        "steam",
-        "obs-studio"
+        "steam"
     ],
     "flatpak":
     [

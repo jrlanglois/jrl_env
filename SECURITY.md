@@ -84,7 +84,7 @@ When you provide a passphrase, jrl_env stores it securely in your system keychai
 ### Sudo and Elevated Privileges
 
 jrl_env requires elevated privileges for:
-- Package manager operations (`apt`, `brew`, `dnf`, `zypper`, `pacman`, `winget`)
+- Package manager operations (`apt`, `brew`, `dnf`, `zypper`, `pacman`, `winget`, `choco`, `snap`)
 - System-wide font installation
 - Modifying system configuration
 

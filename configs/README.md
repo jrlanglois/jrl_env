@@ -132,7 +132,7 @@ This is useful for:
 
 ### macOS (`macos.json`)
 
-```json
+```javascript
 {
     "brew": ["string"],              // Homebrew packages (formula names)
     "brewCask": ["string"],          // Homebrew Cask applications (cask names)
@@ -155,7 +155,7 @@ This is useful for:
 
 Configuration files: `debian.json`, `ubuntu.json`, `popos.json`, `linuxmint.json`, `elementary.json`, `zorin.json`, `mxlinux.json`
 
-```json
+```javascript
 {
     "useLinuxCommon": boolean,       // Merge packages from linuxCommon.json (default: false)
     "apt": ["string"],                // APT packages (Debian/Ubuntu package names)
@@ -187,7 +187,7 @@ Configuration files: `debian.json`, `ubuntu.json`, `popos.json`, `linuxmint.json
 
 Same structure as `ubuntu.json`:
 
-```json
+```javascript
 {
     "linuxCommon": boolean,
     "apt": ["string"],
@@ -213,7 +213,7 @@ Same as Ubuntu (apt, snap, cruft)
 
 Configuration files: `fedora.json`, `redhat.json`
 
-```json
+```javascript
 {
     "useLinuxCommon": boolean,        // Merge packages from linuxCommon.json
     "dnf": ["string"],                // DNF packages (RPM package names)
@@ -243,7 +243,7 @@ Configuration files: `fedora.json`, `redhat.json`
 
 ### OpenSUSE (`opensuse.json`)
 
-```json
+```javascript
 {
     "linuxCommon": boolean,
     "zypper": ["string"],             // Zypper packages (RPM package names)
@@ -271,7 +271,7 @@ Configuration files: `fedora.json`, `redhat.json`
 
 Configuration files: `archlinux.json`, `manjaro.json`, `endeavouros.json`
 
-```json
+```javascript
 {
     "useLinuxCommon": boolean,
     "pacman": ["string"],             // Pacman packages (Arch package names)
@@ -301,7 +301,7 @@ Configuration files: `archlinux.json`, `manjaro.json`, `endeavouros.json`
 
 ### Alpine Linux (`alpine.json`)
 
-```json
+```javascript
 {
     "apk": ["string"],                // APK packages (Alpine package names)
     "shell": {
@@ -326,7 +326,7 @@ Configuration files: `archlinux.json`, `manjaro.json`, `endeavouros.json`
 
 ### Windows 11 (`win11.json`)
 
-```json
+```javascript
 {
     "winget": ["string"],             // Winget packages (format: "Publisher.PackageName")
     "windowsStore": ["string"],       // Microsoft Store app IDs
@@ -342,6 +342,7 @@ Configuration files: `archlinux.json`, `manjaro.json`, `endeavouros.json`
 
 **Package Managers:**
 
+- `chocolatey`: Chocolatey packages (e.g., `"graphviz"`, `"doxygen.install"`)
 - `winget`: Windows Package Manager packages (format: `"Publisher.PackageName"`, e.g., `"Git.Git"`, `"Microsoft.VisualStudioCode"`)
 - `windowsStore`: Microsoft Store app IDs (e.g., `"9MV0B5HZVK9Z"`)
 
@@ -349,7 +350,7 @@ Configuration files: `archlinux.json`, `manjaro.json`, `endeavouros.json`
 
 ### Linux Common (`linuxCommon.json`)
 
-```json
+```javascript
 {
     "linuxCommon": ["string"]         // Package names that should exist in all Linux package managers
 }
@@ -368,7 +369,7 @@ apt, yum, dnf, rpm, zypper, pacman, apk, snap, flatpak
 
 ### Fonts (`fonts.json`)
 
-```json
+```javascript
 {
     "googleFonts": ["string"]         // Font family names from Google Fonts
 }
@@ -383,7 +384,7 @@ apt, yum, dnf, rpm, zypper, pacman, apk, snap, flatpak
 
 ### Repositories (`repositories.json`)
 
-```json
+```javascript
 {
     "workPathUnix": "$HOME/work",
     "workPathWindows": "D:\\work",
@@ -421,7 +422,7 @@ apt, yum, dnf, rpm, zypper, pacman, apk, snap, flatpak
 
 ### Git Config (`gitConfig.json`)
 
-```json
+```javascript
 {
     "user": {
         "name": "string",             // Git user name (UTF-8, web-compatible)
@@ -453,7 +454,7 @@ apt, yum, dnf, rpm, zypper, pacman, apk, snap, flatpak
 
 ### Cursor Settings (`cursorSettings.json`)
 
-```json
+```javascript
 {
     // Any valid Cursor/VSCode settings JSON
     "editor.fontSize": number,
@@ -475,7 +476,7 @@ apt, yum, dnf, rpm, zypper, pacman, apk, snap, flatpak
 
 ### Android (`android.json`)
 
-```json
+```javascript
 {
     "android": {
         "sdkComponents": ["string"]    // Android SDK components to install via sdkmanager
@@ -515,7 +516,7 @@ apt, yum, dnf, rpm, zypper, pacman, apk, snap, flatpak
 
 Command objects can be specified in `preInstall` and `postInstall` arrays:
 
-```json
+```javascript
 {
     "name": "string",                 // Human-readable command name
     "shell": "string",                // Shell to use: "bash", "powershell", "cmd", "zsh"
@@ -565,7 +566,7 @@ python3 test/validateRepositories.py configs/repositories.json [--quiet]
 python3 test/validateGitConfig.py configs/gitConfig.json [--quiet]
 ```
 
-All validation scripts support `--help` and `--quiet` flags. See [`test/README.md`](../test/README.md) for details.
+All validation scripts support `--help` and `--quiet` flags. See the test suite documentation for details.
 
 ## JSON Formatting
 
@@ -578,7 +579,7 @@ All JSON files follow these conventions:
 
 Example:
 
-```json
+```javascript
 {
     "key": "value",
     "array": [

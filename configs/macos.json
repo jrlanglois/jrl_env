@@ -7,8 +7,8 @@
         "doxygen",
         "fd",
         "fzf",
-        "git-lfs",
         "git",
+        "git-lfs",
         "go",
         "graphviz",
         "htop",
@@ -29,9 +29,9 @@
         "wget",
         "xcodes",
         "yarn",
+        "zsh",
         "zsh-autosuggestions",
         "zsh-syntax-highlighting"
-        "zsh",
     ],
     "brewCask":
     [

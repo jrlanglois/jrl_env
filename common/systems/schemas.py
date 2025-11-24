@@ -154,6 +154,7 @@ macosConfigSchema = {
 win11ConfigSchema = {
     "type": "object",
     "properties": {
+        "chocolatey": packageArraySchema,
         "winget": packageArraySchema,
         "windowsStore": packageArraySchema,
         "android": androidConfigFragment,

@@ -1,4 +1,7 @@
 {
+    "chocolatey":
+    [
+    ],
     "winget":
     [
         "7zip.7zip",

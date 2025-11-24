@@ -247,7 +247,7 @@ class SetupOrchestrator:
         # Step 1: Setup development environment
         self.executeStep(
             stepName="devEnv",
-            stepNumber="1",
+            stepNumber=1,
             description="Setting up development environment",
             action=lambda: self.system.setupDevEnv(),
         )
@@ -256,7 +256,7 @@ class SetupOrchestrator:
         if self.runFlags.runFonts:
             self.executeStep(
                 stepName="fonts",
-                stepNumber="2",
+                stepNumber=2,
                 description="Installing fonts",
                 action=lambda: self.system.installGoogleFonts(
                     paths["fontsConfigPath"],

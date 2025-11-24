@@ -455,7 +455,7 @@ def validateAppsJson(filePath: Path, platform: str) -> tuple[list[str], list[str
 
         platformFields = {
             # macOS and Windows
-            "win11": {"winget", "windowsStore", "commands", "cruft", "android"},
+            "win11": {"chocolatey", "winget", "windowsStore", "commands", "cruft", "android"},
             "macos": {"brew", "brewCask", "commands", "shell", "cruft", "android"},
             # APT-based
             "debian": aptFields,

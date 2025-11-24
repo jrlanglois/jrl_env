@@ -235,12 +235,15 @@ JSON schema definitions for configuration files.
 
 ## Platform-Specific Modules
 
-### `linux/packageManager.py`
+### `install/packageManagers.py`
 
-Linux package manager abstraction (legacy - prefer `install/packageManagers.py` for new code):
+Cross-platform package manager abstractions:
 
-- `PackageManager`: Abstract base class for package managers
-- `AptPackageManager`, `YumPackageManager`, `DnfPackageManager`, `RpmPackageManager`, `ZypperPackageManager`, `PacmanPackageManager`: Package manager implementations
+- `PackageManager`: Abstract base class for all package managers
+- **macOS**: `BrewPackageManager`, `BrewCaskPackageManager`
+- **Linux**: `AptPackageManager`, `SnapPackageManager`, `DnfPackageManager`, `ZypperPackageManager`, `PacmanPackageManager`
+- **Windows**: `WingetPackageManager`, `ChocolateyPackageManager`, `StorePackageManager`
+- `runPackageCommand()`: Standardised error handling helper
 - `getPackageManager(managerName)`: Factory function to create appropriate package manager
 - `mapPackageName(package, manager)`: Map Debian/Ubuntu package names to RPM equivalents
 

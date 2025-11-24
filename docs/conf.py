@@ -23,7 +23,21 @@ extensions = [
     'sphinx.ext.inheritance_diagram',
     'sphinx.ext.graphviz',  # For call graphs and diagrams
     'sphinx_autodoc_typehints',
+    'myst_parser',  # Markdown support
 ]
+
+# MyST Parser configuration (for Markdown support)
+myst_enable_extensions = [
+    "colon_fence",
+    "deflist",
+    "tasklist",
+]
+
+# Source file suffixes
+source_suffix = {
+    '.rst': 'restructuredtext',
+    '.md': 'markdown',
+}
 
 templates_path = ['_templates']
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
