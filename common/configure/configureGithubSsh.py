@@ -409,12 +409,20 @@ def configureGithubSsh(
             printInfo("You can optionally add a passphrase to protect your SSH key.")
             printInfo("Press Enter to skip passphrase (less secure but more convenient).")
 
-        while True:
+        maxAttempts = 3
+        attempts = 0
+
+        while attempts < maxAttempts:
             passphrase1 = getpass.getpass("Enter passphrase (empty for no passphrase): ")
 
             if not passphrase1:
+                attempts += 1
                 if requirePassphrase:
-                    printWarning("Passphrase is required. Please enter a passphrase.")
+                    if attempts >= maxAttempts:
+                        printWarning(f"Empty passphrase entered {maxAttempts} times. Using no passphrase.")
+                        passphrase = ""
+                        break
+                    printWarning(f"Passphrase is required. Please enter a passphrase. (Attempt {attempts}/{maxAttempts})")
                     continue
                 else:
                     printInfo("Using no passphrase.")

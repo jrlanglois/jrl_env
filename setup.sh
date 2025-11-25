@@ -1,6 +1,19 @@
 #!/bin/bash
 # Unified setup wrapper for Unix-like systems (macOS, Linux)
 # Auto-detects OS and runs the appropriate Python setup script
+#
+# Options:
+#   --yes, -y    Auto-accept prompts (for Docker/CI)
+
+# Parse --yes flag before set -u
+AUTO_YES=false
+for arg in "$@"; do
+    case $arg in
+        --yes|-y)
+            AUTO_YES=true
+            ;;
+    esac
+done
 
 set -euo pipefail
 
@@ -49,12 +62,16 @@ if ! command -v python3 >/dev/null 2>&1; then
         fi
     fi
 
-    # Prompt user to install Python3
-    echo "Would you like to install Python3? (y/N)"
-    read -r response
-    if [[ ! "$response" =~ ^[Yy]$ ]]; then
-        echo "Setup cancelled. Python3 is required to continue."
-        exit 1
+    # Prompt user to install Python3 (unless --yes flag provided)
+    if [ "$AUTO_YES" = true ]; then
+        echo "Auto-installing Python3 (--yes flag provided)..."
+    else
+        echo "Would you like to install Python3? (y/N)"
+        read -r response
+        if [[ ! "$response" =~ ^[Yy]$ ]]; then
+            echo "Setup cancelled. Python3 is required to continue."
+            exit 1
+        fi
     fi
 
     # Attempt to install Python3 based on OS

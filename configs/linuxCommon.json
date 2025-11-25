@@ -1,4 +1,9 @@
 {
+    "system":
+    {
+        "timezone": "America/Montreal",
+        "locale": "en_CA.UTF-8"
+    },
     "apt":
     [
         "bat",

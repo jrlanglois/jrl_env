@@ -54,8 +54,8 @@ class SystemBase(ABC):
         Args:
             projectRoot: Root directory of jrl_env project
         """
-        self.projectRoot = projectRoot
-        self.scriptDir = projectRoot / "systems" / self.getPlatformName()
+        self.projectRoot = projectRoot if isinstance(projectRoot, Path) else Path(projectRoot)
+        self.scriptDir = self.projectRoot / "systems" / self.getPlatformName()
         self.setupArgs: Optional[SetupArgs] = None
         self.runFlags: Optional[RunFlags] = None
         self.logFile: Optional[str] = None
@@ -284,10 +284,15 @@ class SystemBase(ABC):
             return True
 
         try:
-            from common.install.installFonts import installGoogleFonts as installFontsFunc
+            # Run installFonts.py as a script (it's not designed to be imported)
+            import subprocess
 
-            installFontsFunc(configPath, installDir)
-            return True
+            cmd = [sys.executable, "-m", "common.install.installFonts", configPath, installDir]
+            if dryRun:
+                cmd.append("--dryRun")
+
+            result = subprocess.run(cmd, check=False)
+            return result.returncode == 0
         except Exception as e:
             printWarning(f"Font installation error: {e}")
             return False

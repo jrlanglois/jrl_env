@@ -1,0 +1,32 @@
+# Alpine Linux test environment for jrl_env
+# Simulates a fresh Alpine installation with ONLY git
+FROM alpine:latest
+
+# Set timezone
+ENV TZ=America/Montreal
+
+
+# Install ONLY git and bash (jrl_env/setup.sh should handle Python installation)
+RUN apk add --no-cache \
+    tzdata \
+    git \
+    bash \
+    sudo \
+    curl
+
+# Create test user (non-root)
+RUN adduser -D -s /bin/bash testuser && \
+    echo "testuser ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+
+USER testuser
+
+# Add ~/.local/bin to PATH for pip --user installations
+ENV PATH="/home/testuser/.local/bin:${PATH}"
+WORKDIR /home/testuser
+
+# Copy jrl_env
+COPY --chown=testuser:testuser . /home/testuser/jrl_env
+
+WORKDIR /home/testuser/jrl_env
+
+CMD ["/bin/bash"]

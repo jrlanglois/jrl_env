@@ -30,6 +30,7 @@ sys.path.insert(0, str(scriptDir))
 from common.core.logging import (
     Colours,
     printError,
+    printH2,
     printInfo,
     printLock,
     printSuccess,

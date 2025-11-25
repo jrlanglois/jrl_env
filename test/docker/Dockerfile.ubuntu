@@ -1,0 +1,38 @@
+# Ubuntu test environment for jrl_env
+# Simulates a fresh Ubuntu installation with ONLY git
+FROM ubuntu:24.04
+
+# Prevent interactive prompts during apt install
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Set timezone (prevents tzdata prompt)
+ENV TZ=America/Montreal
+
+# Install ONLY git (jrl_env/setup.sh should handle Python installation)
+RUN apt-get update && \
+    apt-get install -y \
+    tzdata \
+    git \
+    sudo \
+    curl \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create test user (non-root) - simulates real user
+RUN useradd -m -s /bin/bash testuser && \
+    echo "testuser ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+
+USER testuser
+WORKDIR /home/testuser
+
+# Add ~/.local/bin to PATH for pip --user installations
+ENV PATH="/home/testuser/.local/bin:${PATH}"
+
+# Copy jrl_env
+COPY --chown=testuser:testuser . /home/testuser/jrl_env
+
+WORKDIR /home/testuser/jrl_env
+
+# Default: Interactive shell
+# Real usage: ./setup.sh
+CMD ["/bin/bash"]

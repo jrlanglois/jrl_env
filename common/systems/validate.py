@@ -271,7 +271,7 @@ def collectUnknownFieldErrors(configsPath: Path, targetPlatform: Optional[str] =
             import json
             with open(linuxCommonPath, 'r', encoding='utf-8') as f:
                 linuxCommonData = json.load(f)
-            allowedLinuxCommonFields = {"apt", "dnf", "pacman", "zypper", "snap", "flatpak"}
+            allowedLinuxCommonFields = {"system", "apt", "dnf", "pacman", "zypper", "snap", "flatpak", "cruft"}
             errors = detectUnknownFields(linuxCommonData, allowedLinuxCommonFields)
             unknownFieldErrors.extend(errors)
     except Exception:
@@ -911,7 +911,7 @@ def main(setupSignalHandler: bool = True) -> int:
             try:
                 with open(linuxCommonPath, 'r', encoding='utf-8') as f:
                     linuxCommonData = json.load(f)
-                allowedLinuxCommonFields = {"apt", "dnf", "pacman", "zypper", "snap", "flatpak"}
+                allowedLinuxCommonFields = {"system", "apt", "dnf", "pacman", "zypper", "snap", "flatpak", "cruft"}
                 unknownLinuxCommonErrors = detectUnknownFields(linuxCommonData, allowedLinuxCommonFields)
                 allErrors.extend(unknownLinuxCommonErrors)
             except Exception:

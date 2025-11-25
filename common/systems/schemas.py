@@ -262,10 +262,21 @@ repositoriesConfigSchema = {
     "additionalProperties": False,
 }
 
+# System config schema (timezone, locale)
+systemConfigSchema = {
+    "type": "object",
+    "properties": {
+        "timezone": {"type": "string"},
+        "locale": {"type": "string"},
+    },
+    "additionalProperties": False,
+}
+
 # Linux common config schema
 linuxCommonConfigSchema = {
     "type": "object",
     "properties": {
+        "system": systemConfigSchema,
         "apt": {
             "type": "array",
             "items": {"type": "string"},

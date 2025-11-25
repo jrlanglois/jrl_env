@@ -1,0 +1,31 @@
+# Windows Server test environment for jrl_env
+# NOTE: This requires a Windows Docker host (won't work on macOS/Linux)
+# For testing on macOS, use GitHub Actions with windows-latest instead
+
+FROM mcr.microsoft.com/windows/servercore:ltsc2022
+
+# Set timezone to Eastern Time (Toronto)
+RUN tzutil /s "Eastern Standard Time"
+
+# Install Chocolatey
+RUN powershell -Command \
+    Set-ExecutionPolicy Bypass -Scope Process -Force; \
+    [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; \
+    iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
+
+# Install ONLY Git via Chocolatey (jrl_env/setup.ps1 should handle Python)
+RUN choco install -y git
+
+# Set working directory
+WORKDIR C:\\jrl_env
+
+# Copy jrl_env
+COPY . C:\\jrl_env
+
+# Default: PowerShell
+CMD ["powershell"]
+
+# NOTE: To use this Dockerfile:
+# - You need a Windows Docker host
+# - OR use Docker Desktop on Windows with Windows containers enabled
+# - OR use GitHub Actions (recommended for macOS users)

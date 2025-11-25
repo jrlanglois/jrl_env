@@ -115,7 +115,7 @@ def isAndroidStudioInstalled() -> bool:
     else:
         studioPaths = [
             Path.home() / ".local" / "share" / "applications" / "android-studio.desktop",
-            Path("/opt" / "android-studio" / "bin" / "studio.sh"),
+            Path("/opt/android-studio/bin/studio.sh"),
         ]
 
     for studioPath in studioPaths:

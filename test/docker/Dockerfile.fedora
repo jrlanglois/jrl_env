@@ -1,0 +1,32 @@
+# Fedora test environment for jrl_env
+# Simulates a fresh Fedora installation with ONLY git
+FROM fedora:40
+
+# Set timezone
+ENV TZ=America/Montreal
+
+
+# Install ONLY git (jrl_env/setup.sh should handle Python installation)
+RUN dnf install -y \
+    tzdata \
+    git \
+    sudo \
+    curl \
+    && dnf clean all
+
+# Create test user (non-root)
+RUN useradd -m -s /bin/bash testuser && \
+    echo "testuser ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+
+USER testuser
+
+# Add ~/.local/bin to PATH for pip --user installations
+ENV PATH="/home/testuser/.local/bin:${PATH}"
+WORKDIR /home/testuser
+
+# Copy jrl_env
+COPY --chown=testuser:testuser . /home/testuser/jrl_env
+
+WORKDIR /home/testuser/jrl_env
+
+CMD ["/bin/bash"]

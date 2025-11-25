@@ -32,6 +32,7 @@ class SetupArgs:
     resume: bool = False
     noResume: bool = False
     listSteps: bool = False
+    autoYes: bool = False
     configDir: Optional[str] = None
     noConsoleTimestamps: bool = False
     clearRepoCache: bool = False
@@ -151,6 +152,8 @@ def parseSetupArgs(args: Optional[list[str]] = None) -> SetupArgs:
         # Other flags
         elif arg == "--dryRun":
             setupArgs.dryRun = True
+        elif arg in ("--yes", "-y"):
+            setupArgs.autoYes = True
         elif arg == "--noBackup":
             setupArgs.noBackup = True
         elif arg == "--quiet" or arg == "-q":

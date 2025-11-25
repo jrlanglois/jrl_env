@@ -1,4 +1,7 @@
 # Python dependencies for jrl_env
+
+# JSON schema validation
+jsonschema>=4.0.0
 # Install with: pip install -r requirements.txt
 
 # JSON schema validation for configuration files

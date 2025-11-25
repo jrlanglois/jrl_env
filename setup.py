@@ -210,12 +210,24 @@ def installRequirements() -> bool:
 
         # Install requirements
         printInfo(f"Installing dependencies from {requirementsFile.name}...")
+
+        # Try --user first (cleanest), fall back to --break-system-packages if needed
         result = subprocess.run(
-            [sys.executable, "-m", "pip", "install", "--quiet", "--upgrade", "-r", str(requirementsFile)],
+            [sys.executable, "-m", "pip", "install", "--user", "--quiet", "--upgrade", "-r", str(requirementsFile)],
             check=False,
             capture_output=True,
             text=True,
         )
+
+        # If --user blocked by PEP 668, use --break-system-packages
+        if result.returncode != 0 and "externally-managed-environment" in result.stderr:
+            printInfo("Python environment blocks --user, using --break-system-packages...")
+            result = subprocess.run(
+                [sys.executable, "-m", "pip", "install", "--break-system-packages", "--quiet", "--upgrade", "-r", str(requirementsFile)],
+                check=False,
+                capture_output=True,
+                text=True,
+            )
 
         if result.returncode == 0:
             printSuccess("Dependencies installed successfully.")
@@ -447,8 +459,11 @@ def main() -> int:
     # Check if setup has already been run
     setupAlreadyRan = checkIfSetupAlreadyRan()
 
-    # If setup already ran, run update script instead
-    if setupAlreadyRan:
+    # Parse arguments to check if explicit --install was provided
+    hasExplicitInstall = any(arg.startswith("--install") for arg in sys.argv)
+
+    # If setup already ran AND user didn't explicitly request install, run update instead
+    if setupAlreadyRan and not hasExplicitInstall:
         printWarning("Setup appears to have been run before.")
         printInfo(
             "Running UPDATE mode:\n"
@@ -476,15 +491,22 @@ def main() -> int:
         )
     safePrint()
 
-    # Use GenericSystem for setup
-    systemClass = getSystemClass(platformName)
-    if not systemClass:
-        printError(f"Failed to get system class for platform: {platformName}")
+    # Create system for setup
+    from common.systems.genericSystem import GenericSystem
+    from common.systems.platform import Platform
+
+    try:
+        platformEnum = Platform[platformName]
+        system = GenericSystem(projectRoot, platformEnum)
+    except (KeyError, ValueError):
+        printError(
+            f"Unsupported platform: {platformName}\n"
+            "Supported platforms: macos, ubuntu, raspberrypi, redhat, opensuse, archlinux, win11"
+        )
         return 1
 
     # Start setup
     try:
-        system = systemClass(projectRoot)
         result = system.run()
         if result == 0:
             # Only mark as run and update if not in dry-run or listSteps mode
@@ -492,22 +514,16 @@ def main() -> int:
             listSteps = "--listSteps" in sys.argv
             if not dryRun and not listSteps:
                 markSetupAsRun()
-                # After first-time setup, automatically run update
-                safePrint()
-                printH2("Running Update After First-Time Setup")
-                printInfo("Automatically running update to ensure everything is current...")
-                safePrint()
-                # Use unified update script
-                try:
-                    from common.systems.update import main as updateMain
-                    updateResult = updateMain()
-                    return updateResult
-                except Exception as e:
-                    printWarning(f"Update script had issues: {e}")
-                    return 0  # Don't fail if update has issues
+                # Skip auto-update (causes infinite loop in containers without git push access)
+                printSuccess("Setup completed successfully!")
+                printInfo("To update in the future, run: python3 setup.py --update")
+                return 0
         return result
     except Exception as e:
         printError(f"Failed to run system setup: {e}")
+        # Show full traceback for debugging
+        import traceback
+        traceback.print_exc()
         return 1
 
 
