@@ -150,6 +150,51 @@ class OhMyZshManager:
 
         return defaultTheme
 
+    def getStatus(self) -> dict:
+        """
+        Get Oh My Zsh installation status.
+
+        Returns:
+            Dictionary with status information
+        """
+        status = {
+            'installed': self.isInstalled(),
+            'installPath': str(self.installPath),
+            'zshrcExists': self.zshrcPath.exists(),
+        }
+
+        if status['installed']:
+            # Try to get current theme
+            try:
+                if self.zshrcPath.exists():
+                    content = self.zshrcPath.read_text(encoding='utf-8')
+                    import re
+                    match = re.search(r'^ZSH_THEME="([^"]+)"', content, re.MULTILINE)
+                    if match:
+                        status['currentTheme'] = match.group(1)
+                    else:
+                        status['currentTheme'] = 'unknown'
+                else:
+                    status['currentTheme'] = 'unknown'
+            except Exception:
+                status['currentTheme'] = 'unknown'
+
+        return status
+
+    def printStatus(self) -> None:
+        """Print Oh My Zsh status in a user-friendly format."""
+        from common.core.logging import printInfo, printSuccess, printWarning
+
+        status = self.getStatus()
+
+        printInfo("Oh My Zsh:")
+        if status['installed']:
+            printSuccess("✓ Installed")
+            if status.get('currentTheme'):
+                printInfo(f"Theme: {status['currentTheme']}")
+        else:
+            printWarning("Not installed")
+
     def configureTheme(self, theme: str = "agnoster") -> bool:
         """
         Configure Oh My Zsh theme.

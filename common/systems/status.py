@@ -91,63 +91,43 @@ def checkZsh() -> None:
         except Exception:
             printSuccess("Installed")
 
-        ohMyZshPath = Path.home() / ".oh-my-zsh"
-        if ohMyZshPath.exists():
-            printSuccess("Oh My Zsh installed")
-        else:
-            printWarning("Oh My Zsh not installed")
+        # Use OhMyZshManager for status (proper OOP)
+        from common.install.setupZsh import OhMyZshManager
+        omzManager = OhMyZshManager()
+        omzManager.printStatus()
     else:
         printError("Not installed")
     safePrint()
 
 
-def checkPackageManager(platformName: str) -> None:
-    """Check platform-specific package manager."""
-    if platformName == "macos":
-        printInfo("Homebrew:")
-        if commandExists("brew"):
-            try:
-                result = subprocess.run(
-                    ["brew", "--version"],
-                    capture_output=True,
-                    text=True,
-                    check=True,
-                )
-                version = result.stdout.split("\n")[0] if result.stdout else "Installed"
-                printSuccess(f"Installed: {version}")
-            except Exception:
-                printSuccess("Installed")
-        else:
-            printError("Not installed")
-        safePrint()
-    elif platformName == "win11":
-        printInfo("Windows Package Manager (winget):")
-        if isWingetInstalled():
-            try:
-                result = subprocess.run(
-                    ["winget", "--version"],
-                    capture_output=True,
-                    text=True,
-                    check=True,
-                )
-                printSuccess(f"Installed: {result.stdout.strip()}")
-            except Exception:
-                printSuccess("Installed (version check failed)")
-        else:
-            printError("Not installed")
-        safePrint()
-
-
-def checkInstalledApps(platformName: str, configPath: Path, checkFunc: Optional[Callable[[str], bool]], extractor: str, label: str) -> None:
+def checkPackageManagers(platform) -> None:
     """
-    Check installed applications.
+    Check package managers using the platform's own managers.
+    Uses OOP - delegates to PackageManager instances.
 
     Args:
-        platformName: Platform name
+        platform: Platform instance (BasePlatform subclass)
+    """
+    printInfo("Package Managers:")
+
+    for manager in platform.packageManagers:
+        if manager.isAvailable():
+            version = manager.getVersion()
+            printSuccess(f"{manager.getName()}: {version}")
+        else:
+            printWarning(f"{manager.getName()}: Not available")
+
+    safePrint()
+
+
+def checkInstalledApps(platform, configPath: Path) -> None:
+    """
+    Check installed applications using platform's package managers.
+    Uses OOP - delegates to PackageManager.check() methods.
+
+    Args:
+        platform: Platform instance with packageManagers
         configPath: Path to platform config JSON
-        checkFunc: Function to check if app is installed
-        extractor: JSON path extractor (e.g., ".apt[]?", ".brew[]?")
-        label: Label for the package type (e.g., "apt packages", "brew packages")
     """
     if not configPath.exists():
         return
@@ -155,112 +135,43 @@ def checkInstalledApps(platformName: str, configPath: Path, checkFunc: Optional[
     printInfo("Installed Applications:")
 
     try:
-        apps = getJsonArray(str(configPath), extractor)
-        installed = 0
-        notInstalled = 0
+        # Load the full config
+        with open(configPath, 'r', encoding='utf-8') as f:
+            config = json.load(f)
 
-        for app in apps:
-            if not app or not app.strip():
+        totalInstalled = 0
+        totalNotInstalled = 0
+
+        # Check each package manager's packages
+        for manager in platform.packageManagers:
+            if not manager.isAvailable():
                 continue
 
-            app = app.strip()
-            if checkFunc and checkFunc(app):
-                installed += 1
-            else:
-                notInstalled += 1
-                printError(f"{app}")
+            # Get package list for this manager (brew, apt, winget, etc.)
+            managerType = manager.getName().lower().replace(" ", "")
+            packages = config.get(managerType, [])
 
-        if installed > 0:
-            printSuccess(f"{installed} {label} installed")
-        if notInstalled > 0:
-            printWarning(f"{notInstalled} {label} not installed")
+            if not packages:
+                continue
+
+            installed = sum(1 for pkg in packages if manager.check(pkg))
+            notInstalled = len(packages) - installed
+
+            totalInstalled += installed
+            totalNotInstalled += notInstalled
+
+            if installed > 0:
+                printSuccess(f"{installed} {manager.getName()} package(s) installed")
+            if notInstalled > 0:
+                printWarning(f"{notInstalled} {manager.getName()} package(s) not installed")
+
+        if totalInstalled == 0 and totalNotInstalled == 0:
+            printInfo("No packages configured")
+
     except Exception as e:
         printWarning(f"Error checking apps: {e}")
 
     safePrint()
-
-
-def getAppChecker(platformName: str) -> tuple[Optional[Callable[[str], bool]], str, str]:
-    """
-    Get platform-specific app checker function and config.
-
-    Returns:
-        Tuple of (checkFunc, extractor, label)
-    """
-    if platformName == "win11":
-        return (isAppInstalled, ".winget[]?", "winget app(s)")
-
-    elif platformName == "macos":
-        def checkBrew(app: str) -> bool:
-            try:
-                result = subprocess.run(
-                    ["brew", "list", app],
-                    capture_output=True,
-                    check=False,
-                )
-                return result.returncode == 0
-            except Exception:
-                return False
-
-        return (checkBrew, ".brew[]?", "brew package(s)")
-
-    elif platformName in ("ubuntu", "raspberrypi"):
-        def checkApt(app: str) -> bool:
-            try:
-                result = subprocess.run(
-                    ["dpkg", "-l", app],
-                    capture_output=True,
-                    check=False,
-                )
-                return result.returncode == 0
-            except Exception:
-                return False
-
-        return (checkApt, ".apt[]?", "apt package(s)")
-
-    elif platformName == "redhat":
-        def checkDnf(app: str) -> bool:
-            try:
-                result = subprocess.run(
-                    ["rpm", "-q", app],
-                    capture_output=True,
-                    check=False,
-                )
-                return result.returncode == 0
-            except Exception:
-                return False
-
-        return (checkDnf, ".dnf[]?", "dnf package(s)")
-
-    elif platformName == "opensuse":
-        def checkZypper(app: str) -> bool:
-            try:
-                result = subprocess.run(
-                    ["rpm", "-q", app],
-                    capture_output=True,
-                    check=False,
-                )
-                return result.returncode == 0
-            except Exception:
-                return False
-
-        return (checkZypper, ".zypper[]?", "zypper package(s)")
-
-    elif platformName == "archlinux":
-        def checkPacman(app: str) -> bool:
-            try:
-                result = subprocess.run(
-                    ["pacman", "-Q", app],
-                    capture_output=True,
-                    check=False,
-                )
-                return result.returncode == 0
-            except Exception:
-                return False
-
-        return (checkPacman, ".pacman[]?", "pacman package(s)")
-
-    return (None, "", "")
 
 
 def checkRepositories(platformName: str, configsPath: Optional[Path] = None) -> None:
@@ -452,13 +363,17 @@ def runStatusCheck(system: Optional[object] = None) -> int:
     # Check common items
     checkGit()
     checkZsh()
-    checkPackageManager(platformName)
 
-    # Check installed apps
-    platformConfigPath = configsPath / f"{platformName}.json"
-    checkFunc, extractor, label = getAppChecker(platformName)
-    if checkFunc:
-        checkInstalledApps(platformName, platformConfigPath, checkFunc, extractor, label)
+    # Check package managers using platform facade (clean OOP)
+    from common.systems.platforms import getCurrentPlatform
+    platform = getCurrentPlatform(dryRun=True)
+    checkPackageManagers(platform)
+
+    # Check installed apps using platform's package managers (OOP)
+    from common.systems.platforms import getCurrentPlatform
+    platform = getCurrentPlatform(dryRun=True)
+    platformConfigPath = configsPath / f"{platform.getPlatformName()}.json"
+    checkInstalledApps(platform, platformConfigPath)
 
     # Check fonts
     fontsConfigPath = Path(paths.get("fontsConfigPath", configsPath / "fonts.json"))

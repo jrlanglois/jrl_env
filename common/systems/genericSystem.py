@@ -15,8 +15,20 @@ from common.systems.systemsConfig import SystemConfig, getSystemConfig
 
 class GenericSystem(SystemBase):
     """
-    Generic system implementation driven by SystemConfig data.
-    Eliminates the need for per-platform system.py files.
+    Setup orchestration layer for full installation.
+
+    Coordinates the complete setup process including:
+    - Font installation
+    - Application installation
+    - Git configuration
+    - SSH setup
+    - Cursor configuration
+    - Repository cloning
+
+    Uses SystemConfig for platform-specific paths and dependencies.
+    Delegates to SetupOrchestrator for step-by-step execution.
+
+    For updates only, use BasePlatform (platforms.py) instead.
     """
 
     def __init__(self, projectRoot: Path, platform: Platform):
