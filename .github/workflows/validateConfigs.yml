@@ -34,7 +34,7 @@ jobs:
 
       - name: Validate macOS packages
         run: |
-          python3 test/validatePackages.py configs/macos.json
+          python3 test/validate/validatePackages.py configs/macos.json
 
 
   validate-windows-config:
@@ -78,7 +78,7 @@ jobs:
 
       - name: Validate Google Fonts
         run: |
-          python3 test/validateFonts.py configs/fonts.json
+          python3 test/validate/validateFonts.py configs/fonts.json
 
   validate-repositories:
     name: Validate Repositories Config
@@ -101,7 +101,7 @@ jobs:
 
       - name: Validate repositories
         run: |
-          python3 test/validateRepositories.py configs/repositories.json
+          python3 test/validate/validateRepositories.py configs/repositories.json
 
   validate-git-config:
     name: Validate Git Config
@@ -119,7 +119,7 @@ jobs:
 
       - name: Validate Git config (aliases, name, email, GitHub username)
         run: |
-          python3 test/validateGitConfig.py configs/gitConfig.json
+          python3 test/validate/validateGitConfig.py configs/gitConfig.json
 
   validate-cursor-config:
     name: Validate Cursor Config
@@ -169,7 +169,7 @@ jobs:
         run: |
           echo "Validating packages for apt, dnf, pacman, zypper, snap, flatpak..."
           echo "Using parallel API validation for speed (may take 1-3 minutes)"
-          python3 test/validateLinuxCommonPackages.py configs/linuxCommon.json --all
+          python3 test/validate/validateLinuxCommonPackages.py configs/linuxCommon.json --all
         continue-on-error: true
 
   validate-linux-distros:

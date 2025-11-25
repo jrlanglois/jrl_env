@@ -9,8 +9,10 @@ from pathlib import Path
 
 # Add project root to path
 scriptDir = Path(__file__).parent.absolute()
-projectRoot = scriptDir.parent
-sys.path.insert(0, str(projectRoot))
+sys.path.insert(0, str(scriptDir.parent.parent))
+
+from common.core.utilities import getProjectRoot
+projectRoot = getProjectRoot()
 
 from common.configure.githubApi import parseGitHubPattern
 

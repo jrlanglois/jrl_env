@@ -557,13 +557,13 @@ python3 -m common.systems.validate ubuntu [--quiet]
 
 ```bash
 # Package validation
-python3 test/validatePackages.py configs/macos.json [--quiet]
-python3 test/validateLinuxCommonPackages.py configs/linuxCommon.json [--all | package-manager] [--quiet]
+python3 test/validate/validatePackages.py configs/macos.json [--quiet]
+python3 test/validate/validateLinuxCommonPackages.py configs/linuxCommon.json [--all | package-manager] [--quiet]
 
 # Other configs
-python3 test/validateFonts.py configs/fonts.json [--quiet]
-python3 test/validateRepositories.py configs/repositories.json [--quiet]
-python3 test/validateGitConfig.py configs/gitConfig.json [--quiet]
+python3 test/validate/validateFonts.py configs/fonts.json [--quiet]
+python3 test/validate/validateRepositories.py configs/repositories.json [--quiet]
+python3 test/validate/validateGitConfig.py configs/gitConfig.json [--quiet]
 ```
 
 All validation scripts support `--help` and `--quiet` flags. See the test suite documentation for details.

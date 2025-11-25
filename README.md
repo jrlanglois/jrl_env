@@ -260,13 +260,13 @@ python3 -m common.systems.validate ubuntu
 
 ```bash
 # Package validation
-python3 test/validatePackages.py configs/macos.json
-python3 test/validateLinuxCommonPackages.py configs/linuxCommon.json
+python3 test/validate/validatePackages.py configs/macos.json
+python3 test/validate/validateLinuxCommonPackages.py configs/linuxCommon.json
 
 # Other configs
-python3 test/validateFonts.py configs/fonts.json
-python3 test/validateRepositories.py configs/repositories.json
-python3 test/validateGitConfig.py configs/gitConfig.json
+python3 test/validate/validateFonts.py configs/fonts.json
+python3 test/validate/validateRepositories.py configs/repositories.json
+python3 test/validate/validateGitConfig.py configs/gitConfig.json
 ```
 
 All validation scripts support `--help` and `--quiet` flags. See [`test/README.md`](test/README.md) for details.
