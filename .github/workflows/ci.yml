@@ -80,12 +80,12 @@ jobs:
 
       - name: Run setup validation tests
         shell: bash
-        run: python3 test/testSetupValidation.py
+        run: python3 test/test/testSetupValidation.py
 
       - name: Run wildcard repository tests
         shell: bash
-        run: python3 test/testWildcardRepos.py
+        run: python3 test/test/testWildcardRepos.py
 
       - name: Run platform detection tests
         shell: bash
-        run: python3 test/testPlatformDetection.py
+        run: python3 test/test/testPlatformDetection.py

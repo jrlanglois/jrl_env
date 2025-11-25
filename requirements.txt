@@ -13,6 +13,9 @@ argcomplete>=3.0.0
 # Code coverage
 coverage>=7.0.0
 
+# Pre-commit hooks
+pre-commit>=3.0.0
+
 # Documentation generation (Sphinx)
 sphinx>=7.0.0
 sphinx-autodoc-typehints>=1.24.0

@@ -30,8 +30,8 @@ Validates that packages exist in their respective package managers.
 
 .. code-block:: bash
 
-   python3 test/validatePackages.py configs/macos.json
-   python3 test/validatePackages.py configs/ubuntu.json
+   python3 test/validate/validatePackages.py configs/macos.json
+   python3 test/validate/validatePackages.py configs/ubuntu.json
 
 **Description:**
 
@@ -62,7 +62,7 @@ Validates packages across all Linux package managers.
 
 .. code-block:: bash
 
-   python3 test/validateLinuxCommonPackages.py configs/linuxCommon.json
+   python3 test/validate/validateLinuxCommonPackages.py configs/linuxCommon.json
 
 **Description:**
 
@@ -84,7 +84,7 @@ Validates Google Fonts availability.
 
 .. code-block:: bash
 
-   python3 test/validateFonts.py configs/fonts.json
+   python3 test/validate/validateFonts.py configs/fonts.json
 
 **Description:**
 
@@ -103,7 +103,7 @@ Validates repository accessibility.
 
 .. code-block:: bash
 
-   python3 test/validateRepositories.py configs/repositories.json
+   python3 test/validate/validateRepositories.py configs/repositories.json
 
 **Description:**
 
@@ -123,7 +123,7 @@ Validates Git configuration.
 
 .. code-block:: bash
 
-   python3 test/validateGitConfig.py configs/gitConfig.json
+   python3 test/validate/validateGitConfig.py configs/gitConfig.json
 
 **Description:**
 
@@ -147,7 +147,7 @@ Tests platform detection logic.
 
 .. code-block:: bash
 
-   python3 test/testPlatformDetection.py
+   python3 test/test/testPlatformDetection.py
 
 **Description:**
 
@@ -173,7 +173,7 @@ Tests utility functions.
 
 .. code-block:: bash
 
-   python3 test/testUtilities.py
+   python3 test/test/testUtilities.py
 
 **Description:**
 
@@ -193,7 +193,7 @@ Tests setup validation behaviour.
 
 .. code-block:: bash
 
-   python3 test/testSetupValidation.py
+   python3 test/test/testSetupValidation.py
 
 **Description:**
 
@@ -212,7 +212,7 @@ Tests repository wildcard expansion.
 
 .. code-block:: bash
 
-   python3 test/testWildcardRepos.py
+   python3 test/test/testWildcardRepos.py
 
 **Description:**
 
@@ -231,17 +231,17 @@ Run the complete test suite:
 .. code-block:: bash
 
    # Run all validation tests
-   python3 test/validatePackages.py configs/macos.json
-   python3 test/validateLinuxCommonPackages.py configs/linuxCommon.json
-   python3 test/validateFonts.py configs/fonts.json
-   python3 test/validateRepositories.py configs/repositories.json
-   python3 test/validateGitConfig.py configs/gitConfig.json
+   python3 test/validate/validatePackages.py configs/macos.json
+   python3 test/validate/validateLinuxCommonPackages.py configs/linuxCommon.json
+   python3 test/validate/validateFonts.py configs/fonts.json
+   python3 test/validate/validateRepositories.py configs/repositories.json
+   python3 test/validate/validateGitConfig.py configs/gitConfig.json
 
    # Run all unit tests
-   python3 test/testPlatformDetection.py
-   python3 test/testUtilities.py
-   python3 test/testSetupValidation.py
-   python3 test/testWildcardRepos.py
+   python3 test/test/testPlatformDetection.py
+   python3 test/test/testUtilities.py
+   python3 test/test/testSetupValidation.py
+   python3 test/test/testWildcardRepos.py
 
 Or use the validation system:
 

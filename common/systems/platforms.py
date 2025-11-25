@@ -32,10 +32,10 @@ class BasePlatform(ABC):
         self.packageManagers: List[PackageManager] = []
         self.omzManager = OhMyZshManager(dryRun=dryRun)
         self.androidManager = AndroidStudioManager(dryRun=dryRun)
-        self.initializePackageManagers()
+        self.initialisePackageManagers()
 
     @abstractmethod
-    def initializePackageManagers(self) -> None:
+    def initialisePackageManagers(self) -> None:
         """Set up the package managers for this platform."""
         pass
 
@@ -98,7 +98,7 @@ class BasePlatform(ABC):
 class MacOsPlatform(BasePlatform):
     """macOS platform implementation."""
 
-    def initializePackageManagers(self) -> None:
+    def initialisePackageManagers(self) -> None:
         from common.install.packageManagers import BrewPackageManager, BrewCaskPackageManager
 
         self.packageManagers = [
@@ -174,7 +174,7 @@ class MacOsPlatform(BasePlatform):
 class WindowsPlatform(BasePlatform):
     """Windows platform implementation."""
 
-    def initializePackageManagers(self) -> None:
+    def initialisePackageManagers(self) -> None:
         from common.install.packageManagers import WingetPackageManager, ChocolateyPackageManager, VcpkgPackageManager, StorePackageManager
 
         self.packageManagers = [
@@ -197,7 +197,7 @@ class WindowsPlatform(BasePlatform):
 class UbuntuPlatform(BasePlatform):
     """Ubuntu/Debian-based platform implementation."""
 
-    def initializePackageManagers(self) -> None:
+    def initialisePackageManagers(self) -> None:
         from common.install.packageManagers import AptPackageManager, SnapPackageManager
 
         self.packageManagers = [
@@ -216,7 +216,7 @@ class UbuntuPlatform(BasePlatform):
 class FedoraPlatform(BasePlatform):
     """Fedora/RedHat-based platform implementation."""
 
-    def initializePackageManagers(self) -> None:
+    def initialisePackageManagers(self) -> None:
         from common.install.packageManagers import DnfPackageManager
 
         self.packageManagers = [
@@ -234,7 +234,7 @@ class FedoraPlatform(BasePlatform):
 class OpenSusePlatform(BasePlatform):
     """OpenSUSE platform implementation."""
 
-    def initializePackageManagers(self) -> None:
+    def initialisePackageManagers(self) -> None:
         from common.install.packageManagers import ZypperPackageManager
 
         self.packageManagers = [
@@ -252,7 +252,7 @@ class OpenSusePlatform(BasePlatform):
 class ArchLinuxPlatform(BasePlatform):
     """Arch Linux platform implementation."""
 
-    def initializePackageManagers(self) -> None:
+    def initialisePackageManagers(self) -> None:
         from common.install.packageManagers import PacmanPackageManager
 
         self.packageManagers = [
@@ -270,7 +270,7 @@ class ArchLinuxPlatform(BasePlatform):
 class AlpinePlatform(BasePlatform):
     """Alpine Linux platform implementation."""
 
-    def initializePackageManagers(self) -> None:
+    def initialisePackageManagers(self) -> None:
         # Alpine uses APK, we need to create an ApkPackageManager
         # For now, just an empty list
         self.packageManagers = []

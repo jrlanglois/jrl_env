@@ -220,6 +220,29 @@ def hasInternetConnectivity(timeout: int = 5) -> bool:
         return False
 
 
+def getProjectRoot() -> Path:
+    """
+    Get the jrl_env project root directory.
+    Works from anywhere in the project by looking for setup.py.
+
+    Returns:
+        Path to project root
+
+    Raises:
+        RuntimeError: If project root cannot be found
+    """
+    # Start from current file location
+    current = Path(__file__).resolve()
+
+    # Walk up until we find setup.py
+    for parent in [current] + list(current.parents):
+        if (parent / "setup.py").exists() and (parent / "common").exists():
+            return parent
+
+    # Fallback: assume we're in common/core/ and go up two levels
+    return Path(__file__).resolve().parent.parent.parent
+
+
 __all__ = [
     "commandExists",
     "requireCommand",
@@ -233,4 +256,5 @@ __all__ = [
     "detectPackageManager",
     "getConfigDirectory",
     "hasInternetConnectivity",
+    "getProjectRoot",
 ]

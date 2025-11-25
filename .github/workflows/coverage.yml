@@ -21,9 +21,16 @@ jobs:
 
       - name: Run tests with coverage
         run: |
-          python3 -m coverage run --source=common test/testUtilities.py
-          python3 -m coverage run --source=common -a test/testPlatformDetection.py
-          python3 -m coverage run --source=common -a test/testSetupValidation.py
+          python3 -m coverage run --source=common test/test/testUtilities.py
+          python3 -m coverage run --source=common -a test/test/testPlatformDetection.py
+          python3 -m coverage run --source=common -a test/test/testSetupValidation.py
+          python3 -m coverage run --source=common -a test/test/testPlatforms.py
+          python3 -m coverage run --source=common -a test/test/testPackageManagers.py
+          python3 -m coverage run --source=common -a test/test/testSetupArgs.py
+          python3 -m coverage run --source=common -a test/test/testSetupZsh.py
+          python3 -m coverage run --source=common -a test/test/testAndroidStudio.py
+          python3 -m coverage run --source=common -a test/test/testSudoHelper.py
+          python3 -m coverage run --source=common -a test/test/testSshKeyManager.py
 
       - name: Generate coverage report
         run: |
@@ -46,4 +53,3 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
           MINIMUM_GREEN: 80
           MINIMUM_ORANGE: 60
-

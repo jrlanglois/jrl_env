@@ -50,8 +50,8 @@ class RunFlags:
 
 
 # Valid target names
-VALID_INSTALL_TARGETS = {'all', 'fonts', 'apps', 'git', 'cursor', 'repos', 'ssh'}
-VALID_UPDATE_TARGETS = {'all', 'apps', 'system'}
+validInstallTargets = {'all', 'fonts', 'apps', 'git', 'cursor', 'repos', 'ssh'}
+validUpdateTargets = {'all', 'apps', 'system'}
 
 
 def parseTargets(targetString: str, validTargets: set) -> List[str]:
@@ -110,7 +110,7 @@ def parseSetupArgs(args: Optional[list[str]] = None) -> SetupArgs:
         elif arg.startswith("--install="):
             targetString = arg.split("=", 1)[1]
             try:
-                setupArgs.installTargets = parseTargets(targetString, VALID_INSTALL_TARGETS)
+                setupArgs.installTargets = parseTargets(targetString, validInstallTargets)
             except ValueError as e:
                 printError(str(e))
                 sys.exit(1)
@@ -121,7 +121,7 @@ def parseSetupArgs(args: Optional[list[str]] = None) -> SetupArgs:
         elif arg.startswith("--update="):
             targetString = arg.split("=", 1)[1]
             try:
-                setupArgs.updateTargets = parseTargets(targetString, VALID_UPDATE_TARGETS)
+                setupArgs.updateTargets = parseTargets(targetString, validUpdateTargets)
             except ValueError as e:
                 printError(str(e))
                 sys.exit(1)
@@ -247,6 +247,6 @@ __all__ = [
     "RunFlags",
     "parseSetupArgs",
     "determineRunFlags",
-    "VALID_INSTALL_TARGETS",
-    "VALID_UPDATE_TARGETS",
+    "validInstallTargets",
+    "validUpdateTargets",
 ]

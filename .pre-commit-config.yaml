@@ -1,0 +1,65 @@
+# Pre-commit hooks for jrl_env
+# Install: pip install pre-commit && pre-commit install
+# Run manually: pre-commit run --all-files
+
+repos:
+  # Check line endings and file formatting
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-yaml
+        name: Check YAML syntax
+      - id: check-json
+        name: Check JSON syntax
+      - id: end-of-file-fixer
+        name: Fix end of file
+      - id: trailing-whitespace
+        name: Trim trailing whitespace
+      - id: mixed-line-ending
+        name: Check line endings
+        args: ['--fix=auto']
+
+  # Python formatting and linting
+  - repo: https://github.com/psf/black
+    rev: 25.11.0
+    hooks:
+      - id: black
+        name: Format Python code (disabled - we use our own style)
+        # Disabled because we use custom Allman brace style
+        exclude: .*
+
+  # Custom hooks (local)
+  - repo: local
+    hooks:
+      - id: format-repo
+        name: Format repository (line endings, style)
+        entry: python3 helpers/formatRepo.py
+        language: system
+        pass_filenames: false
+        always_run: true
+
+      - id: validate-json-configs
+        name: Validate JSON configs
+        entry: python3 -m common.systems.validate
+        language: system
+        pass_filenames: false
+        files: configs/.*\.json$
+
+      - id: check-american-spelling
+        name: Check for American spelling violations
+        entry: bash -c 'if grep -r -E "initialize|organize|minimize|color[^u]" --include="*.py" common/ test/ 2>/dev/null | grep -v "color.ui"; then echo "❌ American spelling found! Use initialise, organise, colour"; exit 1; fi'
+        language: system
+        pass_filenames: false
+
+      - id: check-underscores
+        name: Check for underscore violations (camelCase only)
+        entry: bash -c 'if grep -E "^[a-z]+_[a-zA-Z]|^[A-Z]+_[A-Z]" --include="*.py" -r common/ 2>/dev/null | grep -v "__.*__" | grep -v "# "; then echo "❌ Underscores found! Use camelCase"; exit 1; fi'
+        language: system
+        pass_filenames: false
+
+      - id: run-unit-tests
+        name: Run unit tests
+        entry: bash -c 'python3 test/test/testUtilities.py && python3 test/test/testPlatformDetection.py'
+        language: system
+        pass_filenames: false
+        stages: [pre-commit]
