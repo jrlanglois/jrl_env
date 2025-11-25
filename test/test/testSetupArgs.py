@@ -21,8 +21,8 @@ from common.install.setupArgs import (
     parseTargets,
     parseSetupArgs,
     determineRunFlags,
-    VALID_INSTALL_TARGETS,
-    VALID_UPDATE_TARGETS,
+    validInstallTargets,
+    validUpdateTargets,
 )
 
 
@@ -31,28 +31,28 @@ class TestParseTargets(unittest.TestCase):
 
     def testParseTargetsEmpty(self):
         """Test parsing empty string defaults to 'all'."""
-        result = parseTargets("", VALID_INSTALL_TARGETS)
+        result = parseTargets("", validInstallTargets)
         self.assertEqual(result, ['all'])
 
     def testParseSingleTarget(self):
         """Test parsing single target."""
-        result = parseTargets("apps", VALID_INSTALL_TARGETS)
+        result = parseTargets("apps", validInstallTargets)
         self.assertEqual(result, ['apps'])
 
     def testParseMultipleTargets(self):
         """Test parsing comma-separated targets."""
-        result = parseTargets("fonts,apps,git", VALID_INSTALL_TARGETS)
+        result = parseTargets("fonts,apps,git", validInstallTargets)
         self.assertEqual(result, ['fonts', 'apps', 'git'])
 
     def testParseTargetsInvalidTarget(self):
         """Test that invalid target raises ValueError."""
         with self.assertRaises(ValueError) as cm:
-            parseTargets("invalid", VALID_INSTALL_TARGETS)
+            parseTargets("invalid", validInstallTargets)
         self.assertIn("Invalid target", str(cm.exception))
 
     def testParseTargetsWhitespace(self):
         """Test that whitespace is stripped."""
-        result = parseTargets(" fonts , apps , git ", VALID_INSTALL_TARGETS)
+        result = parseTargets(" fonts , apps , git ", validInstallTargets)
         self.assertEqual(result, ['fonts', 'apps', 'git'])
 
 
