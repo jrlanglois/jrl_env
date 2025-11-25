@@ -33,9 +33,18 @@ from common.systems.stepDefinitions import getStepsToRun, willAnyStepsRun
 
 class SystemBase(ABC):
     """
-    Base class for system-specific setup implementations.
-    Provides platform abstraction layer with minimal orchestration.
-    Uses Template Method pattern for platform-specific behaviour.
+    Base class for setup orchestration (installation flow).
+
+    Provides the Template Method pattern for platform-specific installation.
+    Subclassed by GenericSystem which handles full setup coordination.
+
+    Responsibilities:
+    - Parse setup arguments
+    - Coordinate with SetupOrchestrator for step execution
+    - Provide platform-specific paths and dependencies
+    - Handle logging and state management
+
+    For update-only operations, use BasePlatform instead.
     """
 
     def __init__(self, projectRoot: Path):

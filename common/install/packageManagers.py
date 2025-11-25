@@ -11,6 +11,7 @@ import subprocess
 import sys
 from abc import ABC, abstractmethod
 from pathlib import Path
+from typing import final
 from typing import Optional
 
 # Add project root to path for imports
@@ -65,7 +66,18 @@ def runPackageCommand(cmd: list, package: str, operation: str, raiseOnError: boo
 
 
 class PackageManager(ABC):
-    """Base class for package managers."""
+    """
+    Base class for package managers (bottom layer).
+
+    All package managers (APT, Brew, Winget, etc.) inherit from this.
+    Provides unified interface for package operations.
+
+    Required methods (enforced via @abstractmethod):
+    - check(), install(), update(), updateAll()
+    - isAvailable(), getName(), getVersion()
+
+    Used by BasePlatform to manage packages across different platforms.
+    """
 
     @abstractmethod
     def check(self, package: str) -> bool:
@@ -119,9 +131,65 @@ class PackageManager(ABC):
         """
         pass
 
+    @abstractmethod
+    def isAvailable(self) -> bool:
+        """
+        Check if this package manager is available on the system.
+        Override in subclasses.
 
+        Returns:
+            True if package manager is available, False otherwise
+        """
+        return False
+
+    @abstractmethod
+    def getVersion(self) -> str:
+        """
+        Get package manager version.
+        Override in subclasses for specific version command.
+
+        Returns:
+            Version string, or "Unknown" if cannot determine
+        """
+        return "Unknown"
+
+    @abstractmethod
+    def getName(self) -> str:
+        """
+        Get human-readable package manager name.
+        Default implementation derives from class name.
+
+        Returns:
+            Package manager name
+        """
+        return self.__class__.__name__.replace("PackageManager", "")
+
+
+@final
 class AptPackageManager(PackageManager):
     """APT package manager (Ubuntu, Debian, Raspberry Pi)."""
+
+    def isAvailable(self) -> bool:
+        """Check if APT is available."""
+        from common.core.utilities import commandExists
+        return commandExists("apt-get")
+
+    def getName(self) -> str:
+        """Get package manager name."""
+        return "APT"
+
+    def getVersion(self) -> str:
+        """Get APT version."""
+        try:
+            result = subprocess.run(
+                ["apt-get", "--version"],
+                capture_output=True,
+                text=True,
+                check=True,
+            )
+            return result.stdout.strip().split("\n")[0]
+        except Exception:
+            return "Unknown"
 
     def check(self, package: str) -> bool:
         try:
@@ -169,8 +237,31 @@ class AptPackageManager(PackageManager):
             return False
 
 
+@final
 class SnapPackageManager(PackageManager):
     """Snap package manager."""
+
+    def isAvailable(self) -> bool:
+        """Check if Snap is available."""
+        from common.core.utilities import commandExists
+        return commandExists("snap")
+
+    def getName(self) -> str:
+        """Get package manager name."""
+        return "Snap"
+
+    def getVersion(self) -> str:
+        """Get Snap version."""
+        try:
+            result = subprocess.run(
+                ["snap", "--version"],
+                capture_output=True,
+                text=True,
+                check=True,
+            )
+            return result.stdout.strip().split("\n")[0]
+        except Exception:
+            return "Unknown"
 
     def check(self, package: str) -> bool:
         try:
@@ -209,8 +300,31 @@ class SnapPackageManager(PackageManager):
             return False
 
 
+@final
 class BrewPackageManager(PackageManager):
     """Homebrew package manager (macOS)."""
+
+    def isAvailable(self) -> bool:
+        """Check if Homebrew is available."""
+        from common.core.utilities import commandExists
+        return commandExists("brew")
+
+    def getName(self) -> str:
+        """Get package manager name."""
+        return "Homebrew"
+
+    def getVersion(self) -> str:
+        """Get Homebrew version."""
+        try:
+            result = subprocess.run(
+                ["brew", "--version"],
+                capture_output=True,
+                text=True,
+                check=True,
+            )
+            return result.stdout.split("\n")[0] if result.stdout else "Unknown"
+        except Exception:
+            return "Unknown"
 
     def check(self, package: str) -> bool:
         try:
@@ -256,8 +370,31 @@ class BrewPackageManager(PackageManager):
             return False
 
 
+@final
 class BrewCaskPackageManager(PackageManager):
     """Homebrew Cask package manager (macOS)."""
+
+    def isAvailable(self) -> bool:
+        """Check if Homebrew Cask is available."""
+        from common.core.utilities import commandExists
+        return commandExists("brew")
+
+    def getName(self) -> str:
+        """Get package manager name."""
+        return "Homebrew Cask"
+
+    def getVersion(self) -> str:
+        """Get Homebrew version (Cask uses same binary)."""
+        try:
+            result = subprocess.run(
+                ["brew", "--version"],
+                capture_output=True,
+                text=True,
+                check=True,
+            )
+            return result.stdout.strip().split("\n")[0]
+        except Exception:
+            return "Unknown"
 
     def check(self, package: str) -> bool:
         try:
@@ -296,8 +433,31 @@ class BrewCaskPackageManager(PackageManager):
             return False
 
 
+@final
 class WingetPackageManager(PackageManager):
     """Windows Package Manager (winget)."""
+
+    def isAvailable(self) -> bool:
+        """Check if Winget is available."""
+        from common.common import isWingetInstalled
+        return isWingetInstalled()
+
+    def getName(self) -> str:
+        """Get package manager name."""
+        return "Winget"
+
+    def getVersion(self) -> str:
+        """Get Winget version."""
+        try:
+            result = subprocess.run(
+                ["winget", "--version"],
+                capture_output=True,
+                text=True,
+                check=True,
+            )
+            return result.stdout.strip()
+        except Exception:
+            return "Unknown"
 
     def check(self, package: str) -> bool:
         try:
@@ -352,8 +512,31 @@ class WingetPackageManager(PackageManager):
             return False
 
 
+@final
 class ChocolateyPackageManager(PackageManager):
     """Chocolatey package manager (Windows)."""
+
+    def isAvailable(self) -> bool:
+        """Check if Chocolatey is available."""
+        from common.core.utilities import commandExists
+        return commandExists("choco")
+
+    def getName(self) -> str:
+        """Get package manager name."""
+        return "Chocolatey"
+
+    def getVersion(self) -> str:
+        """Get Chocolatey version."""
+        try:
+            result = subprocess.run(
+                ["choco", "--version"],
+                capture_output=True,
+                text=True,
+                check=True,
+            )
+            return result.stdout.strip()
+        except Exception:
+            return "Unknown"
 
     def check(self, package: str) -> bool:
         try:
@@ -400,8 +583,31 @@ class ChocolateyPackageManager(PackageManager):
             return False
 
 
+@final
 class VcpkgPackageManager(PackageManager):
     """vcpkg package manager (Windows C/C++ libraries)."""
+
+    def isAvailable(self) -> bool:
+        """Check if vcpkg is available."""
+        from common.core.utilities import commandExists
+        return commandExists("vcpkg")
+
+    def getName(self) -> str:
+        """Get package manager name."""
+        return "vcpkg"
+
+    def getVersion(self) -> str:
+        """Get vcpkg version."""
+        try:
+            result = subprocess.run(
+                ["vcpkg", "version"],
+                capture_output=True,
+                text=True,
+                check=True,
+            )
+            return result.stdout.strip().split("\n")[0]
+        except Exception:
+            return "Unknown"
 
     def check(self, package: str) -> bool:
         try:
@@ -448,8 +654,22 @@ class VcpkgPackageManager(PackageManager):
         return False
 
 
+@final
 class StorePackageManager(PackageManager):
     """Microsoft Store package manager (Windows)."""
+
+    def isAvailable(self) -> bool:
+        """Check if Microsoft Store is available (Windows only)."""
+        from common.systems.platform import isWindows
+        return isWindows()
+
+    def getName(self) -> str:
+        """Get package manager name."""
+        return "Microsoft Store"
+
+    def getVersion(self) -> str:
+        """Get version (N/A for Microsoft Store)."""
+        return "N/A"
 
     def check(self, package: str) -> bool:
         # Store apps can't be easily checked, so always return False
@@ -492,8 +712,31 @@ class StorePackageManager(PackageManager):
         return True
 
 
+@final
 class DnfPackageManager(PackageManager):
     """DNF package manager (RedHat, Fedora, CentOS)."""
+
+    def isAvailable(self) -> bool:
+        """Check if DNF is available."""
+        from common.core.utilities import commandExists
+        return commandExists("dnf")
+
+    def getName(self) -> str:
+        """Get package manager name."""
+        return "DNF"
+
+    def getVersion(self) -> str:
+        """Get DNF version."""
+        try:
+            result = subprocess.run(
+                ["dnf", "--version"],
+                capture_output=True,
+                text=True,
+                check=True,
+            )
+            return result.stdout.strip().split("\n")[0]
+        except Exception:
+            return "Unknown"
 
     def check(self, package: str) -> bool:
         try:
@@ -532,8 +775,31 @@ class DnfPackageManager(PackageManager):
         return False
 
 
+@final
 class ZypperPackageManager(PackageManager):
     """Zypper package manager (OpenSUSE)."""
+
+    def isAvailable(self) -> bool:
+        """Check if Zypper is available."""
+        from common.core.utilities import commandExists
+        return commandExists("zypper")
+
+    def getName(self) -> str:
+        """Get package manager name."""
+        return "Zypper"
+
+    def getVersion(self) -> str:
+        """Get Zypper version."""
+        try:
+            result = subprocess.run(
+                ["zypper", "--version"],
+                capture_output=True,
+                text=True,
+                check=True,
+            )
+            return result.stdout.strip()
+        except Exception:
+            return "Unknown"
 
     def check(self, package: str) -> bool:
         try:
@@ -579,8 +845,32 @@ class ZypperPackageManager(PackageManager):
         return False
 
 
+@final
 class PacmanPackageManager(PackageManager):
     """Pacman package manager (ArchLinux)."""
+
+    def isAvailable(self) -> bool:
+        """Check if Pacman is available."""
+        from common.core.utilities import commandExists
+        return commandExists("pacman")
+
+    def getName(self) -> str:
+        """Get package manager name."""
+        return "Pacman"
+
+    def getVersion(self) -> str:
+        """Get Pacman version."""
+        try:
+            result = subprocess.run(
+                ["pacman", "--version"],
+                capture_output=True,
+                text=True,
+                check=True,
+            )
+            # Pacman outputs multiple lines, take first
+            return result.stdout.strip().split("\n")[0]
+        except Exception:
+            return "Unknown"
 
     def check(self, package: str) -> bool:
         try:

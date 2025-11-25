@@ -68,89 +68,8 @@ from common.common import (
 )
 
 
-def getSystemClass(platformName: str):
-    """
-    Get the system class for the given platform.
-
-    Args:
-        platformName: Platform name (e.g., "ubuntu", "macos", "win11")
-
-    Returns:
-        GenericSystem configured for the platform
-    """
-    try:
-        from common.systems.genericSystem import GenericSystem
-        from common.systems.platform import Platform
-
-        # Convert platform name to Platform enum
-        try:
-            platform = Platform[platformName]
-            # Return a lambda that creates GenericSystem with the platform
-            return lambda projectRoot: GenericSystem(projectRoot, platform)
-        except KeyError:
-            printError(f"Unsupported platform: {platformName}")
-            return None
-    except (ImportError, AttributeError) as e:
-        printError(f"Failed to import GenericSystem: {e}")
-        return None
 
 
-def detectPlatform() -> tuple[str, Optional[Path]]:
-    """
-    Detect the operating system and return the platform name.
-
-    Returns:
-        Tuple of (platform_name, None)
-        Platform name will be one of: "macos", "ubuntu", "raspberrypi", "redhat", "opensuse", "archlinux", "win11", or "unknown"
-        Second value is None (kept for backwards compatibility)
-    """
-    osType = findOperatingSystem()
-
-    if isMacOS():
-        return ("macos", None)
-    elif isLinux():
-        # Try to detect specific Linux distribution
-        osRelease = Path("/etc/os-release")
-        if osRelease.exists():
-            try:
-                distroId = None
-                distroIdLike = None
-                with open(osRelease, 'r', encoding='utf-8') as f:
-                    for line in f:
-                        if line.startswith("ID="):
-                            distroId = line.split('=', 1)[1].strip().strip('"').strip("'")
-                        elif line.startswith("ID_LIKE="):
-                            distroIdLike = line.split('=', 1)[1].strip().strip('"').strip("'")
-
-                # Check ID first
-                if distroId:
-                    if distroId in ("ubuntu", "debian"):
-                        return ("ubuntu", None)
-                    elif distroId == "raspbian":
-                        return ("raspberrypi", None)
-                    elif distroId in ("rhel", "fedora", "centos"):
-                        return ("redhat", None)
-                    elif distroId in ("opensuse-leap", "opensuse-tumbleweed", "sles"):
-                        return ("opensuse", None)
-                    elif distroId == "arch":
-                        return ("archlinux", None)
-
-                # Check ID_LIKE as fallback
-                if distroIdLike:
-                    if "rhel" in distroIdLike or "fedora" in distroIdLike or "centos" in distroIdLike:
-                        return ("redhat", None)
-                    elif "suse" in distroIdLike or "opensuse" in distroIdLike:
-                        return ("opensuse", None)
-                    elif "arch" in distroIdLike:
-                        return ("archlinux", None)
-            except (OSError, IOError):
-                pass
-        # Default to ubuntu for generic Linux
-        return ("ubuntu", None)
-    elif isWindows():
-        return ("win11", None)
-    else:
-        return ("unknown", None)
 
 
 def checkIfSetupAlreadyRan() -> bool:
@@ -418,8 +337,10 @@ def main() -> int:
         printH1("jrl_env Update", dryRun=dryRun)
 
         # Detect platform
+        from common.systems.update import detectPlatform
+
         printInfo("Detecting operating system...")
-        platformName, _ = detectPlatform()
+        platformName = detectPlatform()
 
         if platformName == "unknown":
             printError(f"Unsupported operating system: {getOperatingSystem()}")
@@ -501,8 +422,10 @@ def main() -> int:
     safePrint()
 
     # Detect platform
+    from common.systems.update import detectPlatform
+
     printInfo("Detecting operating system...")
-    platformName, _ = detectPlatform()
+    platformName = detectPlatform()
 
     if platformName == "unknown":
         printError(

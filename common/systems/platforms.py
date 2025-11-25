@@ -17,7 +17,20 @@ from common.install.androidStudio import AndroidStudioManager
 
 
 class BasePlatform(ABC):
-    """Base class for all platform implementations."""
+    """
+    Platform representation and update layer.
+
+    Each platform (macOS, Windows, Ubuntu, etc.) knows:
+    - Which package managers it uses
+    - How to update itself
+    - What managers and tools are available
+
+    This is the middle layer between:
+    - PackageManager (bottom): Individual package operations
+    - GenericSystem (top): Full installation orchestration
+
+    Use getCurrentPlatform() to get a cached instance.
+    """
 
     def __init__(self, projectRoot: Path, dryRun: bool = False):
         """
@@ -355,6 +368,48 @@ def createPlatform(platformName: str, projectRoot: Path, dryRun: bool = False) -
     return platformClass(projectRoot, dryRun)
 
 
+# Cached platform instance (singleton per session)
+_platformInstance = None
+
+
+def getCurrentPlatform(dryRun: bool = False):
+    """
+    Get or create the current platform instance.
+    Cached singleton - same instance returned on subsequent calls.
+
+    Args:
+        dryRun: If True, platform operations won't make actual changes
+
+    Returns:
+        Platform instance (MacOsPlatform, WindowsPlatform, etc.)
+
+    Example:
+        platform = getCurrentPlatform()
+        platform.updateAll()
+        platform.packageManagers  # Already knows what's available
+    """
+    global _platformInstance
+
+    if _platformInstance is None:
+        from common.systems.update import detectPlatform
+        from common.core.utilities import getProjectRoot
+
+        platformName = detectPlatform()
+        projectRoot = getProjectRoot()
+        _platformInstance = createPlatform(platformName, projectRoot, dryRun)
+
+    return _platformInstance
+
+
+def resetPlatformCache() -> None:
+    """
+    Reset the cached platform instance.
+    Useful for testing or when dryRun state changes.
+    """
+    global _platformInstance
+    _platformInstance = None
+
+
 __all__ = [
     "BasePlatform",
     "MacOsPlatform",
@@ -366,4 +421,6 @@ __all__ = [
     "AlpinePlatform",
     "RaspberryPiPlatform",
     "createPlatform",
+    "getCurrentPlatform",
+    "resetPlatformCache",
 ]
